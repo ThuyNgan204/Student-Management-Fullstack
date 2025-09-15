@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from fastapi.responses import JSONResponse
 
 from . import models, schemas
 from .database import SessionLocal, engine
@@ -25,7 +26,7 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/students/", response_model=List[schemas.Student])
+@app.get("/students/")
 def get_students(
     db: Session = Depends(get_db),
     page: int = Query(1, gt=0),
@@ -35,12 +36,13 @@ def get_students(
     skip = (page - 1) * page_size
     query = db.query(models.Student).order_by(models.Student.id.desc())
 
-
     if search:
         query = query.filter(models.Student.name.ilike(f"%{search}%"))
-        
+
+    total = query.count()
     students = query.offset(skip).limit(page_size).all()
-    return students
+
+    return {"items": students, "total": total}
 
 @app.get("/students/{student_id}", response_model=schemas.Student)
 def get_student_detail(student_id: int, db: Session = Depends(get_db)):

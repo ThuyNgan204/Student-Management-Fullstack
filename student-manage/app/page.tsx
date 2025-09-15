@@ -6,30 +6,18 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useStudentStore, Student } from "@/store/useStudentStore";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 
-// ---------------- Schema ----------------
-interface Student {
-  id: number;
-  name: string;
-  class_name: string;
-  age?: number;
-  gender?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  enrollment_date?: string;
-  gpa?: number;
-  status?: string;
-}
-
+// Schema
 const studentSchema = z.object({
   name: z.string().min(1, { message: "Please enter a name!" }),
   class_name: z.string().min(1, { message: "Please enter a class!" }),
 });
-
 type StudentFormInputs = z.infer<typeof studentSchema>;
 
-// ---------------- Debounce Hook ----------------
+// Debounce Hook
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -39,48 +27,75 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-// ---------------- Main Component ----------------
+type StudentResponse = {
+  items: Student[];
+  total: number;
+};
+
 export default function Home() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null); // student detail
 
   const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
+    page,
+    pageSize,
+    search,
+    editingStudent,
+    selectedStudent,
+    setPage,
+    setPageSize,
+    setSearch,
+    setEditingStudent,
+    setSelectedStudent,
+  } = useStudentStore();
+
+  const debouncedSearch = useDebounce(search, 500);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, setPage]);
+
+  // --- Form Add ---
+  const {
+    register: registerAdd,
+    handleSubmit: handleSubmitAdd,
+    reset: resetAdd,
+    formState: { errors: errorsAdd },
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
     defaultValues: { name: "", class_name: "" },
   });
 
-  // ---------------- Queries ----------------
-  const { data: students, isLoading, isError } = useQuery<Student[]>({
-    queryKey: ["students", page, debouncedSearch],
+  // --- Form Edit ---
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    formState: { errors: errorsEdit },
+  } = useForm<StudentFormInputs>({
+    resolver: zodResolver(studentSchema),
+  });
+
+  // Queries
+  const { data, isLoading, isError } = useQuery<StudentResponse>({
+    queryKey: ["students", page, pageSize, debouncedSearch],
     queryFn: async () => {
       const res = await axios.get(
-        `http://localhost:8000/students/?page=${page}&page_size=10&search=${debouncedSearch}`
+        `http://localhost:8000/students/?page=${page}&page_size=${pageSize}&search=${debouncedSearch}`
       );
       return res.data;
     },
     keepPreviousData: true,
   });
 
-  // ---------------- Mutations ----------------
+  // Mutations
   const addStudentMutation = useMutation({
     mutationFn: (newStudent: StudentFormInputs) =>
       axios.post("http://localhost:8000/students/", newStudent),
-    onSuccess: (res) => {
-      queryClient.setQueryData<Student[]>(["students", page, debouncedSearch], (old) => {
-        if (!old) return [res.data];
-        return [res.data, ...old];
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["students", page, pageSize, debouncedSearch],
       });
-      reset();
+      resetAdd();
     },
   });
 
@@ -90,45 +105,39 @@ export default function Home() {
         `http://localhost:8000/students/${updatedStudent.id}`,
         updatedStudent
       ),
-    onSuccess: (res) => {
-      queryClient.setQueryData<Student[]>(["students", page, debouncedSearch], (old) => {
-        if (!old) return [];
-        return old.map((s) => (s.id === res.data.id ? res.data : s));
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["students", page, pageSize, debouncedSearch],
       });
       setEditingStudent(null);
-      reset();
+      resetEdit();
     },
   });
 
   const deleteStudentMutation = useMutation({
     mutationFn: (studentId: number) =>
       axios.delete(`http://localhost:8000/students/${studentId}`),
-    onSuccess: (_, studentId) => {
-      queryClient.setQueryData<Student[]>(["students", page, debouncedSearch], (old) => {
-        if (!old) return [];
-        return old.filter((s) => s.id !== studentId);
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["students", page, pageSize, debouncedSearch],
       });
     },
   });
 
-  // ---------------- Handlers ----------------
-  const onSubmit = (data: StudentFormInputs) => {
-    if (editingStudent) {
-      updateStudentMutation.mutate({ ...editingStudent, ...data });
-    } else {
-      addStudentMutation.mutate(data);
-    }
+  // Handlers
+  const onSubmitAdd = (data: StudentFormInputs) => {
+    addStudentMutation.mutate(data);
   };
 
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
-    setValue("name", student.name);
-    setValue("class_name", student.class_name);
+    resetEdit({ name: student.name, class_name: student.class_name });
   };
 
-  const handleCancelEdit = () => {
-    setEditingStudent(null);
-    reset();
+  const handleUpdate = (data: StudentFormInputs) => {
+    if (editingStudent) {
+      updateStudentMutation.mutate({ ...editingStudent, ...data });
+    }
   };
 
   const handleDelete = (studentId: number) => {
@@ -146,75 +155,114 @@ export default function Home() {
     }
   };
 
-  // ---------------- UI ----------------
+  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+
+  // UI
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       {/* Header */}
-      <header className="bg-indigo-600 text-white px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <header className="bg-indigo-600 text-white px-6 py-4">
         <h1 className="text-2xl font-bold">Student Management</h1>
-
-        {/* Search Box */}
-        <input
-          type="text"
-          placeholder="Search student..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 rounded-md text-black w-full md:w-64"
-        />
       </header>
 
-      {/* Form Add/Edit Student */}
-      <div className="px-6 py-4 border-t border-gray-300 bg-gray-50">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col md:flex-row md:items-center gap-3"
-        >
-          <input
-            type="text"
-            placeholder="Name"
-            {...register("name")}
-            className="px-3 py-2 rounded-md border text-black"
-          />
-          <input
-            type="text"
-            placeholder="Class"
-            {...register("class_name")}
-            className="px-3 py-2 rounded-md border text-black"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md font-semibold"
+      {/* Top Controls: Add Form (left) + Search (right) */}
+      <div className="px-6 py-4 border-b border-gray-300 bg-gray-50">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          
+          {/* Form Add Student */}
+          <form
+            onSubmit={handleSubmitAdd(onSubmitAdd)}
+            className="flex flex-col md:flex-row md:items-center gap-3 flex-1"
           >
-            {editingStudent ? "Save" : "Add Student"}
-          </button>
-          {editingStudent && (
+            <input
+              type="text"
+              placeholder="Name"
+              {...registerAdd("name")}
+              className="w-72 border rounded-md px-3 py-2"
+            />
+            {errorsAdd.name && (
+              <span className="text-red-600 text-sm">{errorsAdd.name.message}</span>
+            )}
+
+            <input
+              type="text"
+              placeholder="Class"
+              {...registerAdd("class_name")}
+              className="w-32 border rounded-md px-3 py-2"
+            />
+            {errorsAdd.class_name && (
+              <span className="text-red-600 text-sm">{errorsAdd.class_name.message}</span>
+            )}
+
             <button
-              type="button"
-              onClick={handleCancelEdit}
-              className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-md font-semibold"
+              type="submit"
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md font-semibold"
             >
-              Cancel
+              Add
             </button>
-          )}
-        </form>
+          </form>
 
-        {/* Table */}
-        <main className="flex-1 overflow-x-auto px-6 py-4">
-          {isLoading && <p className="text-center mt-6 text-gray-600">Loading...</p>}
-          {isError && <p className="text-center mt-6 text-red-600">Error loading students.</p>}
+          {/* Search Box */}
+          <div className="relative w-full md:w-80">
+            <input
+              type="text"
+              placeholder="Search student..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-3 py-2 pr-8 rounded-md border text-black w-full"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+              >
+                ❌
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
-          {!isLoading && !isError && (
+      <div className="flex items-center gap-2 my-4 px-6">
+        <label htmlFor="pageSize" className="text-sm text-gray-600">
+          Rows per page:
+        </label>
+        <select
+          id="pageSize"
+          value={pageSize}
+          onChange={(e) => {
+            setPageSize(Number(e.target.value));
+            setPage(1);
+          }}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+        </select>
+      </div>
+
+      {/* Table */}
+      <main className="flex-1 overflow-x-auto px-6 py-4">
+        {isLoading && <p className="text-center mt-6 text-gray-600">Loading...</p>}
+        {isError && <p className="text-center mt-6 text-red-600">Error loading students.</p>}
+
+        {!isLoading && !isError && (
+          <>
             <table className="w-full border-collapse border border-gray-300">
               <thead className="bg-gray-100">
                 <tr>
+                  <th className="p-3 border text-left w-16">ID</th>
                   <th className="p-3 border text-left">Name</th>
                   <th className="p-3 border text-left">Class</th>
-                  <th className="p-3 border text-center">Actions</th>
+                  <th className="p-3 border text-center w-72">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {students?.map((student) => (
+                {data?.items.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
+                    <td className="p-3 border">{student.id}</td>
                     <td className="p-3 border">{student.name}</td>
                     <td className="p-3 border">{student.class_name}</td>
                     <td className="p-3 border text-center space-x-2">
@@ -239,7 +287,7 @@ export default function Home() {
                     </td>
                   </tr>
                 ))}
-                {students?.length === 0 && (
+                {data?.items.length === 0 && (
                   <tr>
                     <td colSpan={4} className="text-center p-4 text-gray-500 italic">
                       No students found.
@@ -248,56 +296,159 @@ export default function Home() {
                 )}
               </tbody>
             </table>
-          )}
-        </main>
-      </div>
 
-      {/* Pagination */}
-      <footer className="flex justify-center items-center gap-4 py-4 border-t border-gray-300">
-        <button
-          onClick={() => setPage((old) => Math.max(old - 1, 1))}
-          disabled={page === 1}
-          className="px-4 py-2 bg-gray-300 text-gray-800 rounded disabled:opacity-50 hover:bg-gray-400"
-        >
-          Previous
-        </button>
-        <span className="font-semibold">Page {page}</span>
-        <button
-          onClick={() => setPage((old) => old + 1)}
-          disabled={!students || students.length < 10}
-          className="px-4 py-2 bg-gray-300 text-gray-800 rounded disabled:opacity-50 hover:bg-gray-400"
-        >
-          Next
-        </button>
-      </footer>
+            {/* Pagination */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              >
+                {"<"}
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setPage(i + 1)}
+                  className={`px-3 py-1 rounded ${
+                    page === i + 1 ? "bg-indigo-600 text-white" : "bg-gray-200"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage(page + 1)}
+                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+              >
+                {">"}
+              </button>
+            </div>
+          </>
+        )}
+      </main>
 
       {/* Detail Modal */}
-      {selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Student Detail</h2>
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li><strong>ID:</strong> {selectedStudent.id}</li>
-              <li><strong>Name:</strong> {selectedStudent.name}</li>
-              <li><strong>Class:</strong> {selectedStudent.class_name}</li>
-              {selectedStudent.age && <li><strong>Age:</strong> {selectedStudent.age}</li>}
-              {selectedStudent.gender && <li><strong>Gender:</strong> {selectedStudent.gender}</li>}
-              {selectedStudent.email && <li><strong>Email:</strong> {selectedStudent.email}</li>}
-              {selectedStudent.phone && <li><strong>Phone:</strong> {selectedStudent.phone}</li>}
-              {selectedStudent.address && <li><strong>Address:</strong> {selectedStudent.address}</li>}
-              {selectedStudent.enrollment_date && <li><strong>Enrolled:</strong> {selectedStudent.enrollment_date}</li>}
-              {selectedStudent.gpa && <li><strong>GPA:</strong> {selectedStudent.gpa}</li>}
-              {selectedStudent.status && <li><strong>Status:</strong> {selectedStudent.status}</li>}
-            </ul>
-            <button
-              onClick={() => setSelectedStudent(null)}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+      <AnimatePresence>
+        {selectedStudent && (
+          <motion.div
+            className="fixed inset-0 bg-white/50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="relative bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
             >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+              <button
+                onClick={() => setSelectedStudent(null)}
+                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-200"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+
+              <h2 className="text-xl font-bold mb-4">Student Detail</h2>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li><strong>ID:</strong> {selectedStudent.id}</li>
+                <li><strong>Name:</strong> {selectedStudent.name}</li>
+                <li><strong>Class:</strong> {selectedStudent.class_name}</li>
+              </ul>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingStudent && (
+          <motion.div
+            className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="relative bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <button
+                onClick={() => setEditingStudent(null)}
+                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-200"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+
+              <h2 className="text-xl font-bold mb-4">Edit Student</h2>
+
+              <form
+                onSubmit={handleSubmitEdit(handleUpdate)}
+                className="flex flex-col gap-4"
+              >
+                {/* ID */}
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">ID</label>
+                  <input
+                    type="text"
+                    value={editingStudent.id}
+                    readOnly
+                    className="px-3 py-2 rounded-md border text-gray-500 bg-gray-100 cursor-not-allowed"
+                  />
+                </div>
+
+                {/* Name */}
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">Name</label>
+                  <input
+                    type="text"
+                    {...registerEdit("name")}
+                    className="px-3 py-2 rounded-md border text-black"
+                  />
+                  {errorsEdit.name && (
+                    <span className="text-red-600 text-sm">{errorsEdit.name.message}</span>
+                  )}
+                </div>
+
+                {/* Class */}
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">Class</label>
+                  <input
+                    type="text"
+                    {...registerEdit("class_name")}
+                    className="px-3 py-2 rounded-md border text-black"
+                  />
+                  {errorsEdit.class_name && (
+                    <span className="text-red-600 text-sm">{errorsEdit.class_name.message}</span>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditingStudent(null)}
+                    className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
