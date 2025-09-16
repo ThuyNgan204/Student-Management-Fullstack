@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useForm } from "react-hook-form";
@@ -60,10 +60,23 @@ export default function Home() {
     handleSubmit: handleSubmitAdd,
     reset: resetAdd,
     formState: { errors: errorsAdd },
+    clearErrors,
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
     defaultValues: { name: "", class_name: "" },
   });
+
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(e.target as Node)) {
+        clearErrors(); // chỉ clear khi click ngoài form
+      }
+    };
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [clearErrors]);
 
   // --- Form Edit ---
   const {
@@ -171,28 +184,43 @@ export default function Home() {
           
           {/* Form Add Student */}
           <form
+            ref={formRef}
             onSubmit={handleSubmitAdd(onSubmitAdd)}
             className="flex flex-col md:flex-row md:items-center gap-3 flex-1"
           >
-            <input
-              type="text"
-              placeholder="Name"
-              {...registerAdd("name")}
-              className="w-72 border rounded-md px-3 py-2"
-            />
-            {errorsAdd.name && (
-              <span className="text-red-600 text-sm">{errorsAdd.name.message}</span>
-            )}
+            {/* Name input */}
+            <div className="flex flex-col w-72 relative">
+              <input
+                type="text"
+                placeholder="Name"
+                {...registerAdd("name")}
+                className={`w-72 border rounded-md px-3 py-2 ${
+                  errorsAdd.name ? "border-red-500" : "border border-black-300"
+                }`}
+              />
+              {errorsAdd.name && (
+                <span className="absolute top-full left-0 text-xs text-red-500">
+                  {errorsAdd.name.message}
+                </span>
+              )}
+            </div>
 
-            <input
-              type="text"
-              placeholder="Class"
-              {...registerAdd("class_name")}
-              className="w-32 border rounded-md px-3 py-2"
-            />
-            {errorsAdd.class_name && (
-              <span className="text-red-600 text-sm">{errorsAdd.class_name.message}</span>
-            )}
+            {/* Class input */}
+            <div className="flex flex-col w-42 relative">
+              <input
+                type="text"
+                placeholder="Class"
+                {...registerAdd("class_name")}
+                className={`w-42 border rounded-md px-3 py-2 ${
+                  errorsAdd.class_name ? "border-red-500" : "border border-black-300"
+                }`}
+              />
+              {errorsAdd.class_name && (
+                <span className="absolute top-full left-0 text-xs text-red-500">
+                  {errorsAdd.class_name.message}
+                </span>
+              )}
+            </div>
 
             <button
               type="submit"
