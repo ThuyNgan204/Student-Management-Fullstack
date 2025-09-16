@@ -12,12 +12,14 @@ interface StudentStore {
   search: string;
   editingStudent: Student | null;
   selectedStudent: Student | null;
+  addOpen: boolean;
 
   setPage: (page: number) => void;
   setPageSize: (page_size: number) => void;
   setSearch: (search: string) => void;
   setEditingStudent: (student: Student | null) => void;
   setSelectedStudent: (student: Student | null) => void;
+  setAddOpen: (isOpen: boolean) => void;
 }
 
 export const useStudentStore = create<StudentStore>((set) => ({
@@ -26,10 +28,12 @@ export const useStudentStore = create<StudentStore>((set) => ({
   search: "",
   editingStudent: null,
   selectedStudent: null,
+  addOpen: false,
 
   setPage: (page) => set({ page }),
   setPageSize: (pageSize) => set({pageSize}),
   setSearch: (search) => set({ search }),
   setEditingStudent: (student) => set({ editingStudent: student }),
   setSelectedStudent: (student) => set({ selectedStudent: student }),
+  setAddOpen: (isOpen) => set({addOpen: isOpen}),
 }));

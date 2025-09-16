@@ -1,15 +1,44 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useStudentStore, Student } from "@/store/useStudentStore";
-import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
 import Link from "next/link";
+
+// shadcn components
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Schema
 const studentSchema = z.object({
@@ -18,19 +47,19 @@ const studentSchema = z.object({
 });
 type StudentFormInputs = z.infer<typeof studentSchema>;
 
+type StudentResponse = {
+  items: Student[];
+  total: number;
+};
+
 // Debounce Hook
 const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+  const [debouncedValue, setDebouncedValue] =useState(value);
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedValue(value), delay);
     return () => clearTimeout(handler);
   }, [value, delay]);
   return debouncedValue;
-};
-
-type StudentResponse = {
-  items: Student[];
-  total: number;
 };
 
 export default function Home() {
@@ -42,11 +71,13 @@ export default function Home() {
     search,
     editingStudent,
     selectedStudent,
+    addOpen,
     setPage,
     setPageSize,
     setSearch,
     setEditingStudent,
     setSelectedStudent,
+    setAddOpen,
   } = useStudentStore();
 
   const debouncedSearch = useDebounce(search, 500);
@@ -55,31 +86,18 @@ export default function Home() {
     setPage(1);
   }, [debouncedSearch, setPage]);
 
-  // --- Form Add ---
+  // Form Add
   const {
     register: registerAdd,
     handleSubmit: handleSubmitAdd,
     reset: resetAdd,
     formState: { errors: errorsAdd },
-    clearErrors,
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
     defaultValues: { name: "", class_name: "" },
   });
 
-  const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (formRef.current && !formRef.current.contains(e.target as Node)) {
-        clearErrors(); // chỉ clear khi click ngoài form
-      }
-    };
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [clearErrors]);
-
-  // --- Form Edit ---
+  // Form Edit
   const {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
@@ -110,6 +128,7 @@ export default function Home() {
         queryKey: ["students", page, pageSize, debouncedSearch],
       });
       resetAdd();
+      setAddOpen(false);
     },
   });
 
@@ -154,12 +173,6 @@ export default function Home() {
     }
   };
 
-  const handleDelete = (studentId: number) => {
-    if (window.confirm("Are you sure you want to delete this student?")) {
-      deleteStudentMutation.mutate(studentId);
-    }
-  };
-
   const handleView = async (studentId: number) => {
     try {
       const res = await axios.get(`http://localhost:8000/students/${studentId}`);
@@ -171,91 +184,37 @@ export default function Home() {
 
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
 
-  // UI
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       {/* Header */}
-      <header className="bg-indigo-600 text-white px-6 py-4">
-        <h1 className="text-2xl font-bold">Student Management</h1>
+      <header className= "bg-primary text-primary-foreground px-6 py-4 hover:bg-primary/90">
+        <h1 className="text-2xl text-center font-bold">STUDENT MANAGEMENT</h1>
       </header>
 
-      {/* Top Controls: Add Form (left) + Search (right) */}
-      <div className="px-6 py-4 border-b border-gray-300 bg-gray-50">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          
-          {/* Form Add Student */}
-          <form
-            ref={formRef}
-            onSubmit={handleSubmitAdd(onSubmitAdd)}
-            className="flex flex-col md:flex-row md:items-center gap-3 flex-1"
-          >
-            {/* Name input */}
-            <div className="flex flex-col w-72 relative">
-              <input
-                type="text"
-                placeholder="Name"
-                {...registerAdd("name")}
-                className={`w-72 border rounded-md px-3 py-2 ${
-                  errorsAdd.name ? "border-red-500" : "border border-black-300"
-                }`}
-              />
-              {errorsAdd.name && (
-                <span className="absolute top-full left-0 text-xs text-red-500">
-                  {errorsAdd.name.message}
-                </span>
-              )}
-            </div>
+      {/* Top Controls */}
+      <div className="px-6 py-4 border-b border-gray-300 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <Button onClick={() => setAddOpen(true)}>Add Student</Button>
 
-            {/* Class input */}
-            <div className="flex flex-col w-42 relative">
-              <input
-                type="text"
-                placeholder="Class"
-                {...registerAdd("class_name")}
-                className={`w-42 border rounded-md px-3 py-2 ${
-                  errorsAdd.class_name ? "border-red-500" : "border border-black-300"
-                }`}
-              />
-              {errorsAdd.class_name && (
-                <span className="absolute top-full left-0 text-xs text-red-500">
-                  {errorsAdd.class_name.message}
-                </span>
-              )}
-            </div>
-
+        <div className="relative w-full md:w-80">
+          <Input
+            placeholder="Search student..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search && (
             <button
-              type="submit"
-              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md font-semibold"
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
             >
-              Add
+              X
             </button>
-          </form>
-
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <input
-              type="text"
-              placeholder="Search student..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="px-3 py-2 pr-8 rounded-md border text-black w-full"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
-              >
-                ❌
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
+      {/* PageSize */}
       <div className="flex items-center gap-2 my-4 px-6">
-        <label htmlFor="pageSize" className="text-sm text-gray-600">
-          Rows per page:
-        </label>
+        <Label htmlFor="pageSize">Rows per page:</Label>
         <select
           id="pageSize"
           value={pageSize}
@@ -274,214 +233,221 @@ export default function Home() {
 
       {/* Table */}
       <main className="flex-1 overflow-x-auto px-6 py-4">
-        {isLoading && <p className="text-center mt-6 text-gray-600">Loading...</p>}
-        {isError && <p className="text-center mt-6 text-red-600">Error loading students.</p>}
+        {isLoading && <p>Loading...</p>}
+        {isError && <p>Error loading students.</p>}
 
         {!isLoading && !isError && (
           <>
-            <table className="w-full border-collapse border border-gray-300">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-3 border text-left w-16">ID</th>
-                  <th className="p-3 border text-left">Name</th>
-                  <th className="p-3 border text-left">Class</th>
-                  <th className="p-3 border text-center w-72">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-300">
+                  <TableHead className="w-32 p-3 border">ID</TableHead>
+                  <TableHead className="w-1/2 p-3 border">Name</TableHead>
+                  <TableHead className="w-1/4 p-3 border">Class</TableHead>
+                  <TableHead className="w-42 p-3 border text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {data?.items.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="p-3 border">{student.id}</td>
-                    <td className="p-3 border">
-                      <Link href={`/students/${student.id}`} className="text-blue-600 hover:underline">
+                  <TableRow key={student.id} className="border">
+                    <TableCell className="border">{student.id}</TableCell>
+                    <TableCell className="border">
+                      <Link
+                        href={`/students/${student.id}`}
+                        className="text-primary hover:underline hover:text-primary/80"
+                      >
                         {student.name}
                       </Link>
-                    </td>
-                    <td className="p-3 border">{student.class_name}</td>
-                    <td className="p-3 border text-center space-x-2">
-                      <button
+                    </TableCell>
+                    <TableCell className="border">{student.class_name}</TableCell>
+                    <TableCell className="space-x-2 text-center">
+                      <Button
+                        variant="secondary"
                         onClick={() => handleView(student.id)}
-                        className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700"
                       >
                         View
-                      </button>
-                      <button
+                      </Button>
+
+                      <Button
+                        variant="default"
                         onClick={() => handleEdit(student)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(student.id)}
-                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+                            Delete
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the student from the system.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteStudentMutation.mutate(student.id)}
+                            >
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      
+                    </TableCell>
+                  </TableRow>
                 ))}
                 {data?.items.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="text-center p-4 text-gray-500 italic">
+                  <TableRow className="border">
+                    <TableCell colSpan={4} className="text-center border">
                       No students found.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
 
             {/* Pagination */}
             <div className="flex items-center justify-center gap-2 mt-4">
-              <button
+              <Button
+                variant="outline"
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
-                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
               >
                 {"<"}
-              </button>
+              </Button>
 
               {[...Array(totalPages)].map((_, i) => (
-                <button
+                <Button
                   key={i + 1}
+                  variant={page === i + 1 ? "default" : "outline"}
                   onClick={() => setPage(i + 1)}
-                  className={`px-3 py-1 rounded ${
-                    page === i + 1 ? "bg-indigo-600 text-white" : "bg-gray-200"
-                  }`}
                 >
                   {i + 1}
-                </button>
+                </Button>
               ))}
 
-              <button
+              <Button
+                variant="outline"
                 disabled={page === totalPages}
                 onClick={() => setPage(page + 1)}
-                className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
               >
                 {">"}
-              </button>
+              </Button>
             </div>
           </>
         )}
       </main>
 
-      {/* Detail Modal */}
-      <AnimatePresence>
-        {selectedStudent && (
-          <motion.div
-            className="fixed inset-0 bg-white/50 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="relative bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <button
-                onClick={() => setSelectedStudent(null)}
-                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-200"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-
-              <h2 className="text-xl font-bold mb-4">Student Detail</h2>
-              <ul className="space-y-2 text-sm text-gray-700">
-                <li><strong>ID:</strong> {selectedStudent.id}</li>
-                <li><strong>Name:</strong> {selectedStudent.name}</li>
-                <li><strong>Class:</strong> {selectedStudent.class_name}</li>
-              </ul>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Add Modal */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Student</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmitAdd(onSubmitAdd)} className="space-y-4">
+            <div>
+              <Label className="mb-2">Name</Label>
+              <Input {...registerAdd("name")} />
+              {errorsAdd.name && (
+                <p className="text-xs text-red-500">{errorsAdd.name.message}</p>
+              )}
+            </div>
+            <div>
+              <Label className="mb-2">Class</Label>
+              <Input {...registerAdd("class_name")} />
+              {errorsAdd.class_name && (
+                <p className="text-xs text-red-500">
+                  {errorsAdd.class_name.message}
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal */}
-      <AnimatePresence>
-        {editingStudent && (
-          <motion.div
-            className="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="relative bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <button
-                onClick={() => setEditingStudent(null)}
-                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-200"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
+      <Dialog open={!!editingStudent} onOpenChange={() => setEditingStudent(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+          </DialogHeader>
+          {editingStudent && (
+            <form onSubmit={handleSubmitEdit(handleUpdate)} className="space-y-4">
+              <div>
+                <Label className="mb-2">ID</Label>
+                <Input value={editingStudent.id} readOnly />
+              </div>
+              <div>
+                <Label className="mb-2">Name</Label>
+                <Input {...registerEdit("name")} />
+                {errorsEdit.name && (
+                  <p className="text-xs text-red-500">
+                    {errorsEdit.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="mb-2">Class</Label>
+                <Input {...registerEdit("class_name")} />
+                {errorsEdit.class_name && (
+                  <p className="text-xs text-red-500">
+                    {errorsEdit.class_name.message}
+                  </p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingStudent(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Save</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
-              <h2 className="text-xl font-bold mb-4">Edit Student</h2>
-
-              <form
-                onSubmit={handleSubmitEdit(handleUpdate)}
-                className="flex flex-col gap-4"
-              >
-                {/* ID */}
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">ID</label>
-                  <input
-                    type="text"
-                    value={editingStudent.id}
-                    readOnly
-                    className="px-3 py-2 rounded-md border text-gray-500 bg-gray-100 cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Name */}
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">Name</label>
-                  <input
-                    type="text"
-                    {...registerEdit("name")}
-                    className="px-3 py-2 rounded-md border text-black"
-                  />
-                  {errorsEdit.name && (
-                    <span className="text-red-600 text-sm">{errorsEdit.name.message}</span>
-                  )}
-                </div>
-
-                {/* Class */}
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">Class</label>
-                  <input
-                    type="text"
-                    {...registerEdit("class_name")}
-                    className="px-3 py-2 rounded-md border text-black"
-                  />
-                  {errorsEdit.class_name && (
-                    <span className="text-red-600 text-sm">{errorsEdit.class_name.message}</span>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-2 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setEditingStudent(null)}
-                    className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Save
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* View Modal */}
+      <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Student Detail</DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <ul className="space-y-2">
+              <li>
+                <strong>ID:</strong> {selectedStudent.id}
+              </li>
+              <li>
+                <strong>Name:</strong> {selectedStudent.name}
+              </li>
+              <li>
+                <strong>Class:</strong> {selectedStudent.class_name}
+              </li>
+            </ul>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedStudent(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
