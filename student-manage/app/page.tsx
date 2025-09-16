@@ -9,6 +9,7 @@ import { z } from "zod";
 import { useStudentStore, Student } from "@/store/useStudentStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import Link from "next/link";
 
 // Schema
 const studentSchema = z.object({
@@ -291,7 +292,11 @@ export default function Home() {
                 {data?.items.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
                     <td className="p-3 border">{student.id}</td>
-                    <td className="p-3 border">{student.name}</td>
+                    <td className="p-3 border">
+                      <Link href={`/students/${student.id}`} className="text-blue-600 hover:underline">
+                        {student.name}
+                      </Link>
+                    </td>
                     <td className="p-3 border">{student.class_name}</td>
                     <td className="p-3 border text-center space-x-2">
                       <button
