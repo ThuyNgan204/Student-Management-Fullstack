@@ -44,6 +44,8 @@ import {
 const studentSchema = z.object({
   name: z.string().min(1, { message: "Please enter a name!" }),
   class_name: z.string().min(1, { message: "Please enter a class!" }),
+  gender: z.string().min(1, { message: "Please enter a gender!" }),
+  dob: z.string().min(1, { message: "Please select date of birth!" }),
 });
 type StudentFormInputs = z.infer<typeof studentSchema>;
 
@@ -54,7 +56,7 @@ type StudentResponse = {
 
 // Debounce Hook
 const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] =useState(value);
+  const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedValue(value), delay);
     return () => clearTimeout(handler);
@@ -94,7 +96,7 @@ export default function Home() {
     formState: { errors: errorsAdd },
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
-    defaultValues: { name: "", class_name: "" },
+    defaultValues: { name: "", class_name: "", gender: "", dob: "" },
   });
 
   // Form Edit
@@ -164,7 +166,12 @@ export default function Home() {
 
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
-    resetEdit({ name: student.name, class_name: student.class_name });
+    resetEdit({
+      name: student.name,
+      class_name: student.class_name,
+      gender: student.gender,
+      dob: student.dob
+    });
   };
 
   const handleUpdate = (data: StudentFormInputs) => {
@@ -184,10 +191,15 @@ export default function Home() {
 
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
 
+  function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("vi-VN");
+}
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       {/* Header */}
-      <header className= "bg-primary text-primary-foreground px-6 py-4 hover:bg-primary/90">
+      <header className="bg-primary text-primary-foreground px-6 py-4 hover:bg-primary/90">
         <h1 className="text-2xl text-center font-bold">STUDENT MANAGEMENT</h1>
       </header>
 
@@ -241,10 +253,18 @@ export default function Home() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-300">
-                  <TableHead className="w-32 p-3 border">ID</TableHead>
-                  <TableHead className="w-1/2 p-3 border">Name</TableHead>
-                  <TableHead className="w-1/4 p-3 border">Class</TableHead>
-                  <TableHead className="w-42 p-3 border text-center">Actions</TableHead>
+                  <TableHead className="w-20 p-3 border">ID</TableHead>
+                  <TableHead className="w-40 p-3 border">Name</TableHead>
+                  <TableHead className="w-32 p-3 border">Gender</TableHead>
+                  <TableHead className="w-40 p-3 border">
+                    Date of Birth
+                  </TableHead>
+                  <TableHead className="w-32 p-3 border">Class</TableHead>
+                  <TableHead className="w-48 p-3 border">Created At</TableHead>
+                  <TableHead className="w-48 p-3 border">Updated At</TableHead>
+                  <TableHead className="w-42 p-3 border text-center">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -259,7 +279,17 @@ export default function Home() {
                         {student.name}
                       </Link>
                     </TableCell>
+                    <TableCell className="border">{student.gender}</TableCell>
+                    <TableCell className="border">
+                      {formatDate(student.dob)}
+                    </TableCell>
                     <TableCell className="border">{student.class_name}</TableCell>
+                    <TableCell className="border">
+                      {formatDate(student.created_at)}
+                    </TableCell>
+                    <TableCell className="border">
+                      {formatDate(student.updated_at)}
+                    </TableCell>
                     <TableCell className="space-x-2 text-center">
                       <Button
                         variant="secondary"
@@ -277,34 +307,36 @@ export default function Home() {
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <button className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
-                            Delete
-                          </button>
+                          <Button variant="destructive">Delete</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Are you absolutely sure?
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the student from the system.
+                              This action cannot be undone. This will permanently
+                              delete the student from the system.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => deleteStudentMutation.mutate(student.id)}
+                              onClick={() =>
+                                deleteStudentMutation.mutate(student.id)
+                              }
                             >
                               Continue
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                      
                     </TableCell>
                   </TableRow>
                 ))}
                 {data?.items.length === 0 && (
                   <TableRow className="border">
-                    <TableCell colSpan={4} className="text-center border">
+                    <TableCell colSpan={8} className="text-center border">
                       No students found.
                     </TableCell>
                   </TableRow>
@@ -367,8 +399,28 @@ export default function Home() {
                 </p>
               )}
             </div>
+            <div>
+              <Label className="mb-2">Gender</Label>
+              <Input {...registerAdd("gender")} />
+              {errorsAdd.gender && (
+                <p className="text-xs text-red-500">
+                  {errorsAdd.gender.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label className="mb-2">Date of Birth</Label>
+              <Input type="date" {...registerAdd("dob")} />
+              {errorsAdd.dob && (
+                <p className="text-xs text-red-500">{errorsAdd.dob.message}</p>
+              )}
+            </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAddOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit">Save</Button>
@@ -407,6 +459,30 @@ export default function Home() {
                   </p>
                 )}
               </div>
+              <div>
+                <Label className="mb-2">Gender</Label>
+                <Input {...registerEdit("gender")} />
+                {errorsEdit.gender && (
+                  <p className="text-xs text-red-500">
+                    {errorsEdit.gender.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="mb-2">Date of Birth</Label>
+                <Input type="date" {...registerEdit("dob")} />
+                {errorsEdit.dob && (
+                  <p className="text-xs text-red-500">{errorsEdit.dob.message}</p>
+                )}
+              </div>
+              <div>
+                <Label className="mb-2">Created At</Label>
+                <Input value={formatDate(editingStudent.created_at)} readOnly />
+              </div>
+              <div>
+                <Label className="mb-2">Updated At</Label>
+                <Input value={formatDate(editingStudent.updated_at)} readOnly />
+              </div>
               <DialogFooter>
                 <Button
                   type="button"
@@ -438,6 +514,18 @@ export default function Home() {
               </li>
               <li>
                 <strong>Class:</strong> {selectedStudent.class_name}
+              </li>
+              <li>
+                <strong>Gender:</strong> {selectedStudent.gender}
+              </li>
+              <li>
+                <strong>Date of Birth:</strong> {formatDate(selectedStudent.dob)}
+              </li>
+              <li>
+                <strong>Created At:</strong> {formatDate(selectedStudent.created_at)}
+              </li>
+              <li>
+                <strong>Updated At:</strong> {formatDate(selectedStudent.updated_at)}
               </li>
             </ul>
           )}

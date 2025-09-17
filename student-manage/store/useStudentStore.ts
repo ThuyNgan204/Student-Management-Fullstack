@@ -3,7 +3,11 @@ import { create } from "zustand";
 export interface Student {
   id: number;
   name: string;
+  gender: string;
+  dob: string;
   class_name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface StudentStore {

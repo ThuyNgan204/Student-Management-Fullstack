@@ -26,7 +26,7 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/students/")
+@app.get("/students/", response_model=schemas.StudentList)
 def get_students(
     db: Session = Depends(get_db),
     page: int = Query(1, gt=0),
@@ -44,6 +44,7 @@ def get_students(
 
     return {"items": students, "total": total}
 
+
 @app.get("/students/{student_id}", response_model=schemas.Student)
 def get_student_detail(student_id: int, db: Session = Depends(get_db)):
     student = db.query(models.Student).filter(models.Student.id == student_id).first()
@@ -53,7 +54,7 @@ def get_student_detail(student_id: int, db: Session = Depends(get_db)):
 
 @app.post("/students/", response_model=schemas.Student)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    db_student = models.Student(name=student.name, class_name=student.class_name)
+    db_student = models.Student(name=student.name, class_name=student.class_name, gender=student.gender, dob=student.dob)
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
@@ -67,6 +68,8 @@ def update_student(student_id: int, student_data: schemas.StudentCreate, db: Ses
     
     student.name = student_data.name
     student.class_name = student_data.class_name
+    student.gender = student_data.gender
+    student.dob = student_data.dob
     
     db.commit()
     db.refresh(student)
