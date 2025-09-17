@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from sqlalchemy import asc, desc
+from typing import List, Optional, Union
+from sqlalchemy import asc, desc, or_
 
 from . import models, schemas
 from .database import SessionLocal, engine
@@ -30,18 +30,33 @@ def get_db():
 # Get list students
 @app.get("/students/", response_model=schemas.StudentList)
 def get_students(
+    request: Request,
     db: Session = Depends(get_db),
     page: int = Query(1, gt=0),
     page_size: int = Query(10, gt=0),
     search: Optional[str] = None,
-    gender: Optional[str] = None,
+    gender: Optional[Union[List[str], str]] = Query(None, description="Multiple genders allowed (comma or multiple params)"),
+    class_prefix: Optional[Union[List[str], str]] = Query(None, description="Multiple class prefixes allowed (comma or multiple params)"),
     sort_by: Optional[str] = None,
     sort_order: str = Query("asc", regex="^(asc|desc)$"),
 ):
     skip = (page - 1) * page_size
     query = db.query(models.Student)
 
-    # Filter
+    # Convert gender to list
+    if gender:
+        if isinstance(gender, str):
+            gender = [g.strip() for g in gender.split(",") if g.strip()]
+        elif isinstance(gender, list):
+            gender = [g.strip() for g in gender if g.strip()]
+
+    # Convert class_prefix to list
+    if class_prefix:
+        if isinstance(class_prefix, str):
+            class_prefix = [c.strip() for c in class_prefix.split(",") if c.strip()]
+        elif isinstance(class_prefix, list):
+            class_prefix = [c.strip() for c in class_prefix if c.strip()]
+
     # Search
     if search:
         query = query.filter(
@@ -49,11 +64,17 @@ def get_students(
             (models.Student.last_name.ilike(f"%{search}%"))
         )
 
-    # Gender
-    if gender and gender.lower() != "all":
-        query = query.filter(models.Student.gender == gender)
+    # Gender filter (multi)
+    if gender and len(gender) > 0:
+        query = query.filter(models.Student.gender.in_(gender))
 
-    # Dynamic Sort
+    # Class prefix filter (multi)
+    if class_prefix and len(class_prefix) > 0:
+        query = query.filter(
+            or_(*[models.Student.class_name.ilike(f"{p}%") for p in class_prefix])
+        )
+
+    # Sort
     if sort_by and hasattr(models.Student, sort_by):
         sort_column = getattr(models.Student, sort_by)
         if sort_order == "desc":
@@ -68,6 +89,7 @@ def get_students(
 
     return {"items": students, "total": total}
 
+
 # Get detail
 @app.get("/students/{student_id}", response_model=schemas.Student)
 def get_student_detail(student_id: int, db: Session = Depends(get_db)):
@@ -75,6 +97,7 @@ def get_student_detail(student_id: int, db: Session = Depends(get_db)):
     if student is None:
         raise HTTPException(status_code=404, detail="Student not found")
     return student
+
 
 # Create
 @app.post("/students/", response_model=schemas.Student)
@@ -90,6 +113,7 @@ def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(db_student)
     return db_student
+
 
 # Update
 @app.put("/students/{student_id}", response_model=schemas.Student)
@@ -107,6 +131,7 @@ def update_student(student_id: int, student_data: schemas.StudentCreate, db: Ses
     db.commit()
     db.refresh(student)
     return student
+
 
 # Delete
 @app.delete("/students/{student_id}", status_code=204)

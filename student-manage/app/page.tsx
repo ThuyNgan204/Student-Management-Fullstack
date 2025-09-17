@@ -75,7 +75,9 @@ export default function Home() {
     editingStudent,
     selectedStudent,
     addOpen,
-    genderFilter,
+    openFilter,
+    genderFilters,
+    classFilters,
     sortBy,
     sortOrder,
     setPage,
@@ -84,7 +86,9 @@ export default function Home() {
     setEditingStudent,
     setSelectedStudent,
     setAddOpen,
-    setGenderFilter,
+    setOpenFilter,
+    setGenderFilters,
+    setClassFilters,
     setSortBy,
     setSortOrder,
   } = useStudentStore();
@@ -93,7 +97,7 @@ export default function Home() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, genderFilter, sortBy, sortOrder, setPage]);
+  }, [debouncedSearch, genderFilters, classFilters, sortBy, sortOrder, setPage]);
 
   // Form Add
   const {
@@ -118,18 +122,42 @@ export default function Home() {
 
   // Queries
   const { data, isLoading, isError } = useQuery<StudentResponse>({
-    queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
+    queryKey: [
+      "students",
+      page,
+      pageSize,
+      debouncedSearch,
+      genderFilters,
+      classFilters,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async () => {
       const params: Record<string, any> = {
         page,
         page_size: pageSize,
+        sort_order: sortOrder,
       };
       if (debouncedSearch) params.search = debouncedSearch;
-      if (genderFilter && genderFilter !== "all") params.gender = genderFilter;
+      if (genderFilters.length > 0) params.gender = genderFilters;
+      if (classFilters.length > 0) params.class_prefix = classFilters;
       if (sortBy) params.sort_by = sortBy;
-      if (sortOrder) params.sort_order = sortOrder;
 
-      const res = await axios.get(`http://localhost:8000/students/`, { params });
+      const res = await axios.get("http://localhost:8000/students/", {
+        params,
+        paramsSerializer: (params) => {
+          const search = new URLSearchParams();
+          Object.keys(params).forEach((key) => {
+            const value = params[key];
+            if (Array.isArray(value)) {
+              value.forEach((v) => search.append(key, v));
+            } else if (value !== undefined && value !== null) {
+              search.append(key, value);
+            }
+          });
+          return search.toString();
+        },
+      });
       return res.data;
     },
     keepPreviousData: true,
@@ -141,7 +169,7 @@ export default function Home() {
       axios.post("http://localhost:8000/students/", newStudent),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilters, classFilters, sortBy, sortOrder],
       });
       resetAdd();
       setAddOpen(false);
@@ -156,7 +184,7 @@ export default function Home() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilters, classFilters, sortBy, sortOrder],
       });
       setEditingStudent(null);
       resetEdit();
@@ -168,7 +196,7 @@ export default function Home() {
       axios.delete(`http://localhost:8000/students/${studentId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilters, classFilters, sortBy, sortOrder],
       });
     },
   });
@@ -239,67 +267,169 @@ export default function Home() {
         </div>
       </div>
 
-      {/* PageSize + Filters */}
-      <div className="flex items-center gap-2 my-4 px-6">
-        <Label htmlFor="pageSize">Rows per page:</Label>
-        <select
-          id="pageSize"
-          value={pageSize}
-          onChange={(e) => {
-            setPageSize(Number(e.target.value));
-            setPage(1);
-          }}
-          className="border rounded px-2 py-1 text-sm"
-        >
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-          <option value={100}>100</option>
-        </select>
+      {/* Control Panel */}
+      <div className="p-4 mb-6 bg-gray-50 border rounded-lg shadow-sm">
+        <div className="flex flex-wrap items-end justify-between gap-6">
 
-        {/* Filter by Gender */}
-        <select
-          value={genderFilter}
-          onChange={(e) => {
-            setGenderFilter(e.target.value);
-            setPage(1);
-          }}
-          className="border rounded px-2 py-1 text-sm"
-        >
-          <option value="all">All Genders</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
+          {/* Rows per page */}
+          <div className="flex flex-col">
+            <Label htmlFor="pageSize" className="mb-1 text-sm font-medium text-gray-700">
+              Rows per page
+            </Label>
+            <select
+              id="pageSize"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-black-300"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
 
-        {/* Sort By */}
-        <select
-          value={sortBy}
-          onChange={(e) => {
-            setSortBy(e.target.value);
-            setPage(1);
-          }}
-          className="border rounded px-2 py-1 text-sm"
-        >
-          <option value="">Sort By</option>
-          <option value="id">ID</option>
-          <option value="first_name">Name</option>
-          <option value="dob">Date of Birth</option>
-          <option value="created_at">Created At</option>
-          <option value="updated_at">Updated At</option>
-        </select>
+          {/* Sorting */}
+          <div className="flex flex-col">
+            <Label className="mb-1 text-sm font-medium text-gray-700">Sort</Label>
+            <div className="flex gap-2">
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(1);
+                }}
+                className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-black-300"
+              >
+                <option value="">Field</option>
+                <option value="id">ID</option>
+                <option value="first_name">Name</option>
+                <option value="class_name">Class</option>
+                <option value="dob">Date of Birth</option>
+                <option value="created_at">Created At</option>
+                <option value="updated_at">Updated At</option>
+              </select>
+              <select
+                value={sortOrder}
+                onChange={(e) => {
+                  setSortOrder(e.target.value as "asc" | "desc");
+                  setPage(1);
+                }}
+                className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-black-300"
+              >
+                <option value="desc">DESC</option>
+                <option value="asc">ASC</option>
+              </select>
+            </div>
+          </div>
 
-        {/* Sort Order */}
-        <select
-          value={sortOrder}
-          onChange={(e) => {
-            setSortOrder(e.target.value as "asc" | "desc");
-            setPage(1);
-          }}
-          className="border rounded px-2 py-1 text-sm"
-        >
-          <option value="asc">ASC</option>
-          <option value="desc">DESC</option>
-        </select>
+          {/* Filters dropdown */}
+          <div className="relative inline-block text-left">
+            <Label className="mb-1 text-sm font-medium text-gray-700">Filters</Label>
+            <button
+              onClick={() => setOpenFilter(!openFilter)}
+              className="w-40 border rounded-md px-3 py-2 text-sm bg-white shadow-sm flex items-center justify-between hover:bg-gray-50"
+            >
+              {/* Number of filter has been ticked */}
+              Select filters
+              {genderFilters.length + classFilters.length > 0 && (
+                <span className="ml-1 text-blue-600 font-semibold">
+                  ({genderFilters.length + classFilters.length})
+                </span>
+              )}
+              <svg
+                className={`w-4 h-4 text-gray-500 ml-2 transform ${
+                  openFilter ? "rotate-180" : "rotate-0"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {openFilter && (
+              <div className="absolute left-0 mt-2 w-44 rounded-lg shadow-lg bg-white border z-10 p-4 space-y-4">
+                {/* Gender */}
+                <div>
+                  <p className="font-medium text-sm mb-2">Gender</p>
+                  <div className="flex flex-col gap-1">
+                    {["Male", "Female"].map((g) => (
+                      <label key={g} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          value={g}
+                          checked={genderFilters.includes(g)}
+                          onChange={(e) =>
+                            setGenderFilters((prev) =>
+                              e.target.checked
+                                ? [...prev, g]
+                                : prev.filter((x) => x !== g)
+                            )
+                          }
+                        />
+                        {g}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Class */}
+                <div>
+                  <p className="font-medium text-sm mb-2">Class</p>
+                  <div className="flex flex-col gap-1">
+                    {["10", "11", "12"].map((c) => (
+                      <label key={c} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          value={c}
+                          checked={classFilters.includes(c)}
+                          onChange={(e) =>
+                            setClassFilters((prev) =>
+                              e.target.checked
+                                ? [...prev, c]
+                                : prev.filter((x) => x !== c)
+                            )
+                          }
+                        />
+                        {c}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reset button */}
+                <div className="pt-2 border-t">
+                  <button
+                    onClick={() => {
+                      setGenderFilters([]);
+                      setClassFilters([]);
+                    }}
+                    className="w-full px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+
+          {/* Total count */}
+          <div className="ml-auto text-gray-700 text-sm">
+            <span className="font-medium">Total students:</span>{" "}
+            <span className="font-semibold">{data?.total ?? 0}</span>
+          </div>
+        </div>
       </div>
 
       {/* Table */}
