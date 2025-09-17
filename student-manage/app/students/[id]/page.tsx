@@ -9,7 +9,7 @@ export default function StudentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  // React Query fetch dữ liệu student
+  // React Query fetch students data
   const { data: student, isLoading, isError } = useQuery<Student>({
     queryKey: ["student", id],
     queryFn: async () => {
@@ -35,7 +35,7 @@ export default function StudentDetailPage() {
           <strong>ID:</strong> {student.id}
         </li>
         <li>
-          <strong>Name:</strong> {student.name}
+          <strong>Name:</strong> {student.last_name} {student.first_name}
         </li>
         <li>
           <strong>Class:</strong> {student.class_name}

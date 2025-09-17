@@ -5,7 +5,8 @@ class Student(Base):
     __tablename__ = "students"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+    first_name = Column(String, index=True)
+    last_name = Column(String, index=True)
     class_name = Column(String)
     gender = Column(String)
     dob = Column(Date)

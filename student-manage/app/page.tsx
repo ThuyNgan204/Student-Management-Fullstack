@@ -42,7 +42,8 @@ import {
 
 // Schema
 const studentSchema = z.object({
-  name: z.string().min(1, { message: "Please enter a name!" }),
+  last_name: z.string().min(1, { message: "Please enter a last name!" }),
+  first_name: z.string().min(1, { message: "Please enter a first name!" }),
   class_name: z.string().min(1, { message: "Please enter a class!" }),
   gender: z.string().min(1, { message: "Please enter a gender!" }),
   dob: z.string().min(1, { message: "Please select date of birth!" }),
@@ -74,19 +75,25 @@ export default function Home() {
     editingStudent,
     selectedStudent,
     addOpen,
+    genderFilter,
+    sortBy,
+    sortOrder,
     setPage,
     setPageSize,
     setSearch,
     setEditingStudent,
     setSelectedStudent,
     setAddOpen,
+    setGenderFilter,
+    setSortBy,
+    setSortOrder,
   } = useStudentStore();
 
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, setPage]);
+  }, [debouncedSearch, genderFilter, sortBy, sortOrder, setPage]);
 
   // Form Add
   const {
@@ -96,7 +103,7 @@ export default function Home() {
     formState: { errors: errorsAdd },
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
-    defaultValues: { name: "", class_name: "", gender: "", dob: "" },
+    defaultValues: { last_name: "", first_name: "", class_name: "", gender: "", dob: "" },
   });
 
   // Form Edit
@@ -111,11 +118,18 @@ export default function Home() {
 
   // Queries
   const { data, isLoading, isError } = useQuery<StudentResponse>({
-    queryKey: ["students", page, pageSize, debouncedSearch],
+    queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
     queryFn: async () => {
-      const res = await axios.get(
-        `http://localhost:8000/students/?page=${page}&page_size=${pageSize}&search=${debouncedSearch}`
-      );
+      const params: Record<string, any> = {
+        page,
+        page_size: pageSize,
+      };
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (genderFilter && genderFilter !== "all") params.gender = genderFilter;
+      if (sortBy) params.sort_by = sortBy;
+      if (sortOrder) params.sort_order = sortOrder;
+
+      const res = await axios.get(`http://localhost:8000/students/`, { params });
       return res.data;
     },
     keepPreviousData: true,
@@ -127,7 +141,7 @@ export default function Home() {
       axios.post("http://localhost:8000/students/", newStudent),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students", page, pageSize, debouncedSearch],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
       });
       resetAdd();
       setAddOpen(false);
@@ -142,7 +156,7 @@ export default function Home() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students", page, pageSize, debouncedSearch],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
       });
       setEditingStudent(null);
       resetEdit();
@@ -154,7 +168,7 @@ export default function Home() {
       axios.delete(`http://localhost:8000/students/${studentId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students", page, pageSize, debouncedSearch],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilter, sortBy, sortOrder],
       });
     },
   });
@@ -167,10 +181,11 @@ export default function Home() {
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
     resetEdit({
-      name: student.name,
+      last_name: student.last_name,
+      first_name: student.first_name,
       class_name: student.class_name,
       gender: student.gender,
-      dob: student.dob
+      dob: student.dob,
     });
   };
 
@@ -192,9 +207,9 @@ export default function Home() {
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
 
   function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("vi-VN");
-}
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("vi-VN");
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
@@ -224,7 +239,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* PageSize */}
+      {/* PageSize + Filters */}
       <div className="flex items-center gap-2 my-4 px-6">
         <Label htmlFor="pageSize">Rows per page:</Label>
         <select
@@ -241,6 +256,50 @@ export default function Home() {
           <option value={50}>50</option>
           <option value={100}>100</option>
         </select>
+
+        {/* Filter by Gender */}
+        <select
+          value={genderFilter}
+          onChange={(e) => {
+            setGenderFilter(e.target.value);
+            setPage(1);
+          }}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="all">All Genders</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+
+        {/* Sort By */}
+        <select
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(e.target.value);
+            setPage(1);
+          }}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="">Sort By</option>
+          <option value="id">ID</option>
+          <option value="first_name">Name</option>
+          <option value="dob">Date of Birth</option>
+          <option value="created_at">Created At</option>
+          <option value="updated_at">Updated At</option>
+        </select>
+
+        {/* Sort Order */}
+        <select
+          value={sortOrder}
+          onChange={(e) => {
+            setSortOrder(e.target.value as "asc" | "desc");
+            setPage(1);
+          }}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="asc">ASC</option>
+          <option value="desc">DESC</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -254,17 +313,14 @@ export default function Home() {
               <TableHeader>
                 <TableRow className="bg-gray-300">
                   <TableHead className="w-20 p-3 border">ID</TableHead>
-                  <TableHead className="w-40 p-3 border">Name</TableHead>
+                  <TableHead className="w-32 p-3 border">Last Name</TableHead>
+                  <TableHead className="w-20 p-3 border">First Name</TableHead>
                   <TableHead className="w-32 p-3 border">Gender</TableHead>
-                  <TableHead className="w-40 p-3 border">
-                    Date of Birth
-                  </TableHead>
+                  <TableHead className="w-40 p-3 border">Date of Birth</TableHead>
                   <TableHead className="w-32 p-3 border">Class</TableHead>
                   <TableHead className="w-48 p-3 border">Created At</TableHead>
                   <TableHead className="w-48 p-3 border">Updated At</TableHead>
-                  <TableHead className="w-42 p-3 border text-center">
-                    Actions
-                  </TableHead>
+                  <TableHead className="w-40 p-3 border text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -276,32 +332,28 @@ export default function Home() {
                         href={`/students/${student.id}`}
                         className="text-primary hover:underline hover:text-primary/80"
                       >
-                        {student.name}
+                        {student.last_name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="border">
+                      <Link
+                        href={`/students/${student.id}`}
+                        className="text-primary hover:underline hover:text-primary/80"
+                      >
+                        {student.first_name}
                       </Link>
                     </TableCell>
                     <TableCell className="border">{student.gender}</TableCell>
-                    <TableCell className="border">
-                      {formatDate(student.dob)}
-                    </TableCell>
+                    <TableCell className="border">{formatDate(student.dob)}</TableCell>
                     <TableCell className="border">{student.class_name}</TableCell>
-                    <TableCell className="border">
-                      {formatDate(student.created_at)}
-                    </TableCell>
-                    <TableCell className="border">
-                      {formatDate(student.updated_at)}
-                    </TableCell>
+                    <TableCell className="border">{formatDate(student.created_at)}</TableCell>
+                    <TableCell className="border">{formatDate(student.updated_at)}</TableCell>
                     <TableCell className="space-x-2 text-center">
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleView(student.id)}
-                      >
+                      <Button variant="secondary" onClick={() => handleView(student.id)}>
                         View
                       </Button>
 
-                      <Button
-                        variant="default"
-                        onClick={() => handleEdit(student)}
-                      >
+                      <Button variant="default" onClick={() => handleEdit(student)}>
                         Edit
                       </Button>
 
@@ -311,21 +363,14 @@ export default function Home() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Are you absolutely sure?
-                            </AlertDialogTitle>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone. This will permanently
-                              delete the student from the system.
+                              This action cannot be undone. This will permanently delete the student from the system.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() =>
-                                deleteStudentMutation.mutate(student.id)
-                              }
-                            >
+                            <AlertDialogAction onClick={() => deleteStudentMutation.mutate(student.id)}>
                               Continue
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -336,7 +381,7 @@ export default function Home() {
                 ))}
                 {data?.items.length === 0 && (
                   <TableRow className="border">
-                    <TableCell colSpan={8} className="text-center border">
+                    <TableCell colSpan={9} className="text-center border">
                       No students found.
                     </TableCell>
                   </TableRow>
@@ -346,29 +391,17 @@ export default function Home() {
 
             {/* Pagination */}
             <div className="flex items-center justify-center gap-2 mt-4">
-              <Button
-                variant="outline"
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
+              <Button variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>
                 {"<"}
               </Button>
 
               {[...Array(totalPages)].map((_, i) => (
-                <Button
-                  key={i + 1}
-                  variant={page === i + 1 ? "default" : "outline"}
-                  onClick={() => setPage(i + 1)}
-                >
+                <Button key={i + 1} variant={page === i + 1 ? "default" : "outline"} onClick={() => setPage(i + 1)}>
                   {i + 1}
                 </Button>
               ))}
 
-              <Button
-                variant="outline"
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-              >
+              <Button variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
                 {">"}
               </Button>
             </div>
@@ -376,7 +409,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Add Modal */}
+      {/* Add Student Modal */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
           <DialogHeader>
@@ -384,43 +417,41 @@ export default function Home() {
           </DialogHeader>
           <form onSubmit={handleSubmitAdd(onSubmitAdd)} className="space-y-4">
             <div>
-              <Label className="mb-2">Name</Label>
-              <Input {...registerAdd("name")} />
-              {errorsAdd.name && (
-                <p className="text-xs text-red-500">{errorsAdd.name.message}</p>
-              )}
+              <Label className="mb-2">Last Name</Label>
+              <Input {...registerAdd("last_name")} />
+              {errorsAdd.last_name && <p className="text-xs text-red-500">{errorsAdd.last_name.message}</p>}
             </div>
+            <div>
+              <Label className="mb-2">First Name</Label>
+              <Input {...registerAdd("first_name")} />
+              {errorsAdd.first_name && <p className="text-xs text-red-500">{errorsAdd.first_name.message}</p>}
+            </div>
+
             <div>
               <Label className="mb-2">Class</Label>
               <Input {...registerAdd("class_name")} />
-              {errorsAdd.class_name && (
-                <p className="text-xs text-red-500">
-                  {errorsAdd.class_name.message}
-                </p>
-              )}
+              {errorsAdd.class_name && <p className="text-xs text-red-500">{errorsAdd.class_name.message}</p>}
             </div>
+
+            {/* Gender select */}
             <div>
               <Label className="mb-2">Gender</Label>
-              <Input {...registerAdd("gender")} />
-              {errorsAdd.gender && (
-                <p className="text-xs text-red-500">
-                  {errorsAdd.gender.message}
-                </p>
-              )}
+              <select {...registerAdd("gender")} className="border rounded px-2 py-1 w-full">
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              {errorsAdd.gender && <p className="text-xs text-red-500">{errorsAdd.gender.message}</p>}
             </div>
+
             <div>
               <Label className="mb-2">Date of Birth</Label>
               <Input type="date" {...registerAdd("dob")} />
-              {errorsAdd.dob && (
-                <p className="text-xs text-red-500">{errorsAdd.dob.message}</p>
-              )}
+              {errorsAdd.dob && <p className="text-xs text-red-500">{errorsAdd.dob.message}</p>}
             </div>
+
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAddOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit">Save</Button>
@@ -429,7 +460,7 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Modal */}
+      {/* Edit Student Modal */}
       <Dialog open={!!editingStudent} onOpenChange={() => setEditingStudent(null)}>
         <DialogContent>
           <DialogHeader>
@@ -438,60 +469,44 @@ export default function Home() {
           {editingStudent && (
             <form onSubmit={handleSubmitEdit(handleUpdate)} className="space-y-4">
               <div>
-                <Label className="mb-2">ID</Label>
-                <Input value={editingStudent.id} readOnly />
+                <Label className="mb-2">Last Name</Label>
+                <Input {...registerEdit("last_name")} />
+                {errorsEdit.last_name && <p className="text-xs text-red-500">{errorsEdit.last_name.message}</p>}
               </div>
               <div>
-                <Label className="mb-2">Name</Label>
-                <Input {...registerEdit("name")} />
-                {errorsEdit.name && (
-                  <p className="text-xs text-red-500">
-                    {errorsEdit.name.message}
-                  </p>
-                )}
+                <Label className="mb-2">First Name</Label>
+                <Input {...registerEdit("first_name")} />
+                {errorsEdit.first_name && <p className="text-xs text-red-500">{errorsEdit.first_name.message}</p>}
               </div>
+
               <div>
                 <Label className="mb-2">Class</Label>
                 <Input {...registerEdit("class_name")} />
-                {errorsEdit.class_name && (
-                  <p className="text-xs text-red-500">
-                    {errorsEdit.class_name.message}
-                  </p>
-                )}
+                {errorsEdit.class_name && <p className="text-xs text-red-500">{errorsEdit.class_name.message}</p>}
               </div>
+
+              {/* Gender select */}
               <div>
                 <Label className="mb-2">Gender</Label>
-                <Input {...registerEdit("gender")} />
-                {errorsEdit.gender && (
-                  <p className="text-xs text-red-500">
-                    {errorsEdit.gender.message}
-                  </p>
-                )}
+                <select {...registerEdit("gender")} className="border rounded px-2 py-1 w-full">
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+                {errorsEdit.gender && <p className="text-xs text-red-500">{errorsEdit.gender.message}</p>}
               </div>
+
               <div>
                 <Label className="mb-2">Date of Birth</Label>
                 <Input type="date" {...registerEdit("dob")} />
-                {errorsEdit.dob && (
-                  <p className="text-xs text-red-500">{errorsEdit.dob.message}</p>
-                )}
+                {errorsEdit.dob && <p className="text-xs text-red-500">{errorsEdit.dob.message}</p>}
               </div>
-              <div>
-                <Label className="mb-2">Created At</Label>
-                <Input value={formatDate(editingStudent.created_at)} readOnly />
-              </div>
-              <div>
-                <Label className="mb-2">Updated At</Label>
-                <Input value={formatDate(editingStudent.updated_at)} readOnly />
-              </div>
+
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditingStudent(null)}
-                >
+                <Button type="button" variant="outline" onClick={() => setEditingStudent(null)}>
                   Cancel
                 </Button>
-                <Button type="submit">Save</Button>
+                <Button type="submit">Update</Button>
               </DialogFooter>
             </form>
           )}
@@ -510,7 +525,7 @@ export default function Home() {
                 <strong>ID:</strong> {selectedStudent.id}
               </li>
               <li>
-                <strong>Name:</strong> {selectedStudent.name}
+                <strong>Name:</strong> {selectedStudent.last_name} {selectedStudent.first_name}
               </li>
               <li>
                 <strong>Class:</strong> {selectedStudent.class_name}

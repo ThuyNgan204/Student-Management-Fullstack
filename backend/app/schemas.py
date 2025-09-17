@@ -3,7 +3,8 @@ from typing import List
 from datetime import date, datetime
 
 class StudentBase(BaseModel):
-    name: str
+    first_name: str
+    last_name: str
     class_name: str
     gender: str
     dob: date
