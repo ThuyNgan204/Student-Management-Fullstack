@@ -60,8 +60,7 @@ def get_students(
     # Search
     if search:
         query = query.filter(
-            (models.Student.first_name.ilike(f"%{search}%")) |
-            (models.Student.last_name.ilike(f"%{search}%"))
+            (models.Student.first_name.ilike(f"%{search}%")) 
         )
 
     # Gender filter (multi)
