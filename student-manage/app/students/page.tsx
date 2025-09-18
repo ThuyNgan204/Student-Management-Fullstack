@@ -110,7 +110,7 @@ export default function StudentsPage() {
       axios.post("http://localhost:8000/students/", newStudent),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students"],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilters, classFilters, sortBy, sortOrder],
       });
       setAddOpen(false);
     },
@@ -124,7 +124,7 @@ export default function StudentsPage() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students"],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilters, classFilters, sortBy, sortOrder],
       });
       setEditingStudent(null);
     },
@@ -135,7 +135,7 @@ export default function StudentsPage() {
       axios.delete(`http://localhost:8000/students/${studentId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["students"],
+        queryKey: ["students", page, pageSize, debouncedSearch, genderFilters, classFilters, sortBy, sortOrder],
       });
     },
   });
