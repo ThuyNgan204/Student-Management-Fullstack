@@ -1,23 +1,41 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ReactNode } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
-interface DetailModalProps {
+interface DetailDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
   title: string;
-  children: ReactNode;
+  onClose: () => void;
+  children: React.ReactNode; // Customize content transmission
 }
 
-export default function DetailModal({ open, onOpenChange, title, children }: DetailModalProps) {
+export default function DetailDialog({
+  open,
+  title,
+  onClose,
+  children,
+}: DetailDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-2">{children}</div>
+
+        {children}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

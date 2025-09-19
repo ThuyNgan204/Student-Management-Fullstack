@@ -1,7 +1,5 @@
-// hooks/useCRUD.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useEffect } from "react";
 
 interface UseCRUDProps {
   resource: string;

@@ -43,7 +43,7 @@ export default function DataTable<T>({
                 <TableCell key={colIndex} className={`p-3 border ${col.className || ""}`}>
                   {col.render
                     ? col.render(item)
-                    : // @ts-ignore (cho phép lấy dynamic key)
+                    : // @ts-ignore (can get dynamic key)
                       (item[col.key] as ReactNode)}
                 </TableCell>
               ))}

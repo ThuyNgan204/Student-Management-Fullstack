@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 
 interface FormModalProps {
@@ -10,23 +10,35 @@ interface FormModalProps {
   title: string;
   onSubmit: (e: React.FormEvent) => void;
   children: ReactNode;
+  onCancel?: () => void;
+  submitText?: string;
 }
 
-export default function FormModal({ open, onOpenChange, title, onSubmit, children }: FormModalProps) {
+export default function FormModal({
+  open,
+  onOpenChange,
+  title,
+  onSubmit,
+  children,
+  onCancel,
+  submitText = "Submit",
+}: FormModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={onSubmit} className="space-y-4">
           {children}
-            <>
-            <Button type="button" variant="outline" onClick={() => setEditingStudent(null)}>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onCancel ?? (() => onOpenChange(false))}>
               Cancel
             </Button>
-            <Button type="submit">Update</Button>
-          </>
+            <Button type="submit">{submitText}</Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

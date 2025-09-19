@@ -8,20 +8,27 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogAction,
+  AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import { Button } from "../ui/button";
 
 interface ConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title?: string;
   description?: string;
 }
 
-export default function ConfirmDialog({ open, onOpenChange, onConfirm, title = "Are you sure?", description = "This action cannot be undone." }: ConfirmDialogProps) {
+export default function ConfirmDialog({
+  onConfirm,
+  title = "",
+  description = ""
+}: ConfirmDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Delete</Button>
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -29,7 +36,7 @@ export default function ConfirmDialog({ open, onOpenChange, onConfirm, title = "
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-red-600 text-white hover:bg-red-700">
+          <AlertDialogAction onClick={onConfirm}>
             Confirm
           </AlertDialogAction>
         </AlertDialogFooter>

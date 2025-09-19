@@ -1,4 +1,3 @@
-// Định nghĩa các kiểu dữ liệu dùng chung
 export type Student = {
   id: number;
   last_name: string;
@@ -14,13 +13,3 @@ export type StudentResponse = {
   items: Student[];
   total: number;
 };
-
-export type Teacher = {
-  id: number;
-  last_name: string;
-  first_name: string;
-  email: string;
-  department: string;
-};
-
-// ... Thêm các type khác (Major, Course, etc.)

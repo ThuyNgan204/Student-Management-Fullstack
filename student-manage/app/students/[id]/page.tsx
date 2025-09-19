@@ -1,16 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { Student } from "@/store/useStudentStore";
 import { Button } from "@/components/ui/button";
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "N/A";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("vi-VN");
-}
+import axios from "axios";
+import { formatDate } from "@/utils/date";
 
 export default function StudentDetailPage() {
   const router = useRouter();

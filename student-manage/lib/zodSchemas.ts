@@ -1,4 +1,3 @@
-// Centralized Zod Schemas
 import { z } from "zod";
 
 export const studentSchema = z.object({

@@ -1,7 +1,6 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { useStudentStore } from "@/store/useStudentStore";
 
 export default function ControlPanel({ total }: { total: number }) {
