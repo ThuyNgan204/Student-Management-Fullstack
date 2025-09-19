@@ -8,10 +8,11 @@ import SearchBar from "./SearchBar";
 interface ControlPanelProps {
   total: number;
   addLabel: string;
+  addTotal: string;
   onAdd: () => void;
 }
 
-export default function ControlPanel({ total, addLabel, onAdd }: ControlPanelProps) {
+export default function ControlPanel({ total, addLabel, addTotal, onAdd }: ControlPanelProps) {
   const {
     search,
     pageSize,
@@ -190,7 +191,7 @@ export default function ControlPanel({ total, addLabel, onAdd }: ControlPanelPro
             onClear={() => setSearch("")}
           />
           <span className=" mt-1 text-xs text-gray-600 text-right">
-            Total students: <span className="font-semibold">{total}</span>
+            {addTotal}: <span className="font-semibold">{total}</span>
           </span>
         </div>
       </div>

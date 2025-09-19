@@ -131,6 +131,7 @@ export default function Home() {
         <ControlPanel
           total={data?.total ?? 0}
           addLabel="Add Student"
+          addTotal="Total Students"
           onAdd={() => setAddOpen(true)}
         />
 
