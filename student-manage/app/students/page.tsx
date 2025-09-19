@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useStudentStore, Student } from "@/store/useStudentStore";
 import Link from "next/link";
 import axios from "axios";
@@ -12,7 +11,6 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import ControlPanel from "@/components/shared/ControlPanel";
 import DataTable from "@/components/shared/DataTable";
 import SearchBar from "@/components/shared/SearchBar";
@@ -21,12 +19,12 @@ import Pagination from "@/components/shared/Pagination";
 import DetailDialog from "@/components/shared/DetailModal";
 import FormModal from "@/components/shared/FormModal";
 
+//  Hooks and Schemas
 import { formatDate } from "@/utils/date";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
-import { studentSchema } from "@/lib/zodSchemas";
-
-type StudentFormInputs = z.infer<typeof studentSchema>;
+import { StudentFormInputs, studentSchema } from "@/lib/zodSchemas";
+import { Eye, Pencil } from "lucide-react";
 
 export default function Home() {
   const {
@@ -86,7 +84,7 @@ export default function Home() {
     resource: "students",
     page,
     pageSize,
-    search,
+    search: debouncedSearch,
     genderFilters,
     classFilters,
     sortBy,
@@ -128,17 +126,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
-      {/* Top Controls */}
-      <div className="px-6 py-4 border-b border-gray-300 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <Button onClick={() => setAddOpen(true)}>Add Student</Button>
-
-        <SearchBar search={search} onChange={setSearch} onClear={() => setSearch("")} />
-      </div>
 
       {/* Control Panel */}
         <ControlPanel
           total={data?.total ?? 0}
+          addLabel="Add Student"
+          onAdd={() => setAddOpen(true)}
         />
+
 
       {/* Table */}
       <main className="flex-1 overflow-x-auto px-6 py-4">
@@ -185,8 +180,8 @@ export default function Home() {
                   className: "text-center",
                   render: (s) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(s.id)}>View</Button>
-                      <Button variant="default" onClick={() => handleEdit(s)}>Edit</Button>
+                      <Button variant="secondary" onClick={() => handleView(s.id)}><Eye className="h-4 w-4"/></Button>
+                      <Button variant="default" onClick={() => handleEdit(s)}><Pencil className="h-4 w-4"/></Button>
 
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(s.id)}

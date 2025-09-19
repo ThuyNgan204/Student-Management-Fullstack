@@ -1,16 +1,26 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useStudentStore } from "@/store/useStudentStore";
+import SearchBar from "./SearchBar";
 
-export default function ControlPanel({ total }: { total: number }) {
+interface ControlPanelProps {
+  total: number;
+  addLabel: string;
+  onAdd: () => void;
+}
+
+export default function ControlPanel({ total, addLabel, onAdd }: ControlPanelProps) {
   const {
+    search,
     pageSize,
     sortBy,
     sortOrder,
     genderFilters,
     classFilters,
     openFilter,
+    setSearch,
     setPage,
     setPageSize,
     setSortBy,
@@ -23,12 +33,17 @@ export default function ControlPanel({ total }: { total: number }) {
   return (
     <div className="p-4 mb-6 bg-gray-50 border rounded-lg shadow-sm">
       <div className="flex flex-wrap items-end justify-between gap-6">
+        {/* Add button */}
+        <div className="flex flex-col">
+          <Label className="mb-1 text-sm font-medium invisible">Add</Label>
+          <Button onClick={onAdd} className="whitespace-nowrap">
+            {addLabel}
+          </Button>
+        </div>
+
         {/* Rows per page */}
         <div className="flex flex-col">
-          <Label
-            htmlFor="pageSize"
-            className="mb-1 text-sm font-medium text-gray-700"
-          >
+          <Label htmlFor="pageSize" className="mb-1 text-sm font-medium">
             Rows per page
           </Label>
           <select
@@ -38,18 +53,19 @@ export default function ControlPanel({ total }: { total: number }) {
               setPageSize(Number(e.target.value));
               setPage(1);
             }}
-            className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-black-300"
+            className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
           >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
+            {[10, 20, 50, 100].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Sorting */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-sm font-medium text-gray-700">Sort</Label>
+          <Label className="mb-1 text-sm font-medium">Sort</Label>
           <div className="flex gap-2">
             <select
               value={sortBy}
@@ -57,7 +73,7 @@ export default function ControlPanel({ total }: { total: number }) {
                 setSortBy(e.target.value);
                 setPage(1);
               }}
-              className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-black-300"
+              className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
               <option value="">Field</option>
               <option value="id">ID</option>
@@ -73,7 +89,7 @@ export default function ControlPanel({ total }: { total: number }) {
                 setSortOrder(e.target.value as "asc" | "desc");
                 setPage(1);
               }}
-              className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm focus:ring-1 focus:ring-black-300"
+              className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
               <option value="desc">DESC</option>
               <option value="asc">ASC</option>
@@ -83,9 +99,7 @@ export default function ControlPanel({ total }: { total: number }) {
 
         {/* Filters dropdown */}
         <div className="relative inline-block text-left">
-          <Label className="mb-1 text-sm font-medium text-gray-700">
-            Filters
-          </Label>
+          <Label className="mb-1 text-sm font-medium">Filters</Label>
           <button
             onClick={() => setOpenFilter(!openFilter)}
             className="w-40 border rounded-md px-3 py-2 text-sm bg-white shadow-sm flex items-center justify-between hover:bg-gray-50"
@@ -104,12 +118,7 @@ export default function ControlPanel({ total }: { total: number }) {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
@@ -118,74 +127,71 @@ export default function ControlPanel({ total }: { total: number }) {
               {/* Gender */}
               <div>
                 <p className="font-medium text-sm mb-2">Gender</p>
-                <div className="flex flex-col gap-1">
-                  {["Male", "Female"].map((g) => (
-                    <label
-                      key={g}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        value={g}
-                        checked={genderFilters.includes(g)}
-                        onChange={(e) =>
-                          setGenderFilters((prev) =>
-                            e.target.checked
-                              ? [...prev, g]
-                              : prev.filter((x) => x !== g)
-                          )
-                        }
-                      />
-                      {g}
-                    </label>
-                  ))}
-                </div>
+                {["Male", "Female"].map((g) => (
+                  <label key={g} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      value={g}
+                      checked={genderFilters.includes(g)}
+                      onChange={(e) =>
+                        setGenderFilters((prev) =>
+                          e.target.checked
+                            ? [...prev, g]
+                            : prev.filter((x) => x !== g)
+                        )
+                      }
+                    />
+                    {g}
+                  </label>
+                ))}
               </div>
 
               {/* Class */}
               <div>
                 <p className="font-medium text-sm mb-2">Class</p>
-                <div className="flex flex-col gap-1">
-                  {["10", "11", "12"].map((c) => (
-                    <label key={c} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        value={c}
-                        checked={classFilters.includes(c)}
-                        onChange={(e) =>
-                          setClassFilters((prev) =>
-                            e.target.checked
-                              ? [...prev, c]
-                              : prev.filter((x) => x !== c)
-                          )
-                        }
-                      />
-                      {c}
-                    </label>
-                  ))}
-                </div>
+                {["10", "11", "12"].map((c) => (
+                  <label key={c} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      value={c}
+                      checked={classFilters.includes(c)}
+                      onChange={(e) =>
+                        setClassFilters((prev) =>
+                          e.target.checked
+                            ? [...prev, c]
+                            : prev.filter((x) => x !== c)
+                        )
+                      }
+                    />
+                    {c}
+                  </label>
+                ))}
               </div>
 
-              {/* Reset button */}
-              <div className="pt-2 border-t">
-                <button
-                  onClick={() => {
-                    setGenderFilters([]);
-                    setClassFilters([]);
-                  }}
-                  className="w-full px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200"
-                >
-                  Reset
-                </button>
-              </div>
+              {/* Reset */}
+              <button
+                onClick={() => {
+                  setGenderFilters([]);
+                  setClassFilters([]);
+                }}
+                className="w-full px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
+              >
+                Reset
+              </button>
             </div>
           )}
         </div>
 
-        {/* Total count */}
-        <div className="ml-auto text-gray-700 text-sm">
-          <span className="font-medium">Total students:</span>{" "}
-          <span className="font-semibold">{total}</span>
+        {/* Search + total */}
+        <div className="flex flex-col flex-1 max-w-xs ml-auto">
+          <SearchBar
+            search={search}
+            onChange={setSearch}
+            onClear={() => setSearch("")}
+          />
+          <span className=" mt-1 text-xs text-gray-600 text-right">
+            Total students: <span className="font-semibold">{total}</span>
+          </span>
         </div>
       </div>
     </div>

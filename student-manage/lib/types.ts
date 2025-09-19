@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { studentSchema } from "./zodSchemas";
+
 export type Student = {
   id: number;
   last_name: string;
@@ -13,3 +16,5 @@ export type StudentResponse = {
   items: Student[];
   total: number;
 };
+
+export type StudentFormInputs = z.infer<typeof studentSchema>;

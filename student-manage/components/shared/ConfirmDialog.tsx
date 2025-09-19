@@ -12,6 +12,7 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Button } from "../ui/button";
+import { Trash } from "lucide-react";
 
 interface ConfirmDialogProps {
   onConfirm: () => void;
@@ -27,7 +28,7 @@ export default function ConfirmDialog({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">Delete</Button>
+        <Button variant="destructive"><Trash className="h-4 w-4"/></Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
