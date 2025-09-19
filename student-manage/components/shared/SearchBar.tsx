@@ -1,6 +1,5 @@
 "use client";
 
-import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "../ui/input";
 
 interface SearchBarProps {

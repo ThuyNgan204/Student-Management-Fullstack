@@ -1,29 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "../styles/globals.css";
-import Providers from "@/providers/QueryProvider";
-import MainLayout from "@/components/layout/MainLayout";
-
-
-const inter = Inter({ subsets: ["latin"] });
+import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Student Management App",
-  description: "A student management application with Next.js and React Query.",
+  title: "Student Admin",
+  description: "Student management system",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Providers>
-          <MainLayout>{children}</MainLayout>
-        </Providers>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
