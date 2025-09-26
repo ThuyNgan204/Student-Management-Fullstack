@@ -79,10 +79,8 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
               <option value="">Field</option>
               <option value="id">ID</option>
               <option value="first_name">Name</option>
-              <option value="class_name">Class</option>
+              <option value="student_code">Student Code</option>
               <option value="dob">Date of Birth</option>
-              <option value="created_at">Created At</option>
-              <option value="updated_at">Updated At</option>
             </select>
             <select
               value={sortOrder}
@@ -147,7 +145,7 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
                 ))}
               </div>
 
-              {/* Class */}
+              {/* Class
               <div>
                 <p className="font-medium text-sm mb-2">Class</p>
                 {["10", "11", "12"].map((c) => (
@@ -167,7 +165,7 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
                     {c}
                   </label>
                 ))}
-              </div>
+              </div> */}
 
               {/* Reset */}
               <button

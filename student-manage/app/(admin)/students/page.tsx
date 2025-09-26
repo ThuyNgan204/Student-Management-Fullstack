@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ControlPanel from "@/components/shared/ControlPanel";
 import DataTable from "@/components/shared/DataTable";
-import SearchBar from "@/components/shared/SearchBar";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import Pagination from "@/components/shared/Pagination";
 import DetailDialog from "@/components/shared/DetailModal";
@@ -59,7 +58,7 @@ export default function Home() {
     formState: { errors: errorsAdd },
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
-    defaultValues: { last_name: "", first_name: "", class_name: "", gender: "", dob: "" },
+    defaultValues: { last_name: "", first_name: "", student_code: "", gender: "", dob: "" },
   });
 
   // Form Edit
@@ -87,7 +86,7 @@ export default function Home() {
     search: debouncedSearch,
     genderFilters,
     classFilters,
-    sortBy,
+    sortBy: "student_id",
     sortOrder,
   });
 
@@ -101,7 +100,7 @@ export default function Home() {
     resetEdit({
       last_name: student.last_name,
       first_name: student.first_name,
-      class_name: student.class_name,
+      student_code: student.student_code,
       gender: student.gender,
       dob: student.dob,
     });
@@ -113,9 +112,9 @@ export default function Home() {
     }
   };
 
-  const handleView = async (studentId: number) => {
+  const handleView = async (student_id: number) => {
     try {
-      const res = await axios.get(`http://localhost:8000/students/${studentId}`);
+      const res = await axios.get(`/api/students/${student_id}`);
       setSelectedStudent(res.data);
     } catch (err) {
       alert("Failed to load student detail");
@@ -145,13 +144,13 @@ export default function Home() {
           <>
             <DataTable
               columns={[
-                { key: "id", header: "ID" },
+                { key: "student_id", header: "ID" },
                 {
                   key: "last_name",
                   header: "Last Name",
                   render: (student) => (
                     <Link
-                      href={`/students/${student.id}`}
+                      href={`/students/${student.student_id}`}
                       className="text-primary hover:underline hover:text-primary/80"
                     >
                       {student.last_name}
@@ -163,7 +162,7 @@ export default function Home() {
                   header: "First Name",
                   render: (student) => (
                     <Link
-                      href={`/students/${student.id}`}
+                      href={`/students/${student.student_id}`}
                       className="text-primary hover:underline hover:text-primary/80"
                     >
                       {student.first_name}
@@ -172,20 +171,18 @@ export default function Home() {
                 },
                 { key: "gender", header: "Gender" },
                 { key: "dob", header: "Date of Birth", render: (s) => formatDate(s.dob) },
-                { key: "class_name", header: "Class" },
-                { key: "created_at", header: "Created At", render: (s) => formatDate(s.created_at) },
-                { key: "updated_at", header: "Updated At", render: (s) => formatDate(s.updated_at) },
+                { key: "student_code", header: "Student Code" },
                 {
                   key: "actions",
                   header: "Actions",
                   className: "text-center",
                   render: (s) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(s.id)}><Eye className="h-4 w-4"/></Button>
+                      <Button variant="secondary" onClick={() => handleView(s.student_id)}><Eye className="h-4 w-4"/></Button>
                       <Button variant="default" onClick={() => handleEdit(s)}><Pencil className="h-4 w-4"/></Button>
 
                       <ConfirmDialog
-                        onConfirm={() => deleteMutation.mutate(s.id)}
+                        onConfirm={() => deleteMutation.mutate(s.student_id)}
                         title="Are you absolutely sure?"
                         description="This action cannot be undone. This will permanently delete the student from the system."
                       />
@@ -229,10 +226,10 @@ export default function Home() {
         </div>
 
         <div>
-          <Label className="mb-2">Class</Label>
-          <Input {...registerAdd("class_name")} />
-          {errorsAdd.class_name && (
-            <p className="text-xs text-red-500">{errorsAdd.class_name.message}</p>
+          <Label className="mb-2">Student Code</Label>
+          <Input {...registerAdd("student_code")} />
+          {errorsAdd.student_code && (
+            <p className="text-xs text-red-500">{errorsAdd.student_code.message}</p>
           )}
         </div>
 
@@ -240,8 +237,8 @@ export default function Home() {
           <Label className="mb-2">Gender</Label>
           <select {...registerAdd("gender")} className="border rounded px-2 py-1 w-full">
             <option value="">Select gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
+            <option value="Nam">Male</option>
+            <option value="Nữ">Female</option>
           </select>
           {errorsAdd.gender && (
             <p className="text-xs text-red-500">{errorsAdd.gender.message}</p>
@@ -283,9 +280,9 @@ export default function Home() {
             </div>
 
             <div>
-              <Label className="mb-2">Class</Label>
-              <Input {...registerEdit("class_name")} />
-              {errorsEdit.class_name && <p className="text-xs text-red-500">{errorsEdit.class_name.message}</p>}
+              <Label className="mb-2">Student Code</Label>
+              <Input {...registerEdit("student_code")} />
+              {errorsEdit.student_code && <p className="text-xs text-red-500">{errorsEdit.student_code.message}</p>}
             </div>
 
             <div>
@@ -316,25 +313,19 @@ export default function Home() {
         {selectedStudent && (
           <ul className="space-y-2">
             <li>
-              <strong>ID:</strong> {selectedStudent.id}
+              <strong>ID:</strong> {selectedStudent.student_id}
             </li>
             <li>
               <strong>Name:</strong> {selectedStudent.last_name} {selectedStudent.first_name}
             </li>
             <li>
-              <strong>Class:</strong> {selectedStudent.class_name}
+              <strong>Class:</strong> {selectedStudent.student_code}
             </li>
             <li>
               <strong>Gender:</strong> {selectedStudent.gender}
             </li>
             <li>
               <strong>Date of Birth:</strong> {formatDate(selectedStudent.dob)}
-            </li>
-            <li>
-              <strong>Created At:</strong> {formatDate(selectedStudent.created_at)}
-            </li>
-            <li>
-              <strong>Updated At:</strong> {formatDate(selectedStudent.updated_at)}
             </li>
           </ul>
         )}

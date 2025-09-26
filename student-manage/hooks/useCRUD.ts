@@ -47,25 +47,26 @@ export const useCRUD = <TData, TForm>({
       if (sortBy) params.append("sort_by", sortBy);
       if (sortOrder) params.append("sort_order", sortOrder);
 
-      const res = await axios.get(`http://localhost:8000/${resource}/?${params.toString()}`);
+      // ❗ Chuyển từ FastAPI sang Next API:
+      const res = await axios.get(`/api/${resource}?${params.toString()}`);
       return res.data;
     },
     keepPreviousData: true,
   });
 
   const addMutation = useMutation({
-    mutationFn: (newData: TForm) => axios.post(`http://localhost:8000/${resource}/`, newData),
+    mutationFn: (newData: TForm) => axios.post(`/api/${resource}`, newData),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
   });
 
   const updateMutation = useMutation({
     mutationFn: (updatedData: TData) =>
-      axios.put(`http://localhost:8000/${resource}/${(updatedData as any).id}`, updatedData),
+      axios.put(`/api/${resource}/${(updatedData as any).student_id}`, updatedData),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => axios.delete(`http://localhost:8000/${resource}/${id}`),
+    mutationFn: (student_id: number) => axios.delete(`/api/${resource}/${student_id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
   });
 

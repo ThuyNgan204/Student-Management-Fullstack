@@ -20,7 +20,7 @@ export default function StudentDetailPage() {
     queryKey: ["student", studentId],
     queryFn: async () => {
       const res = await axios.get(
-        `http://localhost:8000/students/${studentId}`
+        `/api/students/${studentId}`
       );
       return res.data;
     },
@@ -56,25 +56,19 @@ export default function StudentDetailPage() {
         </h1>
         <ul className="space-y-4 text-lg text-gray-800">
           <li>
-            <strong>ID:</strong> {student.id}
+            <strong>ID:</strong> {student.student_id}
           </li>
           <li>
             <strong>Name:</strong> {student.last_name} {student.first_name}
           </li>
           <li>
-            <strong>Class:</strong> {student.class_name}
+            <strong>Student Code:</strong> {student.student_code}
           </li>
           <li>
             <strong>Gender:</strong> {student.gender}
           </li>
           <li>
             <strong>Date of Birth:</strong> {formatDate(student.dob)}
-          </li>
-          <li>
-            <strong>Created At:</strong> {formatDate(student.created_at)}
-          </li>
-          <li>
-            <strong>Updated At:</strong> {formatDate(student.updated_at)}
           </li>
         </ul>
         <div className="mt-8 text-center">

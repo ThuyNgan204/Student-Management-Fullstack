@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model academic_class {
+  academic_class_id Int        @id @default(autoincrement())
+  class_code        String     @unique @db.VarChar(20)
+  class_name        String     @db.VarChar(100)
+  cohort            String     @db.VarChar(10)
+  major_id          Int
+  lecturer_id       Int?
+  lecturers         lecturers? @relation(fields: [lecturer_id], references: [lecturer_id], onUpdate: NoAction, map: "fk_lecturer")
+  majors            majors     @relation(fields: [major_id], references: [major_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_major")
+  students          students[]
+}
+
+model academic_classes {
+  academic_class_id Int    @id @default(autoincrement())
+  class_name        String @unique @db.VarChar(50)
+  class_code        String @unique @db.VarChar(50)
+
+  @@index([academic_class_id], map: "ix_academic_classes_academic_class_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model class_section {
+  class_section_id Int          @id @default(autoincrement())
+  section_code     String       @unique @db.VarChar(30)
+  academic_year    String       @db.VarChar(20)
+  semester         String       @db.VarChar(10)
+  course_id        Int
+  lecturer_id      Int
+  capacity         Int
+  start_date       DateTime?    @db.Date
+  end_date         DateTime?    @db.Date
+  courses          courses      @relation(fields: [course_id], references: [course_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_course")
+  lecturers        lecturers    @relation(fields: [lecturer_id], references: [lecturer_id], onDelete: SetNull, onUpdate: NoAction, map: "fk_lecturer")
+  enrollment       enrollment[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model courses {
+  course_id     Int             @id @default(autoincrement())
+  course_code   String          @unique @db.VarChar(20)
+  course_name   String          @db.VarChar(100)
+  credits       Int
+  department_id Int
+  class_section class_section[]
+  departments   departments     @relation(fields: [department_id], references: [department_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_department")
+}
+
+model departments {
+  department_id   Int         @id @default(autoincrement())
+  department_code String      @unique @db.VarChar(20)
+  department_name String      @db.VarChar(100)
+  courses         courses[]
+  lecturers       lecturers[]
+  majors          majors[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model enrollment {
+  enrollment_id    Int           @id @default(autoincrement())
+  student_id       Int
+  class_section_id Int
+  status           String        @db.VarChar(20)
+  class_section    class_section @relation(fields: [class_section_id], references: [class_section_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_class_section")
+  students         students      @relation(fields: [student_id], references: [student_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_student")
+  grades           grades?
+
+  @@unique([student_id, class_section_id], map: "uq_enrollment")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model grades {
+  grade_id         Int        @id @default(autoincrement())
+  enrollment_id    Int        @unique
+  attendance_score Decimal?   @db.Decimal(3, 1)
+  midterm_score    Decimal?   @db.Decimal(3, 1)
+  assignment_score Decimal?   @db.Decimal(3, 1)
+  final_score      Decimal?   @db.Decimal(3, 1)
+  total_score      Decimal?   @db.Decimal(3, 1)
+  letter_grade     String?    @db.VarChar(5)
+  status           String?    @db.VarChar(20)
+  enrollment       enrollment @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_enrollment")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model lecturers {
+  lecturer_id    Int              @id @default(autoincrement())
+  lecturer_code  String           @unique @db.VarChar(20)
+  first_name     String           @db.VarChar(50)
+  last_name      String           @db.VarChar(100)
+  gender         String?          @db.VarChar(10)
+  dob            DateTime?        @db.Date
+  phone          String?          @db.VarChar(15)
+  email          String?          @unique @db.VarChar(100)
+  address        String?          @db.VarChar(255)
+  department_id  Int?
+  avatar         String?          @db.VarChar(255)
+  position       String?          @db.VarChar(50)
+  academic_class academic_class[]
+  class_section  class_section[]
+  departments    departments?     @relation(fields: [department_id], references: [department_id], onUpdate: NoAction)
+  user_account   user_account[]
+}
+
+model majors {
+  major_id       Int              @id @default(autoincrement())
+  major_code     String           @unique @db.VarChar(20)
+  major_name     String           @db.VarChar(100)
+  department_id  Int
+  academic_class academic_class[]
+  departments    departments      @relation(fields: [department_id], references: [department_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_department")
+  students       students[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model students {
+  student_id        Int             @id @default(autoincrement())
+  student_code      String          @unique @db.VarChar(20)
+  first_name        String          @db.VarChar(50)
+  last_name         String          @db.VarChar(50)
+  gender            String?         @db.VarChar(10)
+  dob               DateTime?       @db.Date
+  address           String?         @db.VarChar(255)
+  phone             String?         @db.VarChar(15)
+  email             String?         @unique @db.VarChar(100)
+  avatar            String?         @db.VarChar(255)
+  cohort            String?         @db.VarChar(10)
+  status            String?         @db.VarChar(50)
+  academic_class_id Int?
+  major_id          Int?
+  enrollment        enrollment[]
+  academic_class    academic_class? @relation(fields: [academic_class_id], references: [academic_class_id], onUpdate: NoAction)
+  majors            majors?         @relation(fields: [major_id], references: [major_id], onUpdate: NoAction)
+  user_account      user_account[]
+}
+
+model user_account {
+  user_id     Int        @id @default(autoincrement())
+  username    String     @unique @db.VarChar(50)
+  password    String     @db.VarChar(255)
+  role        String     @db.VarChar(20)
+  student_id  Int?
+  lecturer_id Int?
+  lecturers   lecturers? @relation(fields: [lecturer_id], references: [lecturer_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_lecturer")
+  students    students?  @relation(fields: [student_id], references: [student_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_student")
+}

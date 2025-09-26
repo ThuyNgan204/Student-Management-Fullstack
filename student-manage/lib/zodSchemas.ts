@@ -3,7 +3,7 @@ import { z } from "zod";
 export const studentSchema = z.object({
   last_name: z.string().min(1, { message: "Last name is required." }),
   first_name: z.string().min(1, { message: "First name is required." }),
-  class_name: z.string().min(1, { message: "Class is required." }),
+  student_code: z.string().min(1, { message: "Student code is required." }),
   gender: z.string().min(1, { message: "Gender is required." }),
   dob: z.string().min(1, { message: "Date of birth is required." }),
 });

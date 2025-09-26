@@ -1,14 +1,12 @@
 import { create } from "zustand";
 
 export interface Student {
-  id: number;
+  student_id: number;
   first_name: string;
   last_name: string;
   gender: string;
   dob: string;
-  class_name: string;
-  created_at: string;
-  updated_at: string;
+  student_code: string;
 }
 
 interface StudentStore {
