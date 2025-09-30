@@ -15,6 +15,19 @@ export async function GET(req: Request, { params }: Params) {
   try {
     const student = await prisma.students.findUnique({
       where: { student_id: id },
+        include: {
+          academic_class: {
+            include: {
+              lecturers: true,
+              majors: true,
+            },
+          },
+          majors: {
+            include: {
+              departments: true,
+            },
+          },
+        }, 
     });
 
     if (!student) {

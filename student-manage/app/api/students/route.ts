@@ -40,6 +40,10 @@ export async function GET(req: Request) {
         orderBy,
         skip,
         take: pageSize,
+        include: {
+          academic_class: true,
+          majors: true,
+        },
       }),
       prisma.students.count({ where }),
     ]);

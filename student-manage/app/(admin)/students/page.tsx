@@ -147,7 +147,7 @@ export default function Home() {
                 { key: "student_id", header: "ID" },
                 {
                   key: "last_name",
-                  header: "Last Name",
+                  header: "Họ",
                   render: (student) => (
                     <Link
                       href={`/students/${student.student_id}`}
@@ -159,7 +159,7 @@ export default function Home() {
                 },
                 {
                   key: "first_name",
-                  header: "First Name",
+                  header: "Tên",
                   render: (student) => (
                     <Link
                       href={`/students/${student.student_id}`}
@@ -169,9 +169,20 @@ export default function Home() {
                     </Link>
                   ),
                 },
-                { key: "gender", header: "Gender" },
-                { key: "dob", header: "Date of Birth", render: (s) => formatDate(s.dob) },
-                { key: "student_code", header: "Student Code" },
+                { key: "gender", header: "Giới tính" },
+                { key: "dob", header: "Ngày sinh", render: (s) => formatDate(s.dob) },
+                { key: "student_code", header: "MSSV" },
+                { key: "cohort", header: "Khóa"},
+                {
+                  key: "majors",
+                  header: "Ngành",
+                  render: (student) => student.majors?.major_code ?? "N/A",
+                },
+                {
+                  key: "academic_class",
+                  header: "Lớp sinh hoạt",
+                  render: (student) => student.academic_class?.class_code ?? "N/A",
+                },
                 {
                   key: "actions",
                   header: "Actions",
@@ -316,16 +327,44 @@ export default function Home() {
               <strong>ID:</strong> {selectedStudent.student_id}
             </li>
             <li>
-              <strong>Name:</strong> {selectedStudent.last_name} {selectedStudent.first_name}
+              <strong>Họ Tên:</strong> {selectedStudent.last_name} {selectedStudent.first_name}
             </li>
             <li>
-              <strong>Class:</strong> {selectedStudent.student_code}
+              <strong>Giới tính:</strong> {selectedStudent.gender}
             </li>
             <li>
-              <strong>Gender:</strong> {selectedStudent.gender}
+              <strong>MSSV:</strong> {selectedStudent.student_code}
             </li>
             <li>
-              <strong>Date of Birth:</strong> {formatDate(selectedStudent.dob)}
+              <strong>Ngày sinh:</strong> {formatDate(selectedStudent.dob)}
+            </li>
+            <li>
+              <strong>Địa chỉ:</strong> {selectedStudent.address}
+            </li>
+            <li>
+              <strong>Số điện thoại:</strong> {selectedStudent.phone}
+            </li>
+            <li>
+              <strong>Email:</strong> {selectedStudent.email}
+            </li>
+            <li>
+              <strong>Lớp:</strong> {selectedStudent.academic_class?.class_name}
+            </li>
+            <li>
+              <strong>Cố vấn học tập:</strong> {selectedStudent.academic_class?.lecturers?.last_name}{" "}
+                {selectedStudent?.academic_class?.lecturers?.first_name}
+            </li>
+            <li>
+              <strong>Chuyên ngành:</strong> {selectedStudent.majors?.major_name}
+            </li>
+            <li>
+              <strong>Khoa:</strong> {selectedStudent.majors?.departments?.department_name}
+            </li>
+            <li>
+              <strong>Khóa:</strong> {selectedStudent.cohort}
+            </li>
+            <li>
+              <strong>Tình trạng:</strong> {selectedStudent.status}
             </li>
           </ul>
         )}

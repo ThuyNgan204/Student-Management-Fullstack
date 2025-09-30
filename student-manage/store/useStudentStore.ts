@@ -1,12 +1,64 @@
 import { create } from "zustand";
 
-export interface Student {
-  student_id: number;
+export interface Department {
+  department_id: number;
+  department_name: string;
+  department_code: string;
+}
+
+export interface Lecturer {
+  lecturer_id: number;
+  lecturer_code: string;
   first_name: string;
   last_name: string;
   gender: string;
   dob: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  department_id: number | null;
+  avatar: string | null;
+  position: string | null;
+}
+
+export interface AcademicClass {
+  academic_class_id: number;
+  class_name: string;
+  class_code: string;
+  cohort: string;
+  major_id: number;
+  lecturer_id: number;
+
+  lecturers?: Lecturer | null;
+  majors?: Major | null;
+}
+
+export interface Major {
+  major_id: number;
+  major_code: string;
+  major_name: string;
+  department_id: number;
+  departments?: Department | null;
+}
+
+export interface Student {
+  student_id: number;
   student_code: string;
+  first_name: string;
+  last_name: string;
+  gender: string;
+  dob: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  avatar: string | null;
+  cohort: string | null;
+  status: string | null;
+  academic_class_id: number | null;
+  major_id: number | null;
+
+  academic_class?: AcademicClass | null;
+  majors?: Major | null;
 }
 
 interface StudentStore {
