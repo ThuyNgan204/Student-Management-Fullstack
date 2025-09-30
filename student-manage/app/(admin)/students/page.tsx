@@ -1,9 +1,10 @@
+// page.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useStudentStore, Student } from "@/store/useStudentStore";
+import { useStudentStore, Student, Major, AcademicClass } from "@/store/useStudentStore";
 import Link from "next/link";
 import axios from "axios";
 
@@ -18,7 +19,7 @@ import Pagination from "@/components/shared/Pagination";
 import DetailDialog from "@/components/shared/DetailModal";
 import FormModal from "@/components/shared/FormModal";
 
-//  Hooks and Schemas
+// Hooks and Schemas
 import { formatDate } from "@/utils/date";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
@@ -44,11 +45,35 @@ export default function Home() {
     setAddOpen,
   } = useStudentStore();
 
+  const [majors, setMajors] = useState<Major[]>([]);
+  const [classes, setClasses] = useState<AcademicClass[]>([]);
+
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, genderFilters, classFilters, sortBy, sortOrder, setPage]);
+
+  // Fetch majors & classes for dropdowns
+  useEffect(() => {
+    const fetchData = async () => {
+      
+      try {
+        const [majorsRes, classesRes] = await Promise.all([
+          axios.get("/api/majors"),
+          axios.get("/api/academic_class"),
+        ]);
+        console.log("Majors API:", majorsRes.data);
+        console.log("Classes API:", classesRes.data);
+        
+        setMajors(majorsRes.data);
+        setClasses(classesRes.data);
+      } catch (err) {
+        console.error("Failed to load majors/classes", err);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Form Add
   const {
@@ -58,7 +83,20 @@ export default function Home() {
     formState: { errors: errorsAdd },
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
-    defaultValues: { last_name: "", first_name: "", student_code: "", gender: "", dob: "" },
+    defaultValues: {
+      last_name: "",
+      first_name: "",
+      student_code: "",
+      gender: "",
+      dob: "",
+      address: "",
+      phone: "",
+      email: "",
+      major_id: undefined,
+      academic_class_id: undefined,
+      cohort: "",
+      status: "Đang học",
+    },
   });
 
   // Form Edit
@@ -72,7 +110,7 @@ export default function Home() {
   });
 
   // Queries
-   const {
+  const {
     data,
     isLoading,
     isError,
@@ -92,7 +130,9 @@ export default function Home() {
 
   // Handlers
   const onSubmitAdd = (data: StudentFormInputs) => {
-    addMutation.mutate(data);
+    addMutation.mutate(data, {
+      onSuccess: () => resetAdd(),
+    });
   };
 
   const handleEdit = (student: Student) => {
@@ -103,6 +143,13 @@ export default function Home() {
       student_code: student.student_code,
       gender: student.gender,
       dob: student.dob,
+      address: student.address ?? "",
+      phone: student.phone ?? "",
+      email: student.email ?? "",
+      major_id: student.major_id ?? undefined,
+      academic_class_id: student.academic_class_id ?? undefined,
+      cohort: student.cohort ?? "",
+      status: student.status as "Đang học" | "Bảo lưu" | "Tốt nghiệp",
     });
   };
 
@@ -125,15 +172,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
-
       {/* Control Panel */}
-        <ControlPanel
-          total={data?.total ?? 0}
-          addLabel="Add Student"
-          addTotal="Total Students"
-          onAdd={() => setAddOpen(true)}
-        />
-
+      <ControlPanel
+        total={data?.total ?? 0}
+        addLabel="Add Student"
+        addTotal="Total Students"
+        onAdd={() => setAddOpen(true)}
+      />
 
       {/* Table */}
       <main className="flex-1 overflow-x-auto px-6 py-4">
@@ -172,7 +217,7 @@ export default function Home() {
                 { key: "gender", header: "Giới tính" },
                 { key: "dob", header: "Ngày sinh", render: (s) => formatDate(s.dob) },
                 { key: "student_code", header: "MSSV" },
-                { key: "cohort", header: "Khóa"},
+                { key: "cohort", header: "Khóa" },
                 {
                   key: "majors",
                   header: "Ngành",
@@ -189,21 +234,24 @@ export default function Home() {
                   className: "text-center",
                   render: (s) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(s.student_id)}><Eye className="h-4 w-4"/></Button>
-                      <Button variant="default" onClick={() => handleEdit(s)}><Pencil className="h-4 w-4"/></Button>
+                      <Button variant="secondary" onClick={() => handleView(s.student_id)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="default" onClick={() => handleEdit(s)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
 
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(s.student_id)}
                         title="Are you absolutely sure?"
                         description="This action cannot be undone. This will permanently delete the student from the system."
                       />
-
-                  </div>
+                    </div>
                   ),
                 },
               ]}
-                data={isError || isLoading ? [] : data?.items || []}
-                emptyMessage={isError ? "Error loading students" : "No students found"}
+              data={isError || isLoading ? [] : data?.items || []}
+              emptyMessage={isError ? "Error loading students" : "No students found"}
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -220,49 +268,7 @@ export default function Home() {
         onCancel={() => setAddOpen(false)}
         submitText="Save"
       >
-        <div>
-          <Label className="mb-2">Last Name</Label>
-          <Input {...registerAdd("last_name")} />
-          {errorsAdd.last_name && (
-            <p className="text-xs text-red-500">{errorsAdd.last_name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">First Name</Label>
-          <Input {...registerAdd("first_name")} />
-          {errorsAdd.first_name && (
-            <p className="text-xs text-red-500">{errorsAdd.first_name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">Student Code</Label>
-          <Input {...registerAdd("student_code")} />
-          {errorsAdd.student_code && (
-            <p className="text-xs text-red-500">{errorsAdd.student_code.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">Gender</Label>
-          <select {...registerAdd("gender")} className="border rounded px-2 py-1 w-full">
-            <option value="">Select gender</option>
-            <option value="Nam">Male</option>
-            <option value="Nữ">Female</option>
-          </select>
-          {errorsAdd.gender && (
-            <p className="text-xs text-red-500">{errorsAdd.gender.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">Date of Birth</Label>
-          <Input type="date" {...registerAdd("dob")} />
-          {errorsAdd.dob && (
-            <p className="text-xs text-red-500">{errorsAdd.dob.message}</p>
-          )}
-        </div>
+        <StudentForm register={registerAdd} errors={errorsAdd} majors={majors} classes={classes} />
       </FormModal>
 
       {/* Edit Student Modal */}
@@ -277,50 +283,12 @@ export default function Home() {
         submitText="Update"
       >
         {editingStudent && (
-          <>
-            <div>
-              <Label className="mb-2">Last Name</Label>
-              <Input {...registerEdit("last_name")} />
-              {errorsEdit.last_name && <p className="text-xs text-red-500">{errorsEdit.last_name.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">First Name</Label>
-              <Input {...registerEdit("first_name")} />
-              {errorsEdit.first_name && <p className="text-xs text-red-500">{errorsEdit.first_name.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">Student Code</Label>
-              <Input {...registerEdit("student_code")} />
-              {errorsEdit.student_code && <p className="text-xs text-red-500">{errorsEdit.student_code.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">Gender</Label>
-              <select {...registerEdit("gender")} className="border rounded px-2 py-1 w-full">
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-              {errorsEdit.gender && <p className="text-xs text-red-500">{errorsEdit.gender.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">Date of Birth</Label>
-              <Input type="date" {...registerEdit("dob")} />
-              {errorsEdit.dob && <p className="text-xs text-red-500">{errorsEdit.dob.message}</p>}
-            </div>
-          </>
+          <StudentForm register={registerEdit} errors={errorsEdit} majors={majors} classes={classes} />
         )}
       </FormModal>
 
       {/* View Modal */}
-      <DetailDialog
-        open={!!selectedStudent}
-        title="Student Detail"
-        onClose={() => setSelectedStudent(null)}
-      >
+      <DetailDialog open={!!selectedStudent} title="Student Detail" onClose={() => setSelectedStudent(null)}>
         {selectedStudent && (
           <ul className="space-y-2">
             <li>
@@ -352,7 +320,7 @@ export default function Home() {
             </li>
             <li>
               <strong>Cố vấn học tập:</strong> {selectedStudent.academic_class?.lecturers?.last_name}{" "}
-                {selectedStudent?.academic_class?.lecturers?.first_name}
+              {selectedStudent?.academic_class?.lecturers?.first_name}
             </li>
             <li>
               <strong>Chuyên ngành:</strong> {selectedStudent.majors?.major_name}
@@ -373,3 +341,110 @@ export default function Home() {
   );
 }
 
+// Reusable Form Component
+function StudentForm({
+  register,
+  errors,
+  majors,
+  classes,
+}: {
+  register: ReturnType<typeof useForm<StudentFormInputs>>["register"];
+  errors: any;
+  majors: Major[];
+  classes: AcademicClass[];
+}) {
+  return (
+    <>
+      <div>
+        <Label className="mb-2">Last Name</Label>
+        <Input {...register("last_name")} />
+        {errors.last_name && <p className="text-xs text-red-500">{errors.last_name.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">First Name</Label>
+        <Input {...register("first_name")} />
+        {errors.first_name && <p className="text-xs text-red-500">{errors.first_name.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Student Code</Label>
+        <Input {...register("student_code")} />
+        {errors.student_code && <p className="text-xs text-red-500">{errors.student_code.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Gender</Label>
+        <select {...register("gender")} className="border rounded px-2 py-1 w-full">
+          <option value="">Select gender</option>
+          <option value="Nam">Nam</option>
+          <option value="Nữ">Nữ</option>
+        </select>
+        {errors.gender && <p className="text-xs text-red-500">{errors.gender.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Date of Birth</Label>
+        <Input type="date" {...register("dob")} />
+        {errors.dob && <p className="text-xs text-red-500">{errors.dob.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Address</Label>
+        <Input {...register("address")} />
+      </div>
+
+      <div>
+        <Label className="mb-2">Phone</Label>
+        <Input {...register("phone")} />
+        {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Email</Label>
+        <Input type="email" {...register("email")} />
+        {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Major</Label>
+        <select {...register("major_id")} className="border rounded px-2 py-1 w-full">
+          <option value="">Select major</option>
+          {majors.map((m) => (
+            <option key={m.major_id} value={m.major_id}>
+              {m.major_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <Label className="mb-2">Class</Label>
+        <select {...register("academic_class_id")} className="border rounded px-2 py-1 w-full">
+          <option value="">Select class</option>
+          {classes.map((c) => (
+            <option key={c.academic_class_id} value={c.academic_class_id}>
+              {c.class_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <Label className="mb-2">Cohort</Label>
+        <Input {...register("cohort")} />
+      </div>
+
+      <div>
+        <Label className="mb-2">Status</Label>
+        <select {...register("status")} className="border rounded px-2 py-1 w-full">
+          <option value="">Select status</option>
+          <option value="Đang học">Đang học</option>
+          <option value="Bảo lưu">Bảo lưu</option>
+          <option value="Tốt nghiệp">Tốt nghiệp</option>
+        </select>
+        {errors.status && <p className="text-xs text-red-500">{errors.status.message}</p>}
+      </div>
+    </>
+  );
+}

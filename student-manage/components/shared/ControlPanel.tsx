@@ -126,7 +126,7 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
               {/* Gender */}
               <div>
                 <p className="font-medium text-sm mb-2">Gender</p>
-                {["Male", "Female"].map((g) => (
+                {["Nam", "Nữ", "Khác"].map((g) => (
                   <label key={g} className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
