@@ -6,7 +6,7 @@ interface PaginationProps {
   page: number;
   totalPages: number;
   onChange: (newPage: number) => void;
-  maxButtons?: number; // tối đa số nút hiển thị giữa
+  maxButtons?: number; // Tổng số nút hiển thị (bao gồm số + "...")
 }
 
 export default function Pagination({
@@ -20,29 +20,29 @@ export default function Pagination({
   const pages: (number | "...")[] = [];
 
   if (totalPages <= maxButtons) {
-    // Nếu số trang nhỏ hơn maxButtons thì hiển thị tất cả
+    // Nếu tổng trang ít hơn maxButtons thì hiển thị hết
     for (let i = 1; i <= totalPages; i++) pages.push(i);
   } else {
-    const half = Math.floor(maxButtons / 2);
+    pages.push(1); // Luôn có trang đầu
 
-    if (page <= half + 1) {
-      // đầu danh sách: 1 2 3 ... totalPages
-      for (let i = 1; i <= maxButtons - 1; i++) pages.push(i);
+    if (page <= 3) {
+      // Gần đầu → 1 2 3 ... N
+      pages.push(2);
+      pages.push(3);
       pages.push("...");
-      pages.push(totalPages);
-    } else if (page >= totalPages - half) {
-      // cuối danh sách: 1 ... totalPages-2 totalPages-1 totalPages
-      pages.push(1);
+    } else if (page >= totalPages - 2) {
+      // Gần cuối → 1 ... N-2 N-1 N
       pages.push("...");
-      for (let i = totalPages - (maxButtons - 2); i <= totalPages; i++) pages.push(i);
+      pages.push(totalPages - 2);
+      pages.push(totalPages - 1);
     } else {
-      // giữa danh sách: 1 ... p-1 p p+1 ... totalPages
-      pages.push(1);
+      // Ở giữa → 1 ... page ... N
       pages.push("...");
-      for (let i = page - 1; i <= page + 1; i++) pages.push(i);
+      pages.push(page);
       pages.push("...");
-      pages.push(totalPages);
     }
+
+    pages.push(totalPages); // Luôn có trang cuối
   }
 
   return (

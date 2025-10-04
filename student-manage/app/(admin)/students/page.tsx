@@ -404,6 +404,7 @@ function StudentForm({
           <option value="">Select gender</option>
           <option value="Nam">Nam</option>
           <option value="Nữ">Nữ</option>
+          <option value="Nữ">Khác</option>
         </select>
         {errors.gender && <p className="text-xs text-red-500">{errors.gender.message}</p>}
       </div>

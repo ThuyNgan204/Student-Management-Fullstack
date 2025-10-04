@@ -134,12 +134,14 @@ export default function ControlPanel({
           </button>
 
           {openFilter && (
-            <div className="absolute left-0 mt-2 w-56 rounded-lg shadow-lg bg-white border z-10 p-4 space-y-4">
-              {/* Gender */}
-              <div>
-                <p className="font-medium text-sm mb-2">Gender</p>
+          <div className="absolute left-0 mt-2 w-100 rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
+
+            {/* Gender */}
+            <div>
+              <p className="font-medium text-base mb-3">Gender</p>
+              <div className="grid grid-cols-3 gap-2">
                 {["Nam", "Nữ", "Khác"].map((g) => (
-                  <label key={g} className="flex items-center gap-2 text-sm">
+                  <label key={g} className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       value={g}
@@ -156,12 +158,14 @@ export default function ControlPanel({
                   </label>
                 ))}
               </div>
+            </div>
 
-              {/* Class filter */}
-              <div>
-                <p className="font-medium text-sm mb-2">Class Code</p>
+            {/* Class filter */}
+            <div>
+              <p className="font-medium text-base mb-3">Class Code</p>
+              <div className="grid grid-cols-4 gap-2"> {/* 👈 3 cột */}
                 {["CNTT01", "HTTT02", "HTTT03", "KT04", "KT05", "TC06", "QT07", "QT08", "MK09", "DLT10", "DLT11", "KH12", "TA13", "TQ14"].map((cls) => (
-                  <label key={cls} className="flex items-center gap-2 text-sm">
+                  <label key={cls} className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       value={cls}
@@ -178,12 +182,14 @@ export default function ControlPanel({
                   </label>
                 ))}
               </div>
+            </div>
 
-              {/* Major filter */}
-              <div>
-                <p className="font-medium text-sm mb-2">Major Code</p>
+            {/* Major filter */}
+            <div>
+              <p className="font-medium text-base mb-3">Major Code</p>
+              <div className="grid grid-cols-4 gap-2"> {/* 👈 3 cột */}
                 {["QT", "TC", "CNTT", "HTTT", "KT", "DLT", "MK", "KH", "TQ", "TA"].map((dept) => (
-                  <label key={dept} className="flex items-center gap-2 text-sm">
+                  <label key={dept} className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       value={dept}
@@ -200,20 +206,21 @@ export default function ControlPanel({
                   </label>
                 ))}
               </div>
-
-              {/* Reset */}
-              <button
-                onClick={() => {
-                  setGenderFilters([]);
-                  setClassFilters([]);
-                  setMajorFilters([]); // 👈 reset thêm khoa
-                }}
-                className="w-full px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
-              >
-                Reset
-              </button>
             </div>
-          )}
+
+            {/* Reset */}
+            <button
+              onClick={() => {
+                setGenderFilters([]);
+                setClassFilters([]);
+                setMajorFilters([]);
+              }}
+              className="w-full px-3 py-2 text-base rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
+            >
+              Reset
+            </button>
+          </div>
+        )}
         </div>
 
         {/* Search + total */}
