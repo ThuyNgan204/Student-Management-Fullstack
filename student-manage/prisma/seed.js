@@ -11,12 +11,28 @@ async function main() {
   await prisma.enrollment.deleteMany();
   await prisma.class_section.deleteMany();
   await prisma.courses.deleteMany();
+  await prisma.user_account.deleteMany();
   await prisma.students.deleteMany();
   await prisma.academic_class.deleteMany();
   await prisma.lecturers.deleteMany();
   await prisma.majors.deleteMany();
   await prisma.departments.deleteMany();
-  await prisma.user_account.deleteMany();
+
+  // Reset toàn bộ sequence về 1 (tự động quét tất cả)
+  await prisma.$executeRawUnsafe(`
+    DO $$ DECLARE
+        seq RECORD;
+    BEGIN
+        FOR seq IN
+            SELECT sequence_name FROM information_schema.sequences
+            WHERE sequence_schema = 'public'
+        LOOP
+            EXECUTE 'ALTER SEQUENCE "' || seq.sequence_name || '" RESTART WITH 1';
+        END LOOP;
+    END $$;
+  `)
+
+  console.log("Database cleared and sequences reset!")
 
   const STUDENT_STATUS = ["Đang học", "Bảo lưu", "Tốt nghiệp", "Thôi học"];
   const ENROLLMENT_STATUS = ["Đang học", "Hủy", "Hoàn thành"];
@@ -88,7 +104,7 @@ async function main() {
         gender: gen,
         department_id: departments[i % departments.length].department_id,
         email: `gv${i + 1}@university.edu.vn`,
-        phone: `09${faker.number.int({ min: 1000000, max: 9999999 })}`,
+        phone: `09${faker.number.int({ min: 10000000, max: 99999999 })}`,
         address: `${faker.location.streetAddress()}, ${faker.location.city()}, Việt Nam`,
         position: "Giảng viên",
       },
@@ -136,7 +152,7 @@ async function main() {
         gender,
         dob: faker.date.birthdate({ min: 18, max: 23, mode: "age" }),
         address: `${faker.location.streetAddress()}, ${faker.location.city()}, Việt Nam`,
-        phone: `09${faker.number.int({ min: 1000000, max: 9999999 })}`,
+        phone: `09${faker.number.int({ min: 10000000, max: 99999999 })}`,
         email: `sv${i}@student.university.edu.vn`,
         cohort: "2023",
         status: faker.helpers.arrayElement(STUDENT_STATUS),
