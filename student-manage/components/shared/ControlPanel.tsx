@@ -12,7 +12,12 @@ interface ControlPanelProps {
   onAdd: () => void;
 }
 
-export default function ControlPanel({ total, addLabel, addTotal, onAdd }: ControlPanelProps) {
+export default function ControlPanel({
+  total,
+  addLabel,
+  addTotal,
+  onAdd,
+}: ControlPanelProps) {
   const {
     search,
     pageSize,
@@ -20,6 +25,7 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
     sortOrder,
     genderFilters,
     classFilters,
+    majorFilters,           // 👈 thêm
     openFilter,
     setSearch,
     setPage,
@@ -28,6 +34,7 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
     setSortOrder,
     setGenderFilters,
     setClassFilters,
+    setMajorFilters,        // 👈 thêm
     setOpenFilter,
   } = useStudentStore();
 
@@ -104,9 +111,9 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
             className="w-40 border rounded-md px-3 py-2 text-sm bg-white shadow-sm flex items-center justify-between hover:bg-gray-50"
           >
             Select filters
-            {genderFilters.length + classFilters.length > 0 && (
+            {genderFilters.length + classFilters.length + majorFilters.length > 0 && (
               <span className="ml-1 text-blue-600 font-semibold">
-                ({genderFilters.length + classFilters.length})
+                ({genderFilters.length + classFilters.length + majorFilters.length})
               </span>
             )}
             <svg
@@ -117,12 +124,17 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
 
           {openFilter && (
-            <div className="absolute left-0 mt-2 w-44 rounded-lg shadow-lg bg-white border z-10 p-4 space-y-4">
+            <div className="absolute left-0 mt-2 w-56 rounded-lg shadow-lg bg-white border z-10 p-4 space-y-4">
               {/* Gender */}
               <div>
                 <p className="font-medium text-sm mb-2">Gender</p>
@@ -145,33 +157,56 @@ export default function ControlPanel({ total, addLabel, addTotal, onAdd }: Contr
                 ))}
               </div>
 
-              {/* Class
+              {/* Class filter */}
               <div>
-                <p className="font-medium text-sm mb-2">Class</p>
-                {["10", "11", "12"].map((c) => (
-                  <label key={c} className="flex items-center gap-2 text-sm">
+                <p className="font-medium text-sm mb-2">Class Code</p>
+                {["CNTT01", "HTTT02", "HTTT03", "KT04", "KT05", "TC06", "QT07", "QT08", "MK09", "DLT10", "DLT11", "KH12", "TA13", "TQ14"].map((cls) => (
+                  <label key={cls} className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
-                      value={c}
-                      checked={classFilters.includes(c)}
+                      value={cls}
+                      checked={classFilters.includes(cls)}
                       onChange={(e) =>
                         setClassFilters((prev) =>
                           e.target.checked
-                            ? [...prev, c]
-                            : prev.filter((x) => x !== c)
+                            ? [...prev, cls]
+                            : prev.filter((x) => x !== cls)
                         )
                       }
                     />
-                    {c}
+                    {cls}
                   </label>
                 ))}
-              </div> */}
+              </div>
+
+              {/* Major filter */}
+              <div>
+                <p className="font-medium text-sm mb-2">Major Code</p>
+                {["QT", "TC", "CNTT", "HTTT", "KT", "DLT", "MK", "KH", "TQ", "TA"].map((dept) => (
+                  <label key={dept} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      value={dept}
+                      checked={majorFilters.includes(dept)}
+                      onChange={(e) =>
+                        setMajorFilters((prev) =>
+                          e.target.checked
+                            ? [...prev, dept]
+                            : prev.filter((x) => x !== dept)
+                        )
+                      }
+                    />
+                    {dept}
+                  </label>
+                ))}
+              </div>
 
               {/* Reset */}
               <button
                 onClick={() => {
                   setGenderFilters([]);
                   setClassFilters([]);
+                  setMajorFilters([]); // 👈 reset thêm khoa
                 }}
                 className="w-full px-3 py-1 text-sm rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
               >

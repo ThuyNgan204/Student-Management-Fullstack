@@ -8,17 +8,19 @@ interface UseCRUDProps {
   search?: string;
   genderFilters?: string[];
   classFilters?: string[];
+  majorFilters: string[];
   sortBy?: string;
   sortOrder?: string;
 }
 
-export const useCRUD = <TData, TForm>({
+export const useCRUD = <TData extends { student_id?: number }, TForm>({
   resource,
   page,
   pageSize,
   search,
   genderFilters = [],
   classFilters = [],
+  majorFilters = [],
   sortBy,
   sortOrder,
 }: UseCRUDProps) => {
@@ -30,10 +32,11 @@ export const useCRUD = <TData, TForm>({
     search,
     genderFilters,
     classFilters,
-    sortBy,
+    majorFilters,
     sortOrder,
   ];
 
+  // GET
   const query = useQuery({
     queryKey,
     queryFn: async () => {
@@ -43,30 +46,47 @@ export const useCRUD = <TData, TForm>({
       });
       if (search) params.append("search", search);
       genderFilters.forEach((g) => params.append("gender", g));
-      classFilters.forEach((c) => params.append("class_prefix", c));
+      classFilters.forEach((c) => params.append("class_code", c));
+      majorFilters.forEach((m) => params.append("major_code", m));
       if (sortBy) params.append("sort_by", sortBy);
       if (sortOrder) params.append("sort_order", sortOrder);
 
-      // ❗ Chuyển từ FastAPI sang Next API:
       const res = await axios.get(`/api/${resource}?${params.toString()}`);
       return res.data;
     },
     keepPreviousData: true,
   });
 
+  // CREATE
   const addMutation = useMutation({
-    mutationFn: (newData: TForm) => axios.post(`/api/${resource}`, newData),
+    mutationFn: async (newData: TForm) => {
+      const res = await axios.post(`/api/${resource}`, newData);
+      return res.data;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
   });
 
+  // UPDATE
   const updateMutation = useMutation({
-    mutationFn: (updatedData: TData) =>
-      axios.put(`/api/${resource}/${(updatedData as any).student_id}`, updatedData),
+    mutationFn: async (updatedData: TData) => {
+      if (!updatedData.student_id) {
+        throw new Error("student_id is required for update");
+      }
+      const res = await axios.put(
+        `/api/${resource}/${updatedData.student_id}`,
+        updatedData
+      );
+      return res.data;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
   });
 
+  // DELETE
   const deleteMutation = useMutation({
-    mutationFn: (student_id: number) => axios.delete(`/api/${resource}/${student_id}`),
+    mutationFn: async (student_id: number) => {
+      const res = await axios.delete(`/api/${resource}/${student_id}`);
+      return res.data;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
   });
 

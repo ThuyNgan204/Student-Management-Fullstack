@@ -25,6 +25,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
 import { StudentFormInputs, studentSchema } from "@/lib/zodSchemas";
 import { Eye, Pencil } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Home() {
   const {
@@ -36,6 +37,7 @@ export default function Home() {
     addOpen,
     genderFilters,
     classFilters,
+    majorFilters,
     sortBy,
     sortOrder,
     setPage,
@@ -52,7 +54,7 @@ export default function Home() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, genderFilters, classFilters, sortBy, sortOrder, setPage]);
+  }, [debouncedSearch, genderFilters, classFilters, majorFilters, sortBy, sortOrder, setPage]);
 
   // Fetch majors & classes for dropdowns
   useEffect(() => {
@@ -124,6 +126,7 @@ export default function Home() {
     search: debouncedSearch,
     genderFilters,
     classFilters,
+    majorFilters,
     sortBy: "student_id",
     sortOrder,
   });
@@ -131,7 +134,14 @@ export default function Home() {
   // Handlers
   const onSubmitAdd = (data: StudentFormInputs) => {
     addMutation.mutate(data, {
-      onSuccess: () => resetAdd(),
+       onSuccess: () => {
+      toast.success("Thêm sinh viên thành công");
+      resetAdd();
+      setAddOpen(false);
+    },
+    onError: () => {
+      toast.error("Thêm sinh viên thất bại");
+    },
     });
   };
 
@@ -142,7 +152,7 @@ export default function Home() {
       first_name: student.first_name,
       student_code: student.student_code,
       gender: student.gender,
-      dob: student.dob,
+      dob: student.dob? new Date(student.dob).toISOString().split("T")[0] : "",
       address: student.address ?? "",
       phone: student.phone ?? "",
       email: student.email ?? "",
@@ -155,7 +165,19 @@ export default function Home() {
 
   const handleUpdate = (data: StudentFormInputs) => {
     if (editingStudent) {
-      updateMutation.mutate({ ...editingStudent, ...data });
+      updateMutation.mutate(
+      { ...editingStudent, ...data },
+      {
+        onSuccess: () => {
+          toast.success("Cập nhật thành công");
+          resetEdit();
+          setEditingStudent(null);
+        },
+        onError: () => {
+          toast.error("Cập nhật thất bại");
+        },
+      }
+    );
     }
   };
 
@@ -289,54 +311,57 @@ export default function Home() {
 
       {/* View Modal */}
       <DetailDialog open={!!selectedStudent} title="Student Detail" onClose={() => setSelectedStudent(null)}>
-        {selectedStudent && (
-          <ul className="space-y-2">
-            <li>
-              <strong>ID:</strong> {selectedStudent.student_id}
-            </li>
-            <li>
-              <strong>Họ Tên:</strong> {selectedStudent.last_name} {selectedStudent.first_name}
-            </li>
-            <li>
-              <strong>Giới tính:</strong> {selectedStudent.gender}
-            </li>
-            <li>
-              <strong>MSSV:</strong> {selectedStudent.student_code}
-            </li>
-            <li>
-              <strong>Ngày sinh:</strong> {formatDate(selectedStudent.dob)}
-            </li>
-            <li>
-              <strong>Địa chỉ:</strong> {selectedStudent.address}
-            </li>
-            <li>
-              <strong>Số điện thoại:</strong> {selectedStudent.phone}
-            </li>
-            <li>
-              <strong>Email:</strong> {selectedStudent.email}
-            </li>
-            <li>
-              <strong>Lớp:</strong> {selectedStudent.academic_class?.class_name}
-            </li>
-            <li>
-              <strong>Cố vấn học tập:</strong> {selectedStudent.academic_class?.lecturers?.last_name}{" "}
-              {selectedStudent?.academic_class?.lecturers?.first_name}
-            </li>
-            <li>
-              <strong>Chuyên ngành:</strong> {selectedStudent.majors?.major_name}
-            </li>
-            <li>
-              <strong>Khoa:</strong> {selectedStudent.majors?.departments?.department_name}
-            </li>
-            <li>
-              <strong>Khóa:</strong> {selectedStudent.cohort}
-            </li>
-            <li>
-              <strong>Tình trạng:</strong> {selectedStudent.status}
-            </li>
-          </ul>
-        )}
-      </DetailDialog>
+      {selectedStudent && (
+        <div className="grid grid-cols-12 gap-y-3 gap-x-6">
+          <div className="col-span-4 text-gray-500 font-medium">ID:</div>
+          <div className="col-span-8">{selectedStudent.student_id}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Họ Tên:</div>
+          <div className="col-span-8">
+            {selectedStudent.last_name} {selectedStudent.first_name}
+          </div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Giới tính:</div>
+          <div className="col-span-8">{selectedStudent.gender}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">MSSV:</div>
+          <div className="col-span-8">{selectedStudent.student_code}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Ngày sinh:</div>
+          <div className="col-span-8">{formatDate(selectedStudent.dob)}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Địa chỉ:</div>
+          <div className="col-span-8">{selectedStudent.address}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Số điện thoại:</div>
+          <div className="col-span-8">{selectedStudent.phone}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Email:</div>
+          <div className="col-span-8">{selectedStudent.email}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Lớp:</div>
+          <div className="col-span-8">{selectedStudent.academic_class?.class_name}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Cố vấn học tập:</div>
+          <div className="col-span-8">
+            {selectedStudent.academic_class?.lecturers?.last_name}{" "}
+            {selectedStudent.academic_class?.lecturers?.first_name}
+          </div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Chuyên ngành:</div>
+          <div className="col-span-8">{selectedStudent.majors?.major_name}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Khoa:</div>
+          <div className="col-span-8">{selectedStudent.majors?.departments?.department_name}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Khóa:</div>
+          <div className="col-span-8">{selectedStudent.cohort}</div>
+
+          <div className="col-span-4 text-gray-500 font-medium">Tình trạng:</div>
+          <div className="col-span-8">{selectedStudent.status}</div>
+        </div>
+      )}
+    </DetailDialog>
     </div>
   );
 }
@@ -354,7 +379,7 @@ function StudentForm({
   classes: AcademicClass[];
 }) {
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <Label className="mb-2">Last Name</Label>
         <Input {...register("last_name")} />
@@ -445,6 +470,6 @@ function StudentForm({
         </select>
         {errors.status && <p className="text-xs text-red-500">{errors.status.message}</p>}
       </div>
-    </>
+    </div>
   );
 }

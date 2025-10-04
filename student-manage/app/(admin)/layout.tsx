@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import Providers from "@/providers/QueryProvider";
 import MainLayout from "@/components/layout/MainLayout";
-
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +19,10 @@ export default function AdminLayout({
 }>) {
   return (
         <Providers>
-          <MainLayout>{children}</MainLayout>
+          <MainLayout>
+            {children}
+            <Toaster position="top-right" richColors closeButton /> 
+          </MainLayout>
         </Providers>
   );
 }

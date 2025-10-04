@@ -65,9 +65,12 @@ interface StudentStore {
   page: number;
   pageSize: number;
   search: string;
+
   genderFilters: string[];
   classFilters: string[];
+  majorFilters: string[];
   selectedFilters: string[];
+
   sortBy: keyof Student | "";
   sortOrder: "asc" | "desc";
 
@@ -79,11 +82,15 @@ interface StudentStore {
   setPage: (page: number) => void;
   setPageSize: (pageSize: number) => void;
   setSearch: (search: string) => void;
+
   setGenderFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
   setClassFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
+  setMajorFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
   setSelectedFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
+
   setSortBy: (field: keyof Student | "") => void;
   setSortOrder: (order: "asc" | "desc") => void;
+
   setEditingStudent: (student: Student | null) => void;
   setSelectedStudent: (student: Student | null) => void;
   setAddOpen: (isOpen: boolean) => void;
@@ -94,9 +101,12 @@ export const useStudentStore = create<StudentStore>((set) => ({
   page: 1,
   pageSize: 10,
   search: "",
+
   genderFilters: [],
   classFilters: [],
+  majorFilters: [],
   selectedFilters: [],
+
   sortBy: "",
   sortOrder: "asc",
 
@@ -108,6 +118,7 @@ export const useStudentStore = create<StudentStore>((set) => ({
   setPage: (page) => set({ page }),
   setPageSize: (pageSize) => set({ pageSize }),
   setSearch: (search) => set({ search }),
+
   setGenderFilters: (updater) =>
     set((state) => ({
       genderFilters:
@@ -118,15 +129,22 @@ export const useStudentStore = create<StudentStore>((set) => ({
       classFilters:
         typeof updater === "function" ? updater(state.classFilters) : updater,
     })),
+  setMajorFilters: (updater) =>
+    set((state) => ({
+      majorFilters:
+        typeof updater === "function" ? updater(state.majorFilters) : updater,
+    })),
   setSelectedFilters: (updater) =>
     set((state) => ({
       selectedFilters:
         typeof updater === "function" ? updater(state.selectedFilters) : updater,
     })),
+
   setSortBy: (field) => set({ sortBy: field }),
   setSortOrder: (order) => set({ sortOrder: order }),
+
   setEditingStudent: (student) => set({ editingStudent: student }),
   setSelectedStudent: (student) => set({ selectedStudent: student }),
   setAddOpen: (isOpen) => set({ addOpen: isOpen }),
-  setOpenFilter: (isOpenFilter) => set({openFilter: isOpenFilter})
+  setOpenFilter: (isOpenFilter) => set({ openFilter: isOpenFilter }),
 }));
