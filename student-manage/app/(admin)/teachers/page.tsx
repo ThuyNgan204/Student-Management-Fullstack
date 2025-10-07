@@ -1,55 +1,65 @@
+// app/lecturers/page.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useStudentStore, Student } from "@/store/useStudentStore";
-import Link from "next/link";
 import axios from "axios";
-
-// Components
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import ControlPanel from "@/components/shared/ControlPanel";
-import DataTable from "@/components/shared/DataTable";
-import SearchBar from "@/components/shared/SearchBar";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import Pagination from "@/components/shared/Pagination";
-import DetailDialog from "@/components/shared/DetailModal";
-import FormModal from "@/components/shared/FormModal";
-
-//  Hooks and Schemas
-import { formatDate } from "@/utils/date";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useCRUD } from "@/hooks/useCRUD";
-import { StudentFormInputs, studentSchema } from "@/lib/zodSchemas";
+import { toast } from "sonner";
 import { Eye, Pencil } from "lucide-react";
 
-export default function Home() {
+import ControlPanel from "@/components/shared/ControlPanel";
+import DataTable from "@/components/shared/DataTable";
+import Pagination from "@/components/shared/Pagination";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import FormModal from "@/components/shared/FormModal";
+import DetailDialog from "@/components/shared/DetailModal";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useCRUD } from "@/hooks/useCRUD";
+import { Department, Lecturer, useLecturerStore } from "@/store/useLecturerStore";
+import LecturerForm from "@/components/lecturers/Lecturers";
+import LecturerDetail from "@/components/lecturers/LecturerDetailModal";
+import { TeacherFormInputs, teacherSchema } from "@/lib/zodSchemas";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+export default function LecturersPage() {
   const {
     page,
     pageSize,
     search,
-    editingStudent,
-    selectedStudent,
+    editingLecturer,
+    selectedLecturer,
     addOpen,
     genderFilters,
-    classFilters,
+    departmentFilters,
+    positionFilters,
     sortBy,
     sortOrder,
     setPage,
     setSearch,
-    setEditingStudent,
-    setSelectedStudent,
+    setEditingLecturer,
+    setSelectedLecturer,
     setAddOpen,
-  } = useStudentStore();
+  } = useLecturerStore();
+
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, genderFilters, classFilters, sortBy, sortOrder, setPage]);
+  }, [debouncedSearch, genderFilters, departmentFilters, positionFilters, sortBy, sortOrder, setPage]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const res = await axios.get("/api/departments");
+        setDepartments(res.data);
+      } catch (err) {
+        console.error("Failed to load departments", err);
+      }
+    };
+    fetch();
+  }, []);
 
   // Form Add
   const {
@@ -57,9 +67,21 @@ export default function Home() {
     handleSubmit: handleSubmitAdd,
     reset: resetAdd,
     formState: { errors: errorsAdd },
-  } = useForm<StudentFormInputs>({
-    resolver: zodResolver(studentSchema),
-    defaultValues: { last_name: "", first_name: "", class_name: "", gender: "", dob: "" },
+  } = useForm<TeacherFormInputs>({
+    resolver: zodResolver(teacherSchema),
+    defaultValues: {
+      lecturer_code: "",
+      first_name: "",
+      last_name: "",
+      gender: "",
+      dob: "",
+      phone: "",
+      email: "",
+      address: "",
+      department_id: undefined,
+      position: "",
+      avatar: "",
+    },
   });
 
   // Form Edit
@@ -68,57 +90,87 @@ export default function Home() {
     handleSubmit: handleSubmitEdit,
     reset: resetEdit,
     formState: { errors: errorsEdit },
-  } = useForm<StudentFormInputs>({
-    resolver: zodResolver(studentSchema),
-  });
+  } = useForm<TeacherFormInputs>({
+    resolver: zodResolver(teacherSchema),});
 
-  // Queries
-   const {
-    data,
-    isLoading,
-    isError,
-    addMutation,
-    updateMutation,
-    deleteMutation,
-  } = useCRUD<Student, StudentFormInputs>({
-    resource: "students",
-    page,
-    pageSize,
-    search: debouncedSearch,
-    genderFilters,
-    classFilters,
-    sortBy,
-    sortOrder,
-  });
+  // CRUD hooks (reuses your existing useCRUD)
+const {
+  data,
+  isLoading,
+  isError,
+  addMutation,
+  updateMutation,
+  deleteMutation,
+} = useCRUD<Lecturer, TeacherFormInputs>({
+  resource: "lecturers",
+  idField: "lecturer_id",         // ✅ BẮT BUỘC THÊM
+  page,
+  pageSize,
+  search: debouncedSearch,
+  sortBy: "lecturer_id",
+  sortOrder,
+  filters: {
+    gender: genderFilters,
+    // nếu lọc theo department_id
+    department_id: departmentFilters || [],
+  },
+});
 
-  // Handlers
-  const onSubmitAdd = (data: StudentFormInputs) => {
-    addMutation.mutate(data);
-  };
 
-  const handleEdit = (student: Student) => {
-    setEditingStudent(student);
-    resetEdit({
-      last_name: student.last_name,
-      first_name: student.first_name,
-      class_name: student.class_name,
-      gender: student.gender,
-      dob: student.dob,
+  const onSubmitAdd = (dataForm: TeacherFormInputs) => {
+    addMutation.mutate(dataForm, {
+      onSuccess: () => {
+        toast.success("Thêm giảng viên thành công");
+        resetAdd();
+        setAddOpen(false);
+      },
+      onError: () => {
+        toast.error("Thêm giảng viên thất bại");
+      },
     });
   };
 
-  const handleUpdate = (data: StudentFormInputs) => {
-    if (editingStudent) {
-      updateMutation.mutate({ ...editingStudent, ...data });
+  const handleEdit = (lect: Lecturer) => {
+    setEditingLecturer(lect);
+    resetEdit({
+      lecturer_code: lect.lecturer_code,
+      first_name: lect.first_name,
+      last_name: lect.last_name,
+      gender: lect.gender ?? "",
+      dob: lect.dob ? new Date(lect.dob).toISOString().split("T")[0] : "",
+      phone: lect.phone ?? "",
+      email: lect.email ?? "",
+      address: lect.address ?? "",
+      department_id: lect.department_id ?? undefined,
+      position: lect.position ?? "",
+      avatar: lect.avatar ?? "",
+    });
+  };
+
+  const handleUpdate = (dataForm: TeacherFormInputs) => {
+    if (editingLecturer) {
+      updateMutation.mutate(
+        { ...editingLecturer, ...dataForm },
+        {
+          onSuccess: () => {
+            toast.success("Cập nhật giảng viên thành công");
+            resetEdit();
+            setEditingLecturer(null);
+          },
+          onError: () => {
+            toast.error("Cập nhật giảng viên thất bại");
+          },
+        }
+      );
     }
   };
 
-  const handleView = async (studentId: number) => {
+  const handleView = async (lecturer_id: number) => {
     try {
-      const res = await axios.get(`http://localhost:8000/students/${studentId}`);
-      setSelectedStudent(res.data);
+      const res = await axios.get(`/api/lecturers/${lecturer_id}`);
+      setSelectedLecturer(res.data);
     } catch (err) {
-      alert("Failed to load student detail");
+      toast.error("Không tải được chi tiết giảng viên");
     }
   };
 
@@ -126,76 +178,61 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
+      <ControlPanel
+        total={data?.total ?? 0}
+        addLabel="Add Lecturer"
+        addTotal="Total Lecturers"
+        onAdd={() => setAddOpen(true)}
+      />
 
-      {/* Control Panel */}
-        <ControlPanel
-          total={data?.total ?? 0}
-          addLabel="Add Teacher"
-          addTotal="Total Teachers"
-          onAdd={() => setAddOpen(true)}
-        />
-
-
-      {/* Table */}
       <main className="flex-1 overflow-x-auto px-6 py-4">
         {isLoading && <p>Loading...</p>}
-        {isError && <p>Error loading teachers.</p>}
+        {isError && <p>Error loading lecturers.</p>}
 
         {!isLoading && !isError && (
           <>
             <DataTable
               columns={[
-                { key: "id", header: "ID" },
+                { key: "lecturer_id", header: "ID" },
                 {
                   key: "last_name",
-                  header: "Last Name",
-                  render: (student) => (
-                    <Link
-                      href={`/students/${student.id}`}
-                      className="text-primary hover:underline hover:text-primary/80"
-                    >
-                      {student.last_name}
-                    </Link>
+                  header: "Họ",
+                  render: (l: Lecturer) => (
+                    <a href={`/lecturers/${l.lecturer_id}`} className="text-primary hover:underline">
+                      {l.last_name}
+                    </a>
                   ),
                 },
-                {
-                  key: "first_name",
-                  header: "First Name",
-                  render: (student) => (
-                    <Link
-                      href={`/students/${student.id}`}
-                      className="text-primary hover:underline hover:text-primary/80"
-                    >
-                      {student.first_name}
-                    </Link>
-                  ),
-                },
-                { key: "gender", header: "Gender" },
-                { key: "dob", header: "Date of Birth", render: (s) => formatDate(s.dob) },
-                { key: "class_name", header: "Class" },
-                { key: "created_at", header: "Created At", render: (s) => formatDate(s.created_at) },
-                { key: "updated_at", header: "Updated At", render: (s) => formatDate(s.updated_at) },
+                { key: "first_name", header: "Tên", render: (l: Lecturer) => l.first_name },
+                { key: "lecturer_code", header: "Mã GV" },
+                { key: "gender", header: "Giới tính" },
+                { key: "phone", header: "Phone" },
+                { key: "email", header: "Email" },
+                { key: "departments", header: "Khoa", render: (l: Lecturer) => l.departments?.department_name ?? "N/A" },
+                { key: "position", header: "Chức vụ" },
                 {
                   key: "actions",
                   header: "Actions",
                   className: "text-center",
-                  render: (s) => (
+                  render: (l: Lecturer) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(s.id)}><Eye className="h-4 w-4"/></Button>
-                      <Button variant="default" onClick={() => handleEdit(s)}><Pencil className="h-4 w-4"/></Button>
-
+                      <button className="btn" onClick={() => handleView(l.lecturer_id)}>
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button className="btn" onClick={() => handleEdit(l)}>
+                        <Pencil className="h-4 w-4" />
+                      </button>
                       <ConfirmDialog
-                        onConfirm={() => deleteMutation.mutate(s.id)}
+                        onConfirm={() => deleteMutation.mutate(l.lecturer_id)}
                         title="Are you absolutely sure?"
-                        description="This action cannot be undone. This will permanently delete the student from the system."
+                        description="This action cannot be undone. This will permanently delete the lecturer and associated account."
                       />
-
-                  </div>
+                    </div>
                   ),
                 },
               ]}
-                data={isError || isLoading ? [] : data?.items || []}
-                emptyMessage={isError ? "Error loading students" : "No students found"}
+              data={isError || isLoading ? [] : data?.items || []}
+              emptyMessage={isError ? "Error loading lecturers" : "No lecturers found"}
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -203,143 +240,49 @@ export default function Home() {
         )}
       </main>
 
-      {/* Add Student Modal */}
+      {/* Add Lecturer Modal */}
       <FormModal
         open={addOpen}
-        onOpenChange={setAddOpen}
-        title="Add Student"
+        onOpenChange={(open) => {
+          // Nếu đóng modal (open = false) → reset form
+          if (!open) {
+            resetAdd();
+            setAddOpen(false);
+          } else {
+            setAddOpen(true);
+          }
+        }}
+        title="Add Lecturer"
         onSubmit={handleSubmitAdd(onSubmitAdd)}
-        onCancel={() => setAddOpen(false)}
+        onCancel={() => {
+          resetAdd();
+          setAddOpen(false);
+        }}
         submitText="Save"
       >
-        <div>
-          <Label className="mb-2">Last Name</Label>
-          <Input {...registerAdd("last_name")} />
-          {errorsAdd.last_name && (
-            <p className="text-xs text-red-500">{errorsAdd.last_name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">First Name</Label>
-          <Input {...registerAdd("first_name")} />
-          {errorsAdd.first_name && (
-            <p className="text-xs text-red-500">{errorsAdd.first_name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">Class</Label>
-          <Input {...registerAdd("class_name")} />
-          {errorsAdd.class_name && (
-            <p className="text-xs text-red-500">{errorsAdd.class_name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">Gender</Label>
-          <select {...registerAdd("gender")} className="border rounded px-2 py-1 w-full">
-            <option value="">Select gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-          {errorsAdd.gender && (
-            <p className="text-xs text-red-500">{errorsAdd.gender.message}</p>
-          )}
-        </div>
-
-        <div>
-          <Label className="mb-2">Date of Birth</Label>
-          <Input type="date" {...registerAdd("dob")} />
-          {errorsAdd.dob && (
-            <p className="text-xs text-red-500">{errorsAdd.dob.message}</p>
-          )}
-        </div>
+        <LecturerForm register={registerAdd} errors={errorsAdd} departments={departments} />
       </FormModal>
 
-      {/* Edit Student Modal */}
+      {/* Edit Lecturer Modal */}
       <FormModal
-        open={!!editingStudent}
+        open={!!editingLecturer}
         onOpenChange={(open) => {
-          if (!open) setEditingStudent(null);
+          if (!open) setEditingLecturer(null);
         }}
-        title="Edit Student"
+        title="Edit Lecturer"
         onSubmit={handleSubmitEdit(handleUpdate)}
-        onCancel={() => setEditingStudent(null)}
+        onCancel={() => setEditingLecturer(null)}
         submitText="Update"
       >
-        {editingStudent && (
-          <>
-            <div>
-              <Label className="mb-2">Last Name</Label>
-              <Input {...registerEdit("last_name")} />
-              {errorsEdit.last_name && <p className="text-xs text-red-500">{errorsEdit.last_name.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">First Name</Label>
-              <Input {...registerEdit("first_name")} />
-              {errorsEdit.first_name && <p className="text-xs text-red-500">{errorsEdit.first_name.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">Class</Label>
-              <Input {...registerEdit("class_name")} />
-              {errorsEdit.class_name && <p className="text-xs text-red-500">{errorsEdit.class_name.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">Gender</Label>
-              <select {...registerEdit("gender")} className="border rounded px-2 py-1 w-full">
-                <option value="">Select gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-              {errorsEdit.gender && <p className="text-xs text-red-500">{errorsEdit.gender.message}</p>}
-            </div>
-
-            <div>
-              <Label className="mb-2">Date of Birth</Label>
-              <Input type="date" {...registerEdit("dob")} />
-              {errorsEdit.dob && <p className="text-xs text-red-500">{errorsEdit.dob.message}</p>}
-            </div>
-          </>
+        {editingLecturer && (
+          <LecturerForm register={registerEdit} errors={errorsEdit} departments={departments} />
         )}
       </FormModal>
 
-      {/* View Modal */}
-      <DetailDialog
-        open={!!selectedStudent}
-        title="Student Detail"
-        onClose={() => setSelectedStudent(null)}
-      >
-        {selectedStudent && (
-          <ul className="space-y-2">
-            <li>
-              <strong>ID:</strong> {selectedStudent.id}
-            </li>
-            <li>
-              <strong>Name:</strong> {selectedStudent.last_name} {selectedStudent.first_name}
-            </li>
-            <li>
-              <strong>Class:</strong> {selectedStudent.class_name}
-            </li>
-            <li>
-              <strong>Gender:</strong> {selectedStudent.gender}
-            </li>
-            <li>
-              <strong>Date of Birth:</strong> {formatDate(selectedStudent.dob)}
-            </li>
-            <li>
-              <strong>Created At:</strong> {formatDate(selectedStudent.created_at)}
-            </li>
-            <li>
-              <strong>Updated At:</strong> {formatDate(selectedStudent.updated_at)}
-            </li>
-          </ul>
-        )}
+      {/* Detail */}
+      <DetailDialog open={!!selectedLecturer} title="Lecturer Detail" onClose={() => setSelectedLecturer(null)}>
+        {selectedLecturer && <LecturerDetail lecturer={selectedLecturer} />}
       </DetailDialog>
     </div>
   );
 }
-

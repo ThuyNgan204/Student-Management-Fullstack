@@ -3,38 +3,27 @@ import axios from "axios";
 
 interface UseCRUDProps {
   resource: string;
+  idField?: string; // <--- Chìa khóa chính để update/delete (vd: student_id, lecturer_id...)
   page: number;
   pageSize: number;
   search?: string;
-  genderFilters?: string[];
-  classFilters?: string[];
-  majorFilters: string[];
+  filters?: Record<string, any[]>; // <--- Tự do truyền các filters: { gender: ['Male'], major_id: [1, 2] }
   sortBy?: string;
-  sortOrder?: string;
+  sortOrder?: "asc" | "desc";
 }
 
-export const useCRUD = <TData extends { student_id?: number }, TForm>({
+export const useCRUD = <TData extends Record<string, any>, TForm>({
   resource,
+  idField = "id", // <--- Mặc định là "id", nhưng khi dùng thì truyền "student_id" hoặc "lecturer_id"
   page,
   pageSize,
   search,
-  genderFilters = [],
-  classFilters = [],
-  majorFilters = [],
+  filters = {},
   sortBy,
   sortOrder,
 }: UseCRUDProps) => {
   const queryClient = useQueryClient();
-  const queryKey = [
-    resource,
-    page,
-    pageSize,
-    search,
-    genderFilters,
-    classFilters,
-    majorFilters,
-    sortOrder,
-  ];
+  const queryKey = [resource, page, pageSize, search, filters, sortOrder];
 
   // GET
   const query = useQuery({
@@ -45,9 +34,11 @@ export const useCRUD = <TData extends { student_id?: number }, TForm>({
         page_size: pageSize.toString(),
       });
       if (search) params.append("search", search);
-      genderFilters.forEach((g) => params.append("gender", g));
-      classFilters.forEach((c) => params.append("class_code", c));
-      majorFilters.forEach((m) => params.append("major_code", m));
+
+      Object.entries(filters).forEach(([key, values]) => {
+        values.forEach((v) => params.append(key, String(v)));
+      });
+
       if (sortBy) params.append("sort_by", sortBy);
       if (sortOrder) params.append("sort_order", sortOrder);
 
@@ -69,11 +60,11 @@ export const useCRUD = <TData extends { student_id?: number }, TForm>({
   // UPDATE
   const updateMutation = useMutation({
     mutationFn: async (updatedData: TData) => {
-      if (!updatedData.student_id) {
-        throw new Error("student_id is required for update");
+      if (!updatedData[idField]) {
+        throw new Error(`${idField} is required for update`);
       }
       const res = await axios.put(
-        `/api/${resource}/${updatedData.student_id}`,
+        `/api/${resource}/${updatedData[idField]}`,
         updatedData
       );
       return res.data;
@@ -83,8 +74,8 @@ export const useCRUD = <TData extends { student_id?: number }, TForm>({
 
   // DELETE
   const deleteMutation = useMutation({
-    mutationFn: async (student_id: number) => {
-      const res = await axios.delete(`/api/${resource}/${student_id}`);
+    mutationFn: async (id: number) => {
+      const res = await axios.delete(`/api/${resource}/${id}`);
       return res.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),

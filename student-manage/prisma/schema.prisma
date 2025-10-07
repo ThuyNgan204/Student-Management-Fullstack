@@ -34,12 +34,12 @@ model class_section {
   academic_year    String       @db.VarChar(20)
   semester         String       @db.VarChar(10)
   course_id        Int
-  lecturer_id      Int
+  lecturer_id      Int?
   capacity         Int
   start_date       DateTime?    @db.Date
   end_date         DateTime?    @db.Date
   courses          courses      @relation(fields: [course_id], references: [course_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_course")
-  lecturers        lecturers    @relation(fields: [lecturer_id], references: [lecturer_id], onDelete: SetNull, onUpdate: NoAction, map: "fk_lecturer")
+  lecturers        lecturers?    @relation(fields: [lecturer_id], references: [lecturer_id], onDelete: SetNull, onUpdate: NoAction, map: "fk_lecturer")
   enrollment       enrollment[]
 }
 

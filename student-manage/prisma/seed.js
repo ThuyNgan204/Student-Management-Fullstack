@@ -82,16 +82,16 @@ async function main() {
   );
 
   const lecturerNames = [
-    ["Nguyễn", "Văn An", "Nam"],
-    ["Trần", "Thị Bình", "Nữ"],
-    ["Lê", "Minh Cường", "Nam"],
-    ["Phạm", "Thị Dung", "Nữ"],
-    ["Hoàng", "Văn Hưng", "Nam"],
-    ["Đặng", "Thị Lan", "Nữ"],
-    ["Vũ", "Minh Quân", "Nam"],
-    ["Bùi", "Thị Nga", "Nữ"],
-    ["Ngô", "Văn Phúc", "Nam"],
-    ["Đỗ", "Thị Hoa", "Nữ"],
+    ["Nguyễn Văn", "An", "Nam"],
+    ["Trần Thị", "Bình", "Nữ"],
+    ["Lê Minh", "Cường", "Nam"],
+    ["Phạm Thị", "Dung", "Nữ"],
+    ["Hoàng Văn", "Hưng", "Nam"],
+    ["Đặng Thị", "Lan", "Nữ"],
+    ["Vũ Minh", "Quân", "Nam"],
+    ["Bùi Thị", "Nga", "Nữ"],
+    ["Ngô Văn", "Phúc", "Nam"],
+    ["Đỗ Thị", "Hoa", "Nữ"],
   ];
   const lecturers = [];
   for (let i = 0; i < lecturerNames.length; i++) {
@@ -99,8 +99,8 @@ async function main() {
     const l = await prisma.lecturers.create({
       data: {
         lecturer_code: `GV${i + 1}`,
-        first_name: first,
-        last_name: last,
+        first_name: last,
+        last_name: first,
         gender: gen,
         department_id: departments[i % departments.length].department_id,
         email: `gv${i + 1}@university.edu.vn`,
@@ -163,27 +163,38 @@ async function main() {
     students.push(student);
   }
 
-  const courseNames = [
-    "Cơ sở dữ liệu",
-    "Lập trình web",
-    "Mạng máy tính",
-    "Kế toán tài chính",
-    "Marketing căn bản",
-  ];
-  const courses = [];
-  for (const dep of departments) {
-    for (let i = 0; i < 2; i++) {
-      const c = await prisma.courses.create({
-        data: {
-          course_code: `${dep.department_code}C${faker.number.int({ min: 1, max: 99 })}`,
-          course_name: faker.helpers.arrayElement(courseNames),
-          credits: 3,
-          department_id: dep.department_id,
-        },
-      });
-      courses.push(c);
-    }
+const courseNames = [
+  "Cơ sở dữ liệu",
+  "Lập trình web",
+  "Mạng máy tính",
+  "Kế toán tài chính",
+  "Marketing căn bản",
+];
+
+const courses = [];
+const usedCodes = new Set();
+
+for (const dep of departments) {
+  for (let i = 0; i < 2; i++) {
+    // Tạo code cho đến khi chưa được dùng
+    let code;
+    do {
+      code = `${dep.department_code}C${faker.number.int({ min: 1, max: 99 })}`;
+    } while (usedCodes.has(code));
+
+    usedCodes.add(code);
+
+    const c = await prisma.courses.create({
+      data: {
+        course_code: code,
+        course_name: faker.helpers.arrayElement(courseNames),
+        credits: 3,
+        department_id: dep.department_id,
+      },
+    });
+    courses.push(c);
   }
+}
 
   const classSections = [];
   for (const course of courses) {

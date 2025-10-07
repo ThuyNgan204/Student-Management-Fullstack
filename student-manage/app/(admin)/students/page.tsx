@@ -112,24 +112,28 @@ export default function Home() {
   });
 
   // Queries
-  const {
-    data,
-    isLoading,
-    isError,
-    addMutation,
-    updateMutation,
-    deleteMutation,
-  } = useCRUD<Student, StudentFormInputs>({
-    resource: "students",
-    page,
-    pageSize,
-    search: debouncedSearch,
-    genderFilters,
-    classFilters,
-    majorFilters,
-    sortBy: "student_id",
-    sortOrder,
-  });
+ const {
+  data,
+  isLoading,
+  isError,
+  addMutation,
+  updateMutation,
+  deleteMutation,
+} = useCRUD<Student, StudentFormInputs>({
+  resource: "students",
+  idField: "student_id",             // ✅ BẮT BUỘC THÊM
+  page,
+  pageSize,
+  search: debouncedSearch,
+  sortBy: "student_id",
+  sortOrder,
+  filters: {
+    gender: genderFilters,
+    class_code: classFilters,
+    major_code: majorFilters,
+  },
+});
+
 
   // Handlers
   const onSubmitAdd = (data: StudentFormInputs) => {
@@ -284,10 +288,21 @@ export default function Home() {
       {/* Add Student Modal */}
       <FormModal
         open={addOpen}
-        onOpenChange={setAddOpen}
+        onOpenChange={(open) => {
+          // Nếu đóng modal (open = false) → reset form
+          if (!open) {
+            resetAdd();
+            setAddOpen(false);
+          } else {
+            setAddOpen(true);
+          }
+        }}
         title="Add Student"
         onSubmit={handleSubmitAdd(onSubmitAdd)}
-        onCancel={() => setAddOpen(false)}
+        onCancel={() => {
+          resetAdd();
+          setAddOpen(false);
+        }}
         submitText="Save"
       >
         <StudentForm register={registerAdd} errors={errorsAdd} majors={majors} classes={classes} />
