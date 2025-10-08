@@ -17,18 +17,18 @@ import {
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { name: "Trang chủ", href: "/", icon: LayoutDashboard },
-  { name: "Quản lý sinh viên", href: "/students", icon: Users },
-  { name: "Quản lý giảng viên", href: "/teachers", icon: UserCog },
-  { name: "Quản lý khoa", href: "/departments", icon: Building2 },
-  { name: "Quản lý chuyên ngành", href: "/majors", icon: GraduationCap },
-  { name: "Quản lý lớp sinh hoạt", href: "/classes", icon: ClipboardList },
-  { name: "Quản lý khóa học", href: "/courses", icon: BookOpen },
-  { name: "Quản lý đăng ký", href: "/enrollment", icon: UserPlus },
-  { name: "Quản lý lớp học phần", href: "/class_section", icon: Layers },
-  { name: "Quản lý điểm", href: "/grades", icon: FileText },
-  { name: "Báo cáo - Thống kê", href: "/reports", icon: FileText },
-  { name: "Quản lý tài khoản", href: "/accounts", icon: Users },
+  { name: "TRANG CHỦ", href: "/", icon: LayoutDashboard },
+  { name: "QUẢN LÝ SINH VIÊN", href: "/students", icon: Users },
+  { name: "QUẢN LÝ GIẢNG VIÊN", href: "/teachers", icon: UserCog },
+  { name: "QUẢN LÝ KHOA", href: "/departments", icon: Building2 },
+  { name: "QUẢN LÝ CHUYÊN NGÀNH", href: "/majors", icon: GraduationCap },
+  { name: "QUẢN LÝ LỚP SINH HOẠT", href: "/classes", icon: ClipboardList },
+  { name: "QUẢN LÝ KHÓA HỌC", href: "/courses", icon: BookOpen },
+  { name: "QUẢN LÝ ĐĂNG KÝ", href: "/enrollment", icon: UserPlus },
+  { name: "QUẢN LÝ LỚP HỌC PHẦN", href: "/class_section", icon: Layers },
+  { name: "QUẢN LÝ ĐIỂM", href: "/grades", icon: FileText },
+  { name: "BÁO CÁO - THỐNG KÊ", href: "/reports", icon: FileText },
+  { name: "QUẢN LÝ TÀI KHOẢN", href: "/accounts", icon: Users },
 ];
 
 export default function Sidebar() {

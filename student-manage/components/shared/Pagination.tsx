@@ -68,12 +68,12 @@ export default function Pagination({
       {/* Page numbers */}
       {pages.map((p, idx) =>
         p === "..." ? (
-          <span key={idx} className="px-2 py-1 text-sm">
+          <span key={`ellipsis-${idx}`} className="px-2 py-1 text-sm">
             ...
           </span>
         ) : (
           <Button
-            key={p}
+            key={`page-${p}-${idx}`}
             variant={page === p ? "default" : "outline"}
             onClick={() => onChange(p)}
           >

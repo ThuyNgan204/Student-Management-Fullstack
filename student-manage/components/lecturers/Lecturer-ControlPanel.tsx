@@ -45,7 +45,7 @@ export default function ControlPanelLecturer({
 
   // 🔹 Fetch departments
   useEffect(() => {
-    axios.get("/api/departments").then((r) => setDepartments(r.data)).catch(() => setDepartments([]));
+    axios.get("/api/departments").then((r) => setDepartments(r.data.items)).catch(() => setDepartments([]));
   }, []);
 
   // 🔹 Tắt dropdown khi click ra ngoài
@@ -70,10 +70,12 @@ export default function ControlPanelLecturer({
           </Button>
         </div>
 
-        {/* 🔢 Rows per page */}
+        {/* 🔢 Hiển thị
+ */}
         <div className="flex flex-col">
           <Label htmlFor="pageSize" className="mb-1 text-sm font-medium">
-            Rows per page
+            Hiển thị
+
           </Label>
           <select
             id="pageSize"

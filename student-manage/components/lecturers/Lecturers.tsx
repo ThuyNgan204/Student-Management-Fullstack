@@ -18,27 +18,27 @@ export default function LecturerForm({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <Label className="mb-2">Lecturer Code</Label>
+        <Label className="mb-2">Mã Giảng viên</Label>
         <Input {...register("lecturer_code")} />
         {errors?.lecturer_code && <p className="text-xs text-red-500">{errors.lecturer_code.message}</p>}
       </div>
 
       <div>
-        <Label className="mb-2">First Name</Label>
-        <Input {...register("first_name")} />
-        {errors?.first_name && <p className="text-xs text-red-500">{errors.first_name.message}</p>}
-      </div>
-
-      <div>
-        <Label className="mb-2">Last Name</Label>
+        <Label className="mb-2">Họ</Label>
         <Input {...register("last_name")} />
         {errors?.last_name && <p className="text-xs text-red-500">{errors.last_name.message}</p>}
       </div>
 
       <div>
-        <Label className="mb-2">Gender</Label>
+        <Label className="mb-2">Tên</Label>
+        <Input {...register("first_name")} />
+        {errors?.first_name && <p className="text-xs text-red-500">{errors.first_name.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Giới tính</Label>
         <select {...register("gender")} className="border rounded px-2 py-1 w-full">
-          <option value="">Select gender</option>
+          <option value="">Chọn giới tính</option>
           <option value="Nam">Nam</option>
           <option value="Nữ">Nữ</option>
           <option value="Khác">Khác</option>
@@ -46,12 +46,12 @@ export default function LecturerForm({
       </div>
 
       <div>
-        <Label className="mb-2">Date of Birth</Label>
+        <Label className="mb-2">Ngày sinh</Label>
         <Input type="date" {...register("dob")} />
       </div>
 
       <div>
-        <Label className="mb-2">Phone</Label>
+        <Label className="mb-2">Số điện thoại</Label>
         <Input {...register("phone")} />
       </div>
 
@@ -60,10 +60,15 @@ export default function LecturerForm({
         <Input type="email" {...register("email")} />
       </div>
 
+      <div className="col-span-2">
+        <Label className="mb-2">Địa chỉ</Label>
+        <Input {...register("address")} />
+      </div>
+
       <div>
-        <Label className="mb-2">Department</Label>
+        <Label className="mb-2">Khoa phụ trách</Label>
         <select {...register("department_id")} className="border rounded px-2 py-1 w-full">
-          <option value="">Select department</option>
+          <option value="">Chọn khoa</option>
           {departments.map((d) => (
             <option key={d.department_id} value={d.department_id}>
               {d.department_name}
@@ -73,17 +78,12 @@ export default function LecturerForm({
       </div>
 
       <div>
-        <Label className="mb-2">Position</Label>
+        <Label className="mb-2">Chức vụ</Label>
         <Input {...register("position")} />
       </div>
 
       <div className="col-span-2">
-        <Label className="mb-2">Address</Label>
-        <Input {...register("address")} />
-      </div>
-
-      <div className="col-span-2">
-        <Label className="mb-2">Avatar URL</Label>
+        <Label className="mb-2">Ảnh đại diện (URL)</Label>
         <Input {...register("avatar")} />
       </div>
     </div>

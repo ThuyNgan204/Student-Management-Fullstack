@@ -13,7 +13,7 @@ export default function SearchBar({ search, onChange, onClear }: SearchBarProps)
   return (
     <div className="relative w-full md:w-80">
       <Input
-        placeholder="Search..."
+        placeholder="Tìm kiếm tên, mã..."
         value={search}
         onChange={(e) => onChange(e.target.value)}
       />

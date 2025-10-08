@@ -83,8 +83,8 @@ export default function Home() {
         console.log("Majors API:", majorsRes.data);
         console.log("Classes API:", classesRes.data);
         
-        setMajors(majorsRes.data);
-        setClasses(classesRes.data);
+        setMajors(Array.isArray(majorsRes.data) ? majorsRes.data : majorsRes.data.items || []);
+        setClasses(Array.isArray(classesRes.data) ? classesRes.data : classesRes.data.items || []);
       } catch (err) {
         console.error("Failed to load majors/classes", err);
       }
@@ -113,6 +113,7 @@ export default function Home() {
       academic_class_id: undefined,
       cohort: "",
       status: "Đang học",
+      avatar: "",
     },
   });
 
@@ -205,7 +206,7 @@ export default function Home() {
       const res = await axios.get(`/api/students/${student_id}`);
       setSelectedStudent(res.data);
     } catch (err) {
-      alert("Failed to load student detail");
+      alert("Tải thông tin chi tiết Sinh viên thất bại");
     }
   };
 
@@ -216,15 +217,15 @@ export default function Home() {
       {/* Control Panel */}
       <ControlPanel
         total={data?.total ?? 0}
-        addLabel="Add Student"
-        addTotal="Total Students"
+        addLabel="Thêm Sinh viên"
+        addTotal="Tổng Sinh viên"
         onAdd={() => setAddOpen(true)}
       />
 
       {/* Table */}
       <main className="flex-1 overflow-x-auto px-6 py-4">
-        {isLoading && <p>Loading...</p>}
-        {isError && <p>Error loading students.</p>}
+        {isLoading && <p>Đang tải...</p>}
+        {isError && <p>Tải danh sách Sinh viên thất bại.</p>}
 
         {!isLoading && !isError && (
           <>
@@ -284,15 +285,15 @@ export default function Home() {
 
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(s.student_id)}
-                        title="Are you absolutely sure?"
-                        description="This action cannot be undone. This will permanently delete the student from the system."
+                        title="Bạn đã chắc chắn?"
+                        description="Sinh viên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                       />
                     </div>
                   ),
                 },
               ]}
               data={isError || isLoading ? [] : data?.items || []}
-              emptyMessage={isError ? "Error loading students" : "No students found"}
+              emptyMessage={isError ? "Lỗi tải Sinh viên" : "Không có Sinh viên nào"}
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -312,13 +313,13 @@ export default function Home() {
             setAddOpen(true);
           }
         }}
-        title="Add Student"
+        title="Thêm Sinh viên"
         onSubmit={handleSubmitAdd(onSubmitAdd)}
         onCancel={() => {
           resetAdd();
           setAddOpen(false);
         }}
-        submitText="Save"
+        submitText="Lưu"
       >
         <StudentForm register={registerAdd} errors={errorsAdd} majors={majors} classes={classes} />
       </FormModal>
@@ -329,10 +330,10 @@ export default function Home() {
         onOpenChange={(open) => {
           if (!open) setEditingStudent(null);
         }}
-        title="Edit Student"
+        title="Chỉnh sửa thông tin Sinh viên"
         onSubmit={handleSubmitEdit(handleUpdate)}
         onCancel={() => setEditingStudent(null)}
-        submitText="Update"
+        submitText="Cập nhật"
       >
         {editingStudent && (
           <StudentForm register={registerEdit} errors={errorsEdit} majors={majors} classes={classes} />
@@ -411,27 +412,27 @@ function StudentForm({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <Label className="mb-2">Last Name</Label>
+        <Label className="mb-2">Họ</Label>
         <Input {...register("last_name")} />
         {errors.last_name && <p className="text-xs text-red-500">{errors.last_name.message}</p>}
       </div>
 
       <div>
-        <Label className="mb-2">First Name</Label>
+        <Label className="mb-2">Tên</Label>
         <Input {...register("first_name")} />
         {errors.first_name && <p className="text-xs text-red-500">{errors.first_name.message}</p>}
       </div>
 
       <div>
-        <Label className="mb-2">Student Code</Label>
+        <Label className="mb-2">MSSV</Label>
         <Input {...register("student_code")} />
         {errors.student_code && <p className="text-xs text-red-500">{errors.student_code.message}</p>}
       </div>
 
       <div>
-        <Label className="mb-2">Gender</Label>
+        <Label className="mb-2">Giới Tính</Label>
         <select {...register("gender")} className="border rounded px-2 py-1 w-full">
-          <option value="">Select gender</option>
+          <option value="">Chọn giới tính</option>
           <option value="Nam">Nam</option>
           <option value="Nữ">Nữ</option>
           <option value="Nữ">Khác</option>
@@ -440,18 +441,18 @@ function StudentForm({
       </div>
 
       <div>
-        <Label className="mb-2">Date of Birth</Label>
+        <Label className="mb-2">Ngày sinh</Label>
         <Input type="date" {...register("dob")} />
         {errors.dob && <p className="text-xs text-red-500">{errors.dob.message}</p>}
       </div>
 
       <div>
-        <Label className="mb-2">Address</Label>
+        <Label className="mb-2">Địa chỉ</Label>
         <Input {...register("address")} />
       </div>
 
       <div>
-        <Label className="mb-2">Phone</Label>
+        <Label className="mb-2">Số điện thoại</Label>
         <Input {...register("phone")} />
         {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
       </div>
@@ -463,10 +464,10 @@ function StudentForm({
       </div>
 
       <div>
-        <Label className="mb-2">Major</Label>
+        <Label className="mb-2">Chuyên ngành</Label>
         <select {...register("major_id")} className="border rounded px-2 py-1 w-full">
-          <option value="">Select major</option>
-          {majors.map((m) => (
+          <option value="">Chọn chuyên ngành</option>
+          {(majors || []).map((m) => (
             <option key={m.major_id} value={m.major_id}>
               {m.major_name}
             </option>
@@ -475,10 +476,10 @@ function StudentForm({
       </div>
 
       <div>
-        <Label className="mb-2">Class</Label>
+        <Label className="mb-2">Lớp sinh hoạt</Label>
         <select {...register("academic_class_id")} className="border rounded px-2 py-1 w-full">
-          <option value="">Select class</option>
-          {classes.map((c) => (
+          <option value="">Chọn lớp sinh hoạt</option>
+          {(classes || []).map((c) => (
             <option key={c.academic_class_id} value={c.academic_class_id}>
               {c.class_name}
             </option>
@@ -487,20 +488,24 @@ function StudentForm({
       </div>
 
       <div>
-        <Label className="mb-2">Cohort</Label>
+        <Label className="mb-2">Khóa</Label>
         <Input {...register("cohort")} />
       </div>
 
       <div>
-        <Label className="mb-2">Status</Label>
+        <Label className="mb-2">Tình trạng</Label>
         <select {...register("status")} className="border rounded px-2 py-1 w-full">
-          <option value="">Select status</option>
+          <option value="">Chọn tình trạng</option>
           <option value="Đang học">Đang học</option>
           <option value="Bảo lưu">Bảo lưu</option>
           <option value="Tốt nghiệp">Tốt nghiệp</option>
         </select>
-        {errors.status && <p className="text-xs text-red-500">{errors.status.message}</p>}
       </div>
+
+      <div className="col-span-2">
+              <Label className="mb-2">Ảnh đại diện (URL)</Label>
+              <Input {...register("avatar")} />
+            </div>
     </div>
   );
 }

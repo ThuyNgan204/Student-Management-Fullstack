@@ -48,7 +48,7 @@ export default function ControlPanel({
   // 🔹 Fetch majors & classes
   useEffect(() => {
     axios.get("/api/majors").then((r) => setMajors(r.data)).catch(() => setMajors([]));
-    axios.get("/api/academic_class").then((r) => setClasses(r.data)).catch(() => setClasses([]));
+    axios.get("/api/academic_class").then((r) => setClasses(r.data.items)).catch(() => setClasses([]));
   }, []);
 
   // 🔹 Tắt dropdown khi click ra ngoài
@@ -67,16 +67,17 @@ export default function ControlPanel({
       <div className="flex flex-wrap items-end justify-between gap-6">
         {/* ➕ Add button */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-sm font-medium invisible">Add</Label>
           <Button onClick={onAdd} className="whitespace-nowrap">
             {addLabel}
           </Button>
         </div>
 
-        {/* 🔢 Rows per page */}
+        {/* 🔢 Hiển thị
+ */}
         <div className="flex flex-col">
           <Label htmlFor="pageSize" className="mb-1 text-sm font-medium">
-            Rows per page
+            Hiển thị
+
           </Label>
           <select
             id="pageSize"
@@ -97,7 +98,7 @@ export default function ControlPanel({
 
         {/* Sorting */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-sm font-medium">Sort</Label>
+          <Label className="mb-1 text-sm font-medium">Sắp xếp</Label>
           <div className="flex gap-2">
             {/* Field select */}
             <select
@@ -110,10 +111,10 @@ export default function ControlPanel({
               }}
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
-              <option value="">Field</option>
-              <option value="student_id">Student ID</option>
-              <option value="first_name">Student Name</option>
-              <option value="student_code">Student Code</option>
+              <option value="">Chọn trường</option>
+              <option value="student_id">ID sinh viên</option>
+              <option value="first_name">Tên sinh viên</option>
+              <option value="student_code">MSSV</option>
             </select>
 
             {/* Order select */}
@@ -135,12 +136,12 @@ export default function ControlPanel({
 
         {/* 🔍 Filters dropdown */}
         <div className="relative inline-block text-left" ref={filterRef}>
-          <Label className="mb-1 text-sm font-medium">Filters</Label>
+          <Label className="mb-1 text-sm font-medium">Bộ lọc</Label>
           <button
             onClick={() => setOpenFilter(!openFilter)}
             className="w-40 border rounded-md px-3 py-2 text-sm bg-white shadow-sm flex items-center justify-between hover:bg-gray-50"
           >
-            Select filters
+            Chọn bộ lọc
             {genderFilters.length + classFilters.length + majorFilters.length > 0 && (
               <span className="ml-1 text-blue-600 font-semibold">
                 ({genderFilters.length + classFilters.length + majorFilters.length})
@@ -160,7 +161,7 @@ export default function ControlPanel({
             <div className="absolute left-0 mt-2 w-100 rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
               {/* Gender */}
               <div>
-                <p className="font-medium text-base mb-3">Gender</p>
+                <p className="font-medium text-base mb-3">Giới tính</p>
                 <div className="grid grid-cols-3 gap-2">
                   {["Nam", "Nữ", "Khác"].map((g) => (
                     <label key={g} className="flex items-center gap-2">
@@ -182,7 +183,7 @@ export default function ControlPanel({
 
               {/* Class filter */}
               <div>
-                <p className="font-medium text-base mb-3">Class Code</p>
+                <p className="font-medium text-base mb-3">Lớp sinh hoạt</p>
                 <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
                   {classes.map((cls) => (
                     <label key={cls.class_code} className="flex items-center gap-2">
@@ -204,7 +205,7 @@ export default function ControlPanel({
 
               {/* Major filter */}
               <div>
-                <p className="font-medium text-base mb-3">Major Code</p>
+                <p className="font-medium text-base mb-3">Chuyên ngành</p>
                 <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
                   {majors.map((dept) => (
                     <label key={dept.major_code} className="flex items-center gap-2">
@@ -234,7 +235,7 @@ export default function ControlPanel({
                 }}
                 className="w-full px-3 py-2 text-base rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
               >
-                Reset
+                Thiết lập lại
               </button>
             </div>
           )}

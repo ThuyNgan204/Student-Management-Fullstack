@@ -35,7 +35,7 @@ export default function FormModal({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onCancel ?? (() => onOpenChange(false))}>
-              Cancel
+              Đóng
             </Button>
             <Button type="submit">{submitText}</Button>
           </DialogFooter>

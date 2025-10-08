@@ -33,7 +33,7 @@ export default function DetailDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Close
+            Đóng
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -51,16 +51,22 @@ export default function LecturersPage() {
   }, [debouncedSearch, genderFilters, departmentFilters, positionFilters, sortBy, sortOrder, setPage]);
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await axios.get("/api/departments");
-        setDepartments(res.data);
-      } catch (err) {
-        console.error("Failed to load departments", err);
-      }
-    };
-    fetch();
-  }, []);
+  let isMounted = true;
+
+  (async () => {
+    try {
+      const res = await axios.get("/api/departments");
+      if (isMounted) setDepartments(res.data.items);
+    } catch (error) {
+      console.error("Failed to load departments:", error);
+    }
+  })();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
+
 
   // Form Add
   const {
@@ -182,14 +188,14 @@ const {
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelLecturer
         total={data?.total ?? 0}
-        addLabel="Add Lecturer"
-        addTotal="Total Lecturers"
+        addLabel="Thêm Giảng viên"
+        addTotal="Tổng Giảng viên"
         onAdd={() => setAddOpen(true)}
       />
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
-        {isLoading && <p>Loading...</p>}
-        {isError && <p>Error loading lecturers.</p>}
+        {isLoading && <p>Đang tải...</p>}
+        {isError && <p>Tải danh sách Giảng viên thất bại.</p>}
 
         {!isLoading && !isError && (
           <>
@@ -226,15 +232,15 @@ const {
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(l.lecturer_id)}
-                        title="Are you absolutely sure?"
-                        description="This action cannot be undone. This will permanently delete the lecturer and associated account."
+                        title="Bạn đã chắc chắn?"
+                        description="Giảng viên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                       />
                     </div>
                   ),
                 },
               ]}
               data={isError || isLoading ? [] : data?.items || []}
-              emptyMessage={isError ? "Error loading lecturers" : "No lecturers found"}
+              emptyMessage={isError ? "Lỗi tải danh sách Giảng viên" : "Không có Giảng viên nào"}
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -254,13 +260,13 @@ const {
             setAddOpen(true);
           }
         }}
-        title="Add Lecturer"
+        title="Thêm Giảng viên"
         onSubmit={handleSubmitAdd(onSubmitAdd)}
         onCancel={() => {
           resetAdd();
           setAddOpen(false);
         }}
-        submitText="Save"
+        submitText="Lưu"
       >
         <LecturerForm register={registerAdd} errors={errorsAdd} departments={departments} />
       </FormModal>
@@ -271,10 +277,10 @@ const {
         onOpenChange={(open) => {
           if (!open) setEditingLecturer(null);
         }}
-        title="Edit Lecturer"
+        title="Chỉnh sửa thông tin Giảng viên"
         onSubmit={handleSubmitEdit(handleUpdate)}
         onCancel={() => setEditingLecturer(null)}
-        submitText="Update"
+        submitText="Cập nhật"
       >
         {editingLecturer && (
           <LecturerForm register={registerEdit} errors={errorsEdit} departments={departments} />
@@ -282,7 +288,7 @@ const {
       </FormModal>
 
       {/* Detail */}
-      <DetailDialog open={!!selectedLecturer} title="Lecturer Detail" onClose={() => setSelectedLecturer(null)}>
+      <DetailDialog open={!!selectedLecturer} title="Thông tin chi tiết Giảng viên" onClose={() => setSelectedLecturer(null)}>
         {selectedLecturer && <LecturerDetail lecturer={selectedLecturer} />}
       </DetailDialog>
     </div>

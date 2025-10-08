@@ -82,10 +82,12 @@ export default function ControlPanelClass({
           </Button>
         </div>
 
-        {/* 🔢 Rows per page */}
+        {/* 🔢 Hiển thị
+ */}
         <div className="flex flex-col">
           <Label htmlFor="pageSize" className="mb-1 text-sm font-medium">
-            Rows per page
+            Hiển thị
+
           </Label>
           <select
             id="pageSize"
