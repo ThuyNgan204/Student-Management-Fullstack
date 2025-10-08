@@ -10,19 +10,25 @@ import {
   ClipboardList,
   FileText,
   UserCog,
+  Building2,
+  Layers,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Students", href: "/students", icon: Users },
-  { name: "Teachers", href: "/teachers", icon: UserCog },
-  { name: "Classes", href: "/classes", icon: ClipboardList },
-  { name: "Courses", href: "/courses", icon: BookOpen },
-  { name: "Majors", href: "/majors", icon: GraduationCap },
-  { name: "Grades", href: "/grades", icon: FileText },
-  { name: "Reports", href: "/reports", icon: FileText },
-  { name: "Accounts", href: "/accounts", icon: Users },
+  { name: "Trang chủ", href: "/", icon: LayoutDashboard },
+  { name: "Quản lý sinh viên", href: "/students", icon: Users },
+  { name: "Quản lý giảng viên", href: "/teachers", icon: UserCog },
+  { name: "Quản lý khoa", href: "/departments", icon: Building2 },
+  { name: "Quản lý chuyên ngành", href: "/majors", icon: GraduationCap },
+  { name: "Quản lý lớp sinh hoạt", href: "/classes", icon: ClipboardList },
+  { name: "Quản lý khóa học", href: "/courses", icon: BookOpen },
+  { name: "Quản lý đăng ký", href: "/enrollment", icon: UserPlus },
+  { name: "Quản lý lớp học phần", href: "/class_section", icon: Layers },
+  { name: "Quản lý điểm", href: "/grades", icon: FileText },
+  { name: "Báo cáo - Thống kê", href: "/reports", icon: FileText },
+  { name: "Quản lý tài khoản", href: "/accounts", icon: Users },
 ];
 
 export default function Sidebar() {
@@ -31,7 +37,7 @@ export default function Sidebar() {
   return (
     <aside className="h-full w-64 bg-gray-900 text-gray-100 flex flex-col">
       <div className="h-16 flex items-center justify-center font-bold text-lg border-b border-gray-700">
-        Student Admin
+        QUẢN LÝ SINH VIÊN
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {menuItems.map((item) => {

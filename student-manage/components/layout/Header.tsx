@@ -9,15 +9,18 @@ export default function Header() {
 
   // Map đường dẫn -> title
   const titles: Record<string, string> = {
-    "/": "DASHBOARD",
-    "/students": "STUDENTS",
-    "/teachers": "TEACHERS",
-    "/classes": "CLASSES",
-    "/courses": "COURSES",
-    "/grades": "GRADES",
-    "/majors": "MAJORS",
-    "/accounts": "ACCOUNTS",
-    "/reports": "REPORTS",
+    "/": "TRANG CHỦ",
+    "/students": "QUẢN LÝ SINH VIÊN",
+    "/teachers": "QUẢN LÝ GIẢNG VIÊN",
+    "/departments": "QUẢN LÝ KHOA",
+    "/majors": "QUẢN LÝ CHUYÊN NGÀNH",
+    "/classes": "QUẢN LÝ LỚP SINH HOẠT",
+    "/courses": "QUẢN LÝ KHÓA HỌC",
+    "/enrollment": "QUẢN LÝ ĐĂNG KÝ",
+    "/class_section": "QUẢN LÝ LỚP HỌC PHẦN",
+    "/grades": "QUẢN LÝ ĐIỂM",
+    "/reports": "BÁO CÁO - THỐNG KÊ",
+    "/accounts": "QUẢN LÝ TÀI KHOẢN",
   };
 
   const title = titles[pathname] || "Dashboard";

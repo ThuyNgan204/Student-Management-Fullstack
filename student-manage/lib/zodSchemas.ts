@@ -42,3 +42,10 @@ export const classSchema = z.object({
 });
 
 export type ClassFormInputs = z.infer<typeof classSchema>;
+
+export const departmentSchema = z.object({
+  department_name: z.string().min(1, "Vui lòng nhập tên khoa"),
+  department_code: z.string().min(1, "Vui lòng nhập mã khoa"),
+});
+
+export type DepartmentFormInputs = z.infer<typeof departmentSchema>;
