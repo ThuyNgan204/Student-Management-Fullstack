@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const pageSize = parseInt(searchParams.get("page_size") || "10");
   const search = searchParams.get("search") || undefined;
   const genderFilters = searchParams.getAll("gender");
-  const departmentFilters = searchParams.getAll("department_id").map((v) => Number(v)).filter(Boolean);
+  const departmentFilters = searchParams.getAll("department_code");
   const positionFilters = searchParams.getAll("position");
   const sortBy = searchParams.get("sort_by") || "lecturer_id";
   const sortOrder = searchParams.get("sort_order") || "desc";
@@ -37,8 +37,12 @@ export async function GET(req: Request) {
   }
 
   if (departmentFilters.length > 0) {
-    andConditions.push({ department_id: { in: departmentFilters } });
-  }
+  andConditions.push({
+    departments: {
+      department_code: { in: departmentFilters },
+    },
+  });
+}
 
   if (positionFilters.length > 0) {
     andConditions.push({ position: { in: positionFilters } });
@@ -47,8 +51,10 @@ export async function GET(req: Request) {
   const where: any = {};
   if (andConditions.length > 0) where.AND = andConditions;
 
-  const orderBy: any = {};
-  orderBy[sortBy] = sortOrder === "desc" ? "desc" : "asc";
+  const orderBy =
+    sortBy && ['lecturer_id', 'lecturer_code', 'first_name', 'last_name', 'dob'].includes(sortBy)
+      ? { [sortBy]: sortOrder === 'asc' ? 'asc' : 'desc' }
+      : { student_id: 'asc' };
 
   try {
     const [items, total] = await Promise.all([

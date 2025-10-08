@@ -7,7 +7,6 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Eye, Pencil } from "lucide-react";
 
-import ControlPanel from "@/components/shared/ControlPanel";
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
@@ -20,6 +19,8 @@ import LecturerForm from "@/components/lecturers/Lecturers";
 import LecturerDetail from "@/components/lecturers/LecturerDetailModal";
 import { TeacherFormInputs, teacherSchema } from "@/lib/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
+import ControlPanelLecturer from "@/components/lecturers/Lecturer-ControlPanel";
+import { Button } from "@/components/ui/button";
 
 export default function LecturersPage() {
   const {
@@ -107,13 +108,14 @@ const {
   page,
   pageSize,
   search: debouncedSearch,
-  sortBy: "lecturer_id",
+  sortBy: sortBy || "lecturer_id",
   sortOrder,
   filters: {
-    gender: genderFilters,
-    // nếu lọc theo department_id
-    department_id: departmentFilters || [],
-  },
+  gender: genderFilters,
+  department_code: departmentFilters || [], // ✅ đổi từ department_id → department_code
+  position: positionFilters || [],          // ⚠️ thêm nếu bạn cũng lọc position
+},
+
 });
 
 
@@ -178,7 +180,7 @@ const {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
-      <ControlPanel
+      <ControlPanelLecturer
         total={data?.total ?? 0}
         addLabel="Add Lecturer"
         addTotal="Total Lecturers"
@@ -216,12 +218,12 @@ const {
                   className: "text-center",
                   render: (l: Lecturer) => (
                     <div className="space-x-2">
-                      <button className="btn" onClick={() => handleView(l.lecturer_id)}>
+                      <Button variant="secondary" onClick={() => handleView(l.lecturer_id)}>
                         <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="btn" onClick={() => handleEdit(l)}>
+                      </Button>
+                      <Button variant="default" onClick={() => handleEdit(l)}>
                         <Pencil className="h-4 w-4" />
-                      </button>
+                      </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(l.lecturer_id)}
                         title="Are you absolutely sure?"
