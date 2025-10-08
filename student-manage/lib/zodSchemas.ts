@@ -32,3 +32,13 @@ export const teacherSchema = z.object({
 });
 
 export type TeacherFormInputs = z.infer<typeof teacherSchema>;
+
+export const classSchema = z.object({
+  class_code: z.string().min(1, { message: "Class code is required." }),
+  class_name: z.string().min(1, { message: "Class name is required." }),
+  cohort: z.string().min(1, { message: "Cohort is required." }),
+  major_id: z.coerce.number(),
+  lecturer_id: z.coerce.number(),
+});
+
+export type ClassFormInputs = z.infer<typeof classSchema>;
