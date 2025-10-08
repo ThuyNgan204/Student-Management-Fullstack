@@ -53,8 +53,23 @@ export default function Home() {
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
+    // Luôn reset trang về 1 khi thay đổi filter hoặc tìm kiếm
     setPage(1);
-  }, [debouncedSearch, genderFilters, classFilters, majorFilters, sortBy, sortOrder, setPage]);
+  }, [debouncedSearch, genderFilters, classFilters, majorFilters]);
+
+  // ✅ Khi đổi field sort → gọi API ngay (dựa trên order hiện có)
+  useEffect(() => {
+    if (sortBy) {
+      setPage(1);
+    }
+  }, [sortBy]);
+
+  // ✅ Khi đổi asc/desc → chỉ gọi nếu đã có field
+  useEffect(() => {
+    if (sortBy) {
+      setPage(1);
+    }
+  }, [sortOrder]);
 
   // Fetch majors & classes for dropdowns
   useEffect(() => {
@@ -125,7 +140,7 @@ export default function Home() {
   page,
   pageSize,
   search: debouncedSearch,
-  sortBy: "student_id",
+  sortBy: sortBy || "student_id",
   sortOrder,
   filters: {
     gender: genderFilters,

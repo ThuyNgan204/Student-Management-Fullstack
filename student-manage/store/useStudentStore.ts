@@ -107,7 +107,7 @@ export const useStudentStore = create<StudentStore>((set) => ({
   majorFilters: [],
   selectedFilters: [],
 
-  sortBy: "",
+  sortBy: "student_id",
   sortOrder: "asc",
 
   editingStudent: null,

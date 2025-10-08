@@ -23,7 +23,7 @@ export const useCRUD = <TData extends Record<string, any>, TForm>({
   sortOrder,
 }: UseCRUDProps) => {
   const queryClient = useQueryClient();
-  const queryKey = [resource, page, pageSize, search, filters, sortOrder];
+  const queryKey = [resource, page, pageSize, search, filters, sortBy, sortOrder];
 
   // GET
   const query = useQuery({

@@ -62,25 +62,27 @@ export async function GET(req: Request) {
     });
   }
 
-// Major filter
-if (majorFilters.length > 0) {
-  andConditions.push({
-    majors: {
-      is: {
-        major_code: { in: majorFilters },
+  // Major filter
+  if (majorFilters.length > 0) {
+    andConditions.push({
+      majors: {
+        is: {
+          major_code: { in: majorFilters },
+        },
       },
-    },
-  });
-}
+    });
+  }
 
-// Gán AND
-if (andConditions.length > 0) {
-  where.AND = andConditions;
-}
+  // Gán AND
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
+  }
 
   // Order
-  const orderBy: any = {};
-  orderBy[sortBy] = sortOrder === "desc" ? "desc" : "asc";
+  const orderBy =
+    sortBy && ['student_id', 'student_code', 'first_name', 'last_name', 'dob'].includes(sortBy)
+      ? { [sortBy]: sortOrder === 'asc' ? 'asc' : 'desc' }
+      : { student_id: 'asc' };
 
   try {
     const [items, total] = await Promise.all([
