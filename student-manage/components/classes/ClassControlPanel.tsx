@@ -51,7 +51,7 @@ export default function ControlPanelClass({
       axios.get("/api/majors"),
     ])
       .then(([deptRes, majorRes]) => {
-        setDepartments(deptRes.data);
+        setDepartments(deptRes.data.items);
         setMajors(majorRes.data);
       })
       .catch(() => {
@@ -76,7 +76,6 @@ export default function ControlPanelClass({
       <div className="flex flex-wrap items-end justify-between gap-6">
         {/* ➕ Add button */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-sm font-medium invisible">Add</Label>
           <Button onClick={onAdd} className="whitespace-nowrap">
             {addLabel}
           </Button>
@@ -108,7 +107,7 @@ export default function ControlPanelClass({
 
         {/* 🔽 Sorting */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-sm font-medium">Sort</Label>
+          <Label className="mb-1 text-sm font-medium">Sắp xếp</Label>
           <div className="flex gap-2">
             <select
               value={sortBy}
@@ -118,11 +117,11 @@ export default function ControlPanelClass({
               }}
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
-              <option value="">Field</option>
-              <option value="academic_class_id">Class ID</option>
-              <option value="class_code">Class Code</option>
-              <option value="class_name">Class Name</option>
-              <option value="cohort">Cohort</option>
+              {/* <option value="" disabled>Chọn trường</option> */}
+              <option value="academic_class_id">ID lớp sinh hoạt</option>
+              <option value="class_code">Mã lớp sinh hoạt</option>
+              <option value="class_name">Tên lớp sinh hoạt</option>
+              <option value="cohort">Khóa</option>
             </select>
 
             <select
@@ -141,12 +140,12 @@ export default function ControlPanelClass({
 
         {/* 🎚 Filters */}
         <div className="relative inline-block text-left" ref={filterRef}>
-          <Label className="mb-1 text-sm font-medium">Filters</Label>
+          <Label className="mb-1 text-sm font-medium">Bộ lọc</Label>
           <button
             onClick={() => setOpenFilter(!openFilter)}
             className="w-40 border rounded-md px-3 py-2 text-sm bg-white shadow-sm flex items-center justify-between hover:bg-gray-50"
           >
-            Select filters
+            Chọn bộ lọc
             {(cohortFilters.length + departmentFilters.length + majorFilters.length) > 0 && (
               <span className="ml-1 text-blue-600 font-semibold">
                 ({cohortFilters.length + departmentFilters.length + majorFilters.length})
@@ -166,7 +165,7 @@ export default function ControlPanelClass({
             <div className="absolute left-0 mt-2 w-96 rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
               {/* Cohort Filter */}
               <div>
-                <p className="font-medium text-base mb-3">Cohort</p>
+                <p className="font-medium text-base mb-3">Khóa</p>
                 <div className="grid grid-cols-3 gap-2">
                   {["K44", "K45", "K46", "K47", "K48"].map((c) => (
                     <label key={c} className="flex items-center gap-2">
@@ -188,7 +187,7 @@ export default function ControlPanelClass({
 
               {/* Department Filter */}
               <div>
-                <p className="font-medium text-base mb-3">Department</p>
+                <p className="font-medium text-base mb-3">Khoa</p>
                 <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                   {departments.map((dept) => (
                     <label key={dept.department_code} className="flex items-center gap-2">
@@ -212,7 +211,7 @@ export default function ControlPanelClass({
 
               {/* Major Filter */}
               <div>
-                <p className="font-medium text-base mb-3">Major</p>
+                <p className="font-medium text-base mb-3">Chuyên ngành</p>
                 <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                   {majors.map((m) => (
                     <label key={m.major_code} className="flex items-center gap-2">
@@ -244,7 +243,7 @@ export default function ControlPanelClass({
                 }}
                 className="w-full px-3 py-2 text-base rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
               >
-                Reset
+                Thiết lập lại
               </button>
             </div>
           )}

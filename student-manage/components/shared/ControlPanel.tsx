@@ -111,7 +111,7 @@ export default function ControlPanel({
               }}
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
-              <option value="">Chọn trường</option>
+              {/* <option value="" disabled>Chọn trường</option> */}
               <option value="student_id">ID sinh viên</option>
               <option value="first_name">Tên sinh viên</option>
               <option value="student_code">MSSV</option>

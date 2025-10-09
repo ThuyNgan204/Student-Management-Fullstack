@@ -165,14 +165,14 @@ export default function ClassesPage() {
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelClass
         total={data?.total ?? 0}
-        addLabel="Add Class"
-        addTotal="Total Classes"
+        addLabel="Thêm lớp sinh hoạt"
+        addTotal="Tổng lớp sinh hoạt"
         onAdd={() => setAddOpen(true)}
       />
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
-        {isLoading && <p>Loading...</p>}
-        {isError && <p>Error loading classes.</p>}
+        {isLoading && <p>Đang tải...</p>}
+        {isError && <p>Tải danh dách lớp sinh hoạt thất bại.</p>}
 
         {!isLoading && !isError && (
           <>
@@ -204,7 +204,7 @@ export default function ClassesPage() {
 
                 {
                   key: "actions",
-                  header: "Actions",
+                  header: "Thao tác",
                   render: (c: AcademicClass) => (
                     <div className="space-x-2">
                       <Button variant="secondary" onClick={() => handleView(c.academic_class_id)}>
@@ -215,15 +215,15 @@ export default function ClassesPage() {
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(c.academic_class_id)}
-                        title="Are you sure?"
-                        description="This will permanently delete this class."
+                        title="Bạn đã chắc chắn?"
+                        description="Lớp sinh hoạt này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                       />
                     </div>
                   ),
                 },
               ]}
               data={data?.items || []}
-              emptyMessage="No classes found"
+              emptyMessage="Không có lớp sinh hoạt nào"
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -241,56 +241,63 @@ export default function ClassesPage() {
     >
     <DialogContent className="max-w-lg">
         <DialogHeader>
-        <DialogTitle>Add Class</DialogTitle>
+        <DialogTitle>Thêm lớp sinh hoạt</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
         <div>
-            <Label className="mb-2">Class Name</Label>
-            <Input {...formAdd.register("class_name")} placeholder="Enter class name" />
+            <Label className="mb-2">Tên lớp sinh hoạt</Label>
+            <Input {...formAdd.register("class_name")} />
             {formAdd.formState.errors.class_name && (
             <p className="text-xs text-red-500">{formAdd.formState.errors.class_name.message}</p>
             )}
         </div>
 
         <div>
-            <Label className="mb-2">Class Code</Label>
-            <Input {...formAdd.register("class_code")} placeholder="Enter class code" />
+            <Label className="mb-2">Mã lớp sinh hoạt</Label>
+            <Input {...formAdd.register("class_code")}/>
             {formAdd.formState.errors.class_code && (
             <p className="text-xs text-red-500">{formAdd.formState.errors.class_code.message}</p>
             )}
         </div>
 
         <div>
-            <Label className="mb-2">Cohort</Label>
-            <Input {...formAdd.register("cohort")} placeholder="Enter cohort (e.g. 2024)" />
+            <Label className="mb-2">Khóa</Label>
+            <Input {...formAdd.register("cohort")} />
             {formAdd.formState.errors.cohort && (
             <p className="text-xs text-red-500">{formAdd.formState.errors.cohort.message}</p>
             )}
         </div>
 
         <div>
-            <Label className="mb-2">Major</Label>
+            <Label className="mb-2">Chuyên ngành</Label>
             <select
-            {...formAdd.register("major_id", { valueAsNumber: true })}
-            className="border rounded px-2 py-1 w-full"
+              {...formAdd.register("major_id", { valueAsNumber: true })}
+              defaultValue=""
+              className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+              required
             >
-            <option value="">Select major</option>
-            {majors.map((m) => (
+              <option value="" disabled>
+                Chọn chuyên ngành
+              </option>
+              {majors.map((m) => (
                 <option key={m.major_id} value={m.major_id}>
-                {m.major_name}
+                  {m.major_name}
                 </option>
-            ))}
+              ))}
             </select>
         </div>
 
         <div>
-            <Label className="mb-2">Lecturer</Label>
+            <Label className="mb-2">Giảng viên cố vấn</Label>
             <select
             {...formAdd.register("lecturer_id", { valueAsNumber: true })}
-            className="border rounded px-2 py-1 w-full"
+            defaultValue=""
+            className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+            required
             >
-            <option value="">Select lecturer</option>
+            
+            <option value="" disabled>Chọn giảng viên</option>
             {lecturers.map((l) => (
                 <option key={l.lecturer_id} value={l.lecturer_id}>
                 {l.last_name} {l.first_name}
@@ -308,9 +315,9 @@ export default function ClassesPage() {
                 setAddOpen(false);
             }}
             >
-            Close
+            Đóng
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit">Lưu</Button>
         </DialogFooter>
         </form>
     </DialogContent>
@@ -325,12 +332,12 @@ export default function ClassesPage() {
     >
     <DialogContent className="max-w-lg">
         <DialogHeader>
-        <DialogTitle>Edit Class</DialogTitle>
+        <DialogTitle>Chỉnh sửa thông tin lớp sinh hoạt</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={formEdit.handleSubmit(handleUpdate)} className="space-y-4">
         <div>
-            <Label className="mb-2">Class Name</Label>
+            <Label className="mb-2">Tên lớp sinh hoạt</Label>
             <Input {...formEdit.register("class_name")} />
             {formEdit.formState.errors.class_name && (
             <p className="text-xs text-red-500">{formEdit.formState.errors.class_name.message}</p>
@@ -338,7 +345,7 @@ export default function ClassesPage() {
         </div>
 
         <div>
-            <Label className="mb-2">Class Code</Label>
+            <Label className="mb-2">Mã lớp sinh hoạt</Label>
             <Input {...formEdit.register("class_code")} />
             {formEdit.formState.errors.class_code && (
             <p className="text-xs text-red-500">{formEdit.formState.errors.class_code.message}</p>
@@ -346,17 +353,20 @@ export default function ClassesPage() {
         </div>
 
         <div>
-            <Label className="mb-2">Cohort</Label>
+            <Label className="mb-2">Khóa</Label>
             <Input {...formEdit.register("cohort")} />
         </div>
 
         <div>
-            <Label className="mb-2">Major</Label>
+            <Label className="mb-2">Chuyên ngành</Label>
             <select
             {...formEdit.register("major_id", { valueAsNumber: true })}
-            className="border rounded px-2 py-1 w-full"
+            defaultValue=""
+            className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+            required
             >
-            <option value="">Select major</option>
+            
+<option value="" disabled>Chọn chuyên ngành</option>
             {majors.map((m) => (
                 <option key={m.major_id} value={m.major_id}>
                 {m.major_name}
@@ -366,12 +376,15 @@ export default function ClassesPage() {
         </div>
 
         <div>
-            <Label className="mb-2">Lecturer</Label>
+            <Label className="mb-2">Giảng viên cố vấn</Label>
             <select
             {...formEdit.register("lecturer_id", { valueAsNumber: true })}
-            className="border rounded px-2 py-1 w-full"
+            defaultValue=""
+            className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+            required
             >
-            <option value="">Select lecturer</option>
+            
+<option value="" disabled>Chọn giảng viên</option>
             {lecturers.map((l) => (
                 <option key={l.lecturer_id} value={l.lecturer_id}>
                 {l.last_name} {l.first_name}
@@ -382,16 +395,16 @@ export default function ClassesPage() {
 
         <DialogFooter className="flex justify-end space-x-2">
             <Button variant="outline" type="button" onClick={() => setEditingClass(null)}>
-            Close
+            Đóng
             </Button>
-            <Button type="submit">Update</Button>
+            <Button type="submit">Cập nhật</Button>
         </DialogFooter>
         </form>
     </DialogContent>
     </Dialog>
 
       {/* Detail Modal */}
-      <DetailDialog open={!!selectedClass} title="Class Detail" onClose={() => setSelectedClass(null)}>
+      <DetailDialog open={!!selectedClass} title="Chi tiết lớp sinh hoạt" onClose={() => setSelectedClass(null)}>
         {selectedClass && <ClassDetail academicClass={selectedClass} />}
       </DetailDialog>
     </div>

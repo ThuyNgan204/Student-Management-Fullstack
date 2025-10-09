@@ -75,10 +75,13 @@ export default function ControlPanelDepartment({
           <div className="flex gap-2">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
-              <option value="">Chọn trường</option>
+              {/* <option value="" disabled>Chọn trường</option> */}
               <option value="department_id">ID Khoa</option>
               <option value="department_code">Mã Khoa</option>
               <option value="department_name">Tên khoa</option>

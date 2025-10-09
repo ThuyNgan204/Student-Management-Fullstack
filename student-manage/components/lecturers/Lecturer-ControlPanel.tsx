@@ -64,7 +64,6 @@ export default function ControlPanelLecturer({
       <div className="flex flex-wrap items-end justify-between gap-6">
         {/* ➕ Add button */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-sm font-medium invisible">Add</Label>
           <Button onClick={onAdd} className="whitespace-nowrap">
             {addLabel}
           </Button>
@@ -96,7 +95,7 @@ export default function ControlPanelLecturer({
 
         {/* 🔽 Sorting */}
         <div className="flex flex-col">
-          <Label className="mb-1 text-sm font-medium">Sort</Label>
+          <Label className="mb-1 text-sm font-medium">Sắp xếp</Label>
           <div className="flex gap-2">
             <select
               value={sortBy}
@@ -106,10 +105,10 @@ export default function ControlPanelLecturer({
               }}
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
-              <option value="">Field</option>
-              <option value="lecturer_id">Lecturer ID</option>
-              <option value="lecturer_code">Lecturer Code</option>
-              <option value="first_name">Lecturer Name</option>
+              {/* <option value="" disabled>Chọn trường</option> */}
+              <option value="lecturer_id">ID Giảng viên</option>
+              <option value="lecturer_code">Mã Giảng viên</option>
+              <option value="first_name">Tên Giảng viên</option>
             </select>
 
             <select
@@ -128,12 +127,12 @@ export default function ControlPanelLecturer({
 
         {/* 🎚 Filters */}
         <div className="relative inline-block text-left" ref={filterRef}>
-          <Label className="mb-1 text-sm font-medium">Filters</Label>
+          <Label className="mb-1 text-sm font-medium">Bộ lọc</Label>
           <button
             onClick={() => setOpenFilter(!openFilter)}
             className="w-40 border rounded-md px-3 py-2 text-sm bg-white shadow-sm flex items-center justify-between hover:bg-gray-50"
           >
-            Select filters
+            Chọn bộ lọc
             {(genderFilters.length + departmentFilters.length + positionFilters.length) > 0 && (
               <span className="ml-1 text-blue-600 font-semibold">
                 ({genderFilters.length + departmentFilters.length + positionFilters.length})
@@ -153,7 +152,7 @@ export default function ControlPanelLecturer({
             <div className="absolute left-0 mt-2 w-96 rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
               {/* Gender Filter */}
               <div>
-                <p className="font-medium text-base mb-3">Gender</p>
+                <p className="font-medium text-base mb-3">Giới tính</p>
                 <div className="grid grid-cols-3 gap-2">
                   {["Nam", "Nữ", "Khác"].map((g) => (
                     <label key={g} className="flex items-center gap-2">
@@ -175,7 +174,7 @@ export default function ControlPanelLecturer({
 
               {/* Department Filter */}
               <div>
-                <p className="font-medium text-base mb-3">Department</p>
+                <p className="font-medium text-base mb-3">Khoa</p>
                 <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                   {departments.map((dept) => (
                     <label key={dept.department_code} className="flex items-center gap-2">
@@ -199,7 +198,7 @@ export default function ControlPanelLecturer({
 
               {/* Position Filter */}
               <div>
-                <p className="font-medium text-base mb-3">Position</p>
+                <p className="font-medium text-base mb-3">Chức vụ</p>
                 <div className="grid grid-cols-3 gap-2">
                   {["Trợ giảng", "Giảng viên", "Trưởng khoa", "Phó khoa"].map((pos) => (
                     <label key={pos} className="flex items-center gap-2">
@@ -229,7 +228,7 @@ export default function ControlPanelLecturer({
                 }}
                 className="w-full px-3 py-2 text-base rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
               >
-                Reset
+                Thiết lập lại
               </button>
             </div>
           )}

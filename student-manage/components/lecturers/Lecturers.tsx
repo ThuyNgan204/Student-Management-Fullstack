@@ -37,8 +37,12 @@ export default function LecturerForm({
 
       <div>
         <Label className="mb-2">Giới tính</Label>
-        <select {...register("gender")} className="border rounded px-2 py-1 w-full">
-          <option value="">Chọn giới tính</option>
+        <select {...register("gender")} 
+          defaultValue=""
+          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+          required
+        >
+          <option value="" disabled>Chọn giới tính</option>
           <option value="Nam">Nam</option>
           <option value="Nữ">Nữ</option>
           <option value="Khác">Khác</option>
@@ -67,8 +71,12 @@ export default function LecturerForm({
 
       <div>
         <Label className="mb-2">Khoa phụ trách</Label>
-        <select {...register("department_id")} className="border rounded px-2 py-1 w-full">
-          <option value="">Chọn khoa</option>
+        <select {...register("department_id")} 
+          defaultValue=""
+          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+          required
+        >
+          <option value="" disabled>Chọn khoa</option>
           {departments.map((d) => (
             <option key={d.department_id} value={d.department_id}>
               {d.department_name}

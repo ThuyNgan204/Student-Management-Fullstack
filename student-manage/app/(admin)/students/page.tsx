@@ -341,7 +341,7 @@ export default function Home() {
       </FormModal>
 
       {/* View Modal */}
-      <DetailDialog open={!!selectedStudent} title="Student Detail" onClose={() => setSelectedStudent(null)}>
+      <DetailDialog open={!!selectedStudent} title="Thông tin Sinh viên" onClose={() => setSelectedStudent(null)}>
       {selectedStudent && (
         <div className="grid grid-cols-12 gap-y-3 gap-x-6">
           <div className="col-span-4 text-gray-500 font-medium">ID:</div>
@@ -431,8 +431,13 @@ function StudentForm({
 
       <div>
         <Label className="mb-2">Giới Tính</Label>
-        <select {...register("gender")} className="border rounded px-2 py-1 w-full">
-          <option value="">Chọn giới tính</option>
+        <select {...register("gender")} 
+          defaultValue=""
+          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+          required
+        >
+          
+          <option value="" disabled>Chọn giới tính</option>
           <option value="Nam">Nam</option>
           <option value="Nữ">Nữ</option>
           <option value="Nữ">Khác</option>
@@ -465,8 +470,13 @@ function StudentForm({
 
       <div>
         <Label className="mb-2">Chuyên ngành</Label>
-        <select {...register("major_id")} className="border rounded px-2 py-1 w-full">
-          <option value="">Chọn chuyên ngành</option>
+        <select {...register("major_id")} 
+          defaultValue=""
+          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+          required
+        >
+          
+          <option value="" disabled>Chọn chuyên ngành</option>
           {(majors || []).map((m) => (
             <option key={m.major_id} value={m.major_id}>
               {m.major_name}
@@ -477,8 +487,13 @@ function StudentForm({
 
       <div>
         <Label className="mb-2">Lớp sinh hoạt</Label>
-        <select {...register("academic_class_id")} className="border rounded px-2 py-1 w-full">
-          <option value="">Chọn lớp sinh hoạt</option>
+        <select {...register("academic_class_id")} 
+          defaultValue=""
+          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+          required
+        >
+          
+          <option value="" disabled>Chọn lớp sinh hoạt</option>
           {(classes || []).map((c) => (
             <option key={c.academic_class_id} value={c.academic_class_id}>
               {c.class_name}
@@ -494,8 +509,13 @@ function StudentForm({
 
       <div>
         <Label className="mb-2">Tình trạng</Label>
-        <select {...register("status")} className="border rounded px-2 py-1 w-full">
-          <option value="">Chọn tình trạng</option>
+        <select {...register("status")} 
+          defaultValue=""
+          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+          required
+        >
+          
+          <option value="" disabled>Chọn tình trạng</option>
           <option value="Đang học">Đang học</option>
           <option value="Bảo lưu">Bảo lưu</option>
           <option value="Tốt nghiệp">Tốt nghiệp</option>

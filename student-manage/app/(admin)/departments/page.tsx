@@ -147,8 +147,8 @@ export default function DepartmentsPage() {
                         onConfirm={() =>
                           deleteMutation.mutate(dep.department_id)
                         }
-                        title="Xác nhận xóa"
-                        description="Thao tác này sẽ xóa vĩnh viễn Khoa khỏi hệ thống."
+                        title="Bạn đã chắc chắn"
+                        description="Khoa này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                       />
                     </div>
                   ),
