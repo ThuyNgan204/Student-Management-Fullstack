@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
 
     const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "10");
+    const pageSize = parseInt(searchParams.get("page_size") || "10");
     const search = searchParams.get("search") || "";
     const sortBy = searchParams.get("sort_by") || "department_id";
     const sortOrder = (searchParams.get("sort_order") as "asc" | "desc") || "asc";

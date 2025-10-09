@@ -2,15 +2,13 @@
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { toast } from "sonner";
-import { Eye, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import DetailDialog from "@/components/shared/DetailModal";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,8 +22,6 @@ import { Label } from "@/components/ui/label";
 
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
-import { z } from "zod";
-import ControlPanel from "@/components/shared/ControlPanel";
 import { Department, useDepartmentStore } from "@/store/useDepartmentStore";
 import ControlPanelDepartment from "@/components/departments/ControlPanelDepartment";
 import { DepartmentFormInputs, departmentSchema } from "@/lib/zodSchemas";
@@ -137,7 +133,7 @@ export default function DepartmentsPage() {
                 { key: "department_name", header: "Tên khoa" },
                 {
                   key: "actions",
-                  header: "Actions",
+                  header: "Thao tác",
                   render: (dep: Department) => (
                     <div className="space-x-2">
                       <Button variant="default" onClick={() => handleEdit(dep)}>
@@ -179,7 +175,7 @@ export default function DepartmentsPage() {
           <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
             <div>
               <Label className="mb-2">Mã khoa</Label>
-              <Input {...formAdd.register("department_code")} placeholder="VD: CNTT" />
+              <Input {...formAdd.register("department_code")} />
               {formAdd.formState.errors.department_code && (
                 <p className="text-xs text-red-500">
                   {formAdd.formState.errors.department_code.message}
@@ -189,7 +185,7 @@ export default function DepartmentsPage() {
 
             <div>
               <Label className="mb-2">Tên khoa</Label>
-              <Input {...formAdd.register("department_name")} placeholder="VD: Công nghệ thông tin" />
+              <Input {...formAdd.register("department_name")} />
               {formAdd.formState.errors.department_name && (
                 <p className="text-xs text-red-500">
                   {formAdd.formState.errors.department_name.message}

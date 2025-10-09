@@ -1,58 +1,56 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
 
-type Params = { params: { id: string } };
+const prisma = new PrismaClient();
 
-// ================= GET ONE =================
-export async function GET(req: Request, { params }: Params) {
-  const id = Number(params.id);
-  if (isNaN(id)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
-
+// 📌 GET: Lấy chi tiết ngành
+export async function GET(_: Request, { params }: { params: { id: string } }) {
   try {
+    const id = parseInt(params.id);
+
     const major = await prisma.majors.findUnique({
       where: { major_id: id },
       include: { departments: true },
     });
-    if (!major) return NextResponse.json({ error: "Major not found" }, { status: 404 });
+
+    if (!major) {
+      return NextResponse.json({ error: "Không tìm thấy ngành" }, { status: 404 });
+    }
+
     return NextResponse.json(major);
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to fetch major" }, { status: 500 });
+    console.error("GET /majors/[id] error:", error);
+    return NextResponse.json({ error: "Lỗi khi lấy chi tiết ngành" }, { status: 500 });
   }
 }
 
-// ================= UPDATE =================
-export async function PUT(req: Request, { params }: Params) {
-  const id = Number(params.id);
-  const body = await req.json();
-  if (isNaN(id)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
-
+// 📌 PUT: Cập nhật ngành
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
-    const major = await prisma.majors.update({
+    const id = parseInt(params.id);
+    const { major_code, major_name, department_id } = await req.json();
+
+    const updated = await prisma.majors.update({
       where: { major_id: id },
-      data: {
-        major_code: body.major_code,
-        major_name: body.major_name,
-        department_id: body.department_id,
-      },
+      data: { major_code, major_name, department_id },
+      include: { departments: true },
     });
-    return NextResponse.json(major);
+
+    return NextResponse.json(updated);
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to update major" }, { status: 500 });
+    console.error("PUT /majors/[id] error:", error);
+    return NextResponse.json({ error: "Lỗi khi cập nhật ngành" }, { status: 500 });
   }
 }
 
-// ================= DELETE =================
-export async function DELETE(req: Request, { params }: Params) {
-  const id = Number(params.id);
-  if (isNaN(id)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
-
+// 📌 DELETE: Xóa ngành
+export async function DELETE(_: Request, { params }: { params: { id: string } }) {
   try {
+    const id = parseInt(params.id);
     await prisma.majors.delete({ where: { major_id: id } });
-    return NextResponse.json({ message: "Major deleted successfully" });
+    return NextResponse.json({ message: "Đã xóa ngành thành công" });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to delete major" }, { status: 500 });
+    console.error("DELETE /majors/[id] error:", error);
+    return NextResponse.json({ error: "Lỗi khi xóa ngành" }, { status: 500 });
   }
 }

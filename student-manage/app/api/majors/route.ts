@@ -1,38 +1,106 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
 
-// ================= GET ALL =================
-// GET /api/majors
-export async function GET() {
+const prisma = new PrismaClient();
+
+// 📌 GET: Lấy danh sách ngành (có join khoa) + tìm kiếm + phân trang + sắp xếp + lọc khoa
+export async function GET(req: Request) {
   try {
-    const majors = await prisma.majors.findMany({
-      include: {
-        departments: true,
-      },
+    const { searchParams } = new URL(req.url);
+
+    // --- Paging ---
+    const page = Number(searchParams.get("page")) || 1;
+    const pageSize = Number(searchParams.get("page_size")) || 10;
+    const skip = (page - 1) * pageSize;
+
+    // --- Sorting ---
+    const sortBy = searchParams.get("sort_by") || "major_id";
+    const sortOrder = searchParams.get("sort_order") === "desc" ? "desc" : "asc";
+
+    // --- Filters ---
+    const search = searchParams.get("search") || "";
+    const departmentFilters =
+      searchParams.get("department")?.split(",").filter(Boolean) || [];
+
+    // --- Build where clause ---
+    const where: any = {};
+
+    // 🔍 Search theo mã / tên ngành hoặc tên khoa
+    if (search) {
+      where.OR = [
+        { major_code: { contains: search, mode: "insensitive" } },
+        { major_name: { contains: search, mode: "insensitive" } },
+        { departments: { department_name: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    // 🏢 Lọc theo tên khoa (department_code)
+    if (departmentFilters.length > 0) {
+      where.departments = {
+        department_name: { in: departmentFilters },
+      };
+    }
+
+    // --- Sort fields hợp lệ ---
+    const validSortFields = ["major_id", "major_code", "major_name", "department_id"];
+    const orderBy = validSortFields.includes(sortBy)
+      ? { [sortBy]: sortOrder }
+      : { major_id: "asc" as const };
+
+    // --- Query dữ liệu ---
+    const [total, items] = await Promise.all([
+      prisma.majors.count({ where }),
+      prisma.majors.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy,
+        include: {
+          departments: true, // join bảng departments
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      items,
+      total,
+      page,
+      pageSize,
     });
-    return NextResponse.json(majors);
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to fetch majors" }, { status: 500 });
+    console.error("❌ GET /majors error:", error);
+    return NextResponse.json(
+      { error: "Lỗi khi lấy danh sách ngành" },
+      { status: 500 }
+    );
   }
 }
 
-// ================= CREATE =================
-// POST /api/majors
+// 📌 POST: Thêm ngành mới
 export async function POST(req: Request) {
-  const body = await req.json();
-
   try {
-    const major = await prisma.majors.create({
+    const body = await req.json();
+    const { major_code, major_name, department_id } = body;
+
+    if (!major_code || !major_name || !department_id) {
+      return NextResponse.json({ error: "Thiếu dữ liệu" }, { status: 400 });
+    }
+
+    const newMajor = await prisma.majors.create({
       data: {
-        major_code: body.major_code,
-        major_name: body.major_name,
-        department_id: body.department_id,
+        major_code,
+        major_name,
+        department_id,
       },
+      include: { departments: true },
     });
-    return NextResponse.json(major);
+
+    return NextResponse.json(newMajor, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to create major" }, { status: 500 });
+    console.error("❌ POST /majors error:", error);
+    return NextResponse.json(
+      { error: "Lỗi khi thêm ngành" },
+      { status: 500 }
+    );
   }
 }

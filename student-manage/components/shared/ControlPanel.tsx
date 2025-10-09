@@ -47,7 +47,7 @@ export default function ControlPanel({
 
   // 🔹 Fetch majors & classes
   useEffect(() => {
-    axios.get("/api/majors").then((r) => setMajors(r.data)).catch(() => setMajors([]));
+    axios.get("/api/majors").then((r) => setMajors(r.data.items)).catch(() => setMajors([]));
     axios.get("/api/academic_class").then((r) => setClasses(r.data.items)).catch(() => setClasses([]));
   }, []);
 

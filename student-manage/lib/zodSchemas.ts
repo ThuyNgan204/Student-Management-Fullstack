@@ -50,3 +50,11 @@ export const departmentSchema = z.object({
 });
 
 export type DepartmentFormInputs = z.infer<typeof departmentSchema>;
+
+export const majorSchema = z.object({
+  major_name: z.string().min(1, { message: "Vui lòng nhập tên ngành" }),
+  major_code: z.string().min(1, { message: "Vui lòng nhập mã ngành" }),
+  department_id: z.number().min(1, { message: "Vui lòng chọn ID khoa hợp lệ" }),
+});
+
+export type MajorFormInputs = z.infer<typeof majorSchema>;
