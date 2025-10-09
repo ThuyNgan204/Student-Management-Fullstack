@@ -7,9 +7,11 @@ const truncate = (str, max) => (str ? String(str).slice(0, max) : null);
 async function main() {
   console.log("Seeding database...");
 
+  // Xóa dữ liệu cũ
   await prisma.grades.deleteMany();
   await prisma.enrollment.deleteMany();
   await prisma.class_section.deleteMany();
+  await prisma.major_courses.deleteMany();
   await prisma.courses.deleteMany();
   await prisma.user_account.deleteMany();
   await prisma.students.deleteMany();
@@ -18,7 +20,7 @@ async function main() {
   await prisma.majors.deleteMany();
   await prisma.departments.deleteMany();
 
-  // Reset toàn bộ sequence về 1 (tự động quét tất cả)
+  // Reset sequence
   await prisma.$executeRawUnsafe(`
     DO $$ DECLARE
         seq RECORD;
@@ -30,15 +32,16 @@ async function main() {
             EXECUTE 'ALTER SEQUENCE "' || seq.sequence_name || '" RESTART WITH 1';
         END LOOP;
     END $$;
-  `)
+  `);
 
-  console.log("Database cleared and sequences reset!")
+  console.log("Database cleared and sequences reset!");
 
   const STUDENT_STATUS = ["Đang học", "Bảo lưu", "Tốt nghiệp", "Thôi học"];
   const ENROLLMENT_STATUS = ["Đang học", "Hủy", "Hoàn thành"];
   const SEMESTER_OPTIONS = ["1", "2", "Hè"];
-  const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];
+  const GENDER_OPTIONS = ["Nam", "Nữ"];
 
+  // ===== Departments =====
   const departmentsData = [
     { code: "CNTT", name: "Công nghệ thông tin" },
     { code: "KT", name: "Kinh tế" },
@@ -57,6 +60,7 @@ async function main() {
     )
   );
 
+  // ===== Majors =====
   const majorsData = [
     ["CNTT", "Công nghệ thông tin", 0],
     ["HTTT", "Hệ thống thông tin", 0],
@@ -81,6 +85,7 @@ async function main() {
     )
   );
 
+  // ===== Lecturers =====
   const lecturerNames = [
     ["Nguyễn Văn", "An", "Nam"],
     ["Trần Thị", "Bình", "Nữ"],
@@ -112,6 +117,7 @@ async function main() {
     lecturers.push(l);
   }
 
+  // ===== Academic Classes =====
   const academicClasses = [];
   let classCount = 1;
   for (const major of majors) {
@@ -131,6 +137,7 @@ async function main() {
     }
   }
 
+  // ===== Students =====
   const students = [];
   for (let i = 1; i <= 70; i++) {
     const gender = faker.helpers.arrayElement(GENDER_OPTIONS);
@@ -143,7 +150,9 @@ async function main() {
     const lastName = faker.person.lastName();
     const major = majors[i % majors.length];
     const classCandidates = academicClasses.filter((c) => c.major_id === major.major_id);
-    const academicClassId = classCandidates.length ? classCandidates[faker.number.int({ min: 0, max: classCandidates.length - 1 })].academic_class_id : null;
+    const academicClassId = classCandidates.length
+      ? classCandidates[faker.number.int({ min: 0, max: classCandidates.length - 1 })].academic_class_id
+      : null;
     const student = await prisma.students.create({
       data: {
         student_code: `SV${String(i).padStart(3, "0")}`,
@@ -163,39 +172,56 @@ async function main() {
     students.push(student);
   }
 
-const courseNames = [
-  "Cơ sở dữ liệu",
-  "Lập trình web",
-  "Mạng máy tính",
-  "Kế toán tài chính",
-  "Marketing căn bản",
-];
+  // ===== Courses =====
+  const courseNames = [
+    "Cơ sở dữ liệu",
+    "Lập trình web",
+    "Mạng máy tính",
+    "Kế toán tài chính",
+    "Marketing căn bản",
+  ];
+  const courses = [];
+  const usedCodes = new Set();
 
-const courses = [];
-const usedCodes = new Set();
+  for (const dep of departments) {
+    for (let i = 0; i < 2; i++) {
+      let code;
+      do {
+        code = `${dep.department_code}C${faker.number.int({ min: 1, max: 99 })}`;
+      } while (usedCodes.has(code));
+      usedCodes.add(code);
 
-for (const dep of departments) {
-  for (let i = 0; i < 2; i++) {
-    // Tạo code cho đến khi chưa được dùng
-    let code;
-    do {
-      code = `${dep.department_code}C${faker.number.int({ min: 1, max: 99 })}`;
-    } while (usedCodes.has(code));
-
-    usedCodes.add(code);
-
-    const c = await prisma.courses.create({
-      data: {
-        course_code: code,
-        course_name: faker.helpers.arrayElement(courseNames),
-        credits: 3,
-        department_id: dep.department_id,
-      },
-    });
-    courses.push(c);
+      const c = await prisma.courses.create({
+        data: {
+          course_code: code,
+          course_name: faker.helpers.arrayElement(courseNames),
+          credits: 3,
+          department_id: dep.department_id,
+        },
+      });
+      courses.push(c);
+    }
   }
-}
 
+  // ===== NEW: Major-Courses (liên kết majors ↔ courses) =====
+  const majorCourses = [];
+  for (const major of majors) {
+    // Mỗi major học 2-3 môn trong cùng khoa
+    const deptCourses = courses.filter(c => c.department_id === major.department_id);
+    const selectedCourses = faker.helpers.arrayElements(deptCourses, faker.number.int({ min: 2, max: 3 }));
+
+    for (const course of selectedCourses) {
+      const mc = await prisma.major_courses.create({
+        data: {
+          major_id: major.major_id,
+          course_id: course.course_id,
+        },
+      });
+      majorCourses.push(mc);
+    }
+  }
+
+  // ===== Class Sections =====
   const classSections = [];
   for (const course of courses) {
     const count = faker.number.int({ min: 1, max: 2 });
@@ -216,6 +242,7 @@ for (const dep of departments) {
     }
   }
 
+  // ===== Enrollment + Grades =====
   for (const student of students) {
     const nEnroll = faker.number.int({ min: 3, max: 4 });
     const shuffledSections = faker.helpers.shuffle(classSections);
@@ -251,6 +278,7 @@ for (const dep of departments) {
     }
   }
 
+  // ===== User Accounts =====
   for (const student of students) {
     await prisma.user_account.create({
       data: {

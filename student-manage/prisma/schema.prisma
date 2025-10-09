@@ -19,15 +19,6 @@ model academic_class {
   students          students[]
 }
 
-model academic_classes {
-  academic_class_id Int    @id @default(autoincrement())
-  class_name        String @unique @db.VarChar(50)
-  class_code        String @unique @db.VarChar(50)
-
-  @@index([academic_class_id], map: "ix_academic_classes_academic_class_id")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model class_section {
   class_section_id Int          @id @default(autoincrement())
   section_code     String       @unique @db.VarChar(30)
@@ -39,11 +30,10 @@ model class_section {
   start_date       DateTime?    @db.Date
   end_date         DateTime?    @db.Date
   courses          courses      @relation(fields: [course_id], references: [course_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_course")
-  lecturers        lecturers?    @relation(fields: [lecturer_id], references: [lecturer_id], onDelete: SetNull, onUpdate: NoAction, map: "fk_lecturer")
+  lecturers        lecturers?   @relation(fields: [lecturer_id], references: [lecturer_id], onUpdate: NoAction, map: "fk_lecturer")
   enrollment       enrollment[]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model courses {
   course_id     Int             @id @default(autoincrement())
   course_code   String          @unique @db.VarChar(20)
@@ -52,6 +42,7 @@ model courses {
   department_id Int
   class_section class_section[]
   departments   departments     @relation(fields: [department_id], references: [department_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_department")
+  major_courses major_courses[]
 }
 
 model departments {
@@ -63,7 +54,6 @@ model departments {
   majors          majors[]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model enrollment {
   enrollment_id    Int           @id @default(autoincrement())
   student_id       Int
@@ -76,7 +66,6 @@ model enrollment {
   @@unique([student_id, class_section_id], map: "uq_enrollment")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model grades {
   grade_id         Int        @id @default(autoincrement())
   enrollment_id    Int        @unique
@@ -90,7 +79,6 @@ model grades {
   enrollment       enrollment @relation(fields: [enrollment_id], references: [enrollment_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_enrollment")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model lecturers {
   lecturer_id    Int              @id @default(autoincrement())
   lecturer_code  String           @unique @db.VarChar(20)
@@ -116,11 +104,24 @@ model majors {
   major_name     String           @db.VarChar(100)
   department_id  Int
   academic_class academic_class[]
+  major_courses  major_courses[]
   departments    departments      @relation(fields: [department_id], references: [department_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_department")
   students       students[]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model major_courses {
+  id          Int      @id @default(autoincrement())
+  major_id    Int
+  course_id   Int
+  semester    Int?
+  year        Int?
+  is_required Boolean? @default(true)
+  courses     courses  @relation(fields: [course_id], references: [course_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_course")
+  majors      majors   @relation(fields: [major_id], references: [major_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_major")
+
+  @@unique([major_id, course_id], map: "uq_major_course")
+}
+
 model students {
   student_id        Int             @id @default(autoincrement())
   student_code      String          @unique @db.VarChar(20)
