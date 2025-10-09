@@ -19,13 +19,12 @@ export async function GET(req: Request) {
 
     // --- Filters ---
     const search = searchParams.get("search") || "";
-    const departmentFilters =
-      searchParams.get("department")?.split(",").filter(Boolean) || [];
+    const departmentFilters = searchParams.getAll("department");
 
     // --- Build where clause ---
     const where: any = {};
 
-    // 🔍 Search theo mã / tên ngành hoặc tên khoa
+    // 🔍 Search theo mã / tên ngành
     if (search) {
       where.OR = [
         { major_code: { contains: search, mode: "insensitive" } },
@@ -34,11 +33,9 @@ export async function GET(req: Request) {
       ];
     }
 
-    // 🏢 Lọc theo tên khoa (department_code)
+    // 🏢 Lọc theo nhiều department_id
     if (departmentFilters.length > 0) {
-      where.departments = {
-        department_name: { in: departmentFilters },
-      };
+      where.department_id = { in: departmentFilters.map(Number) };
     }
 
     // --- Sort fields hợp lệ ---
@@ -55,9 +52,7 @@ export async function GET(req: Request) {
         skip,
         take: pageSize,
         orderBy,
-        include: {
-          departments: true, // join bảng departments
-        },
+        include: { departments: true },
       }),
     ]);
 
@@ -70,7 +65,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("❌ GET /majors error:", error);
     return NextResponse.json(
-      { error: "Lỗi khi lấy danh sách ngành" },
+      { error: "Lỗi khi lấy danh sách ngành", details: String(error) },
       { status: 500 }
     );
   }
@@ -90,7 +85,7 @@ export async function POST(req: Request) {
       data: {
         major_code,
         major_name,
-        department_id,
+        department_id: Number(department_id),
       },
       include: { departments: true },
     });
@@ -99,7 +94,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("❌ POST /majors error:", error);
     return NextResponse.json(
-      { error: "Lỗi khi thêm ngành" },
+      { error: "Lỗi khi thêm ngành", details: String(error) },
       { status: 500 }
     );
   }

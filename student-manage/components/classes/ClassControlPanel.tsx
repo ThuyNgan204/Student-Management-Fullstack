@@ -190,16 +190,16 @@ export default function ControlPanelClass({
                 <p className="font-medium text-base mb-3">Khoa</p>
                 <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                   {departments.map((dept) => (
-                    <label key={dept.department_code} className="flex items-center gap-2">
+                    <label key={dept.department_id} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        value={dept.department_code}
-                        checked={departmentFilters.includes(dept.department_code)}
+                        value={dept.department_id}
+                        checked={departmentFilters.includes(dept.department_id)}
                         onChange={(e) =>
                           setDepartmentFilters((prev) =>
                             e.target.checked
-                              ? [...prev, dept.department_code]
-                              : prev.filter((x) => x !== dept.department_code)
+                              ? [...prev, dept.department_id]
+                              : prev.filter((x) => x !== dept.department_id)
                           )
                         }
                       />
@@ -214,16 +214,16 @@ export default function ControlPanelClass({
                 <p className="font-medium text-base mb-3">Chuyên ngành</p>
                 <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                   {majors.map((m) => (
-                    <label key={m.major_code} className="flex items-center gap-2">
+                    <label key={m.major_id} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        value={m.major_code}
-                        checked={majorFilters.includes(m.major_code)}
+                        value={m.major_id}
+                        checked={majorFilters.includes(m.major_id)}
                         onChange={(e) =>
                           setMajorFilters((prev) =>
                             e.target.checked
-                              ? [...prev, m.major_code]
-                              : prev.filter((x) => x !== m.major_code)
+                              ? [...prev, m.major_id]
+                              : prev.filter((x) => x !== m.major_id)
                           )
                         }
                       />

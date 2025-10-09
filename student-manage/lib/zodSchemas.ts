@@ -54,7 +54,16 @@ export type DepartmentFormInputs = z.infer<typeof departmentSchema>;
 export const majorSchema = z.object({
   major_name: z.string().min(1, { message: "Vui lòng nhập tên ngành" }),
   major_code: z.string().min(1, { message: "Vui lòng nhập mã ngành" }),
-  department_id: z.number().min(1, { message: "Vui lòng chọn ID khoa hợp lệ" }),
+  department_id: z.number().min(1, { message: "Vui lòng chọn khoa quản lý" }),
 });
 
 export type MajorFormInputs = z.infer<typeof majorSchema>;
+
+export const courseSchema = z.object({
+  course_name: z.string().min(1, { message: "Vui lòng nhập tên môn học" }),
+  course_code: z.string().min(1, { message: "Vui lòng nhập mã môn học" }),
+  credits: z.number().min(1, { message: "Số tín chỉ phải lớn hơn 0" }),
+  department_id: z.number().min(1, { message: "Vui lòng chọn khoa quản lý" }),
+});
+
+export type CourseFormInputs = z.infer<typeof courseSchema>;

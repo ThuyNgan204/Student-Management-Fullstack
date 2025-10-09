@@ -17,14 +17,14 @@ export async function GET(req: Request) {
 
     // --- Filters ---
     const search = searchParams.get("search") || "";
-    const cohortFilters = searchParams.get("cohort")?.split(",").filter(Boolean) || [];
-    const departmentFilters = searchParams.get("department")?.split(",").filter(Boolean) || [];
-    const majorFilters = searchParams.get("major")?.split(",").filter(Boolean) || [];
+    const cohortFilters = searchParams.getAll("cohort");
+    const departmentFilters = searchParams.getAll("department");
+    const majorFilters = searchParams.getAll("major");
 
     // --- Build where clause ---
     const where: any = {};
 
-    // 🔍 Search theo class_code, class_name, cohort
+    // 🔍 Tìm kiếm theo mã, tên lớp hoặc khóa
     if (search) {
       where.OR = [
         { class_name: { contains: search, mode: "insensitive" } },
@@ -38,22 +38,16 @@ export async function GET(req: Request) {
       where.cohort = { in: cohortFilters };
     }
 
-    // 🏢 Lọc theo department (dựa trên mã khoa)
+    // 🏢 Lọc theo department (dựa trên ID khoa)
     if (departmentFilters.length > 0) {
       where.majors = {
-        departments: {
-          department_code: { in: departmentFilters },
-        },
+        department_id: { in: departmentFilters.map(Number) },
       };
     }
 
-    // 🏫 Lọc theo major (dựa trên mã ngành)
+    // 🏫 Lọc theo major (dựa trên ID ngành)
     if (majorFilters.length > 0) {
-      const majorIds = await prisma.majors.findMany({
-        where: { major_code: { in: majorFilters } },
-        select: { major_id: true },
-      });
-      where.major_id = { in: majorIds.map((m) => m.major_id) };
+      where.major_id = { in: majorFilters.map(Number) };
     }
 
     // --- Query dữ liệu ---
@@ -66,14 +60,10 @@ export async function GET(req: Request) {
         orderBy: { [sortBy]: sortOrder },
         include: {
           majors: {
-            include: {
-              departments: true, // ✅ Lấy department của major
-            },
+            include: { departments: true },
           },
           lecturers: {
-            include: {
-              departments: true, // ✅ Lấy department của lecturer
-            },
+            include: { departments: true },
           },
         },
       }),
@@ -101,20 +91,12 @@ export async function POST(req: Request) {
         class_code: body.class_code,
         class_name: body.class_name,
         cohort: body.cohort,
-        major_id: body.major_id,
-        lecturer_id: body.lecturer_id,
+        major_id: Number(body.major_id),
+        lecturer_id: Number(body.lecturer_id),
       },
       include: {
-        majors: {
-          include: {
-            departments: true, // ✅ Lấy department của major khi thêm
-          },
-        },
-        lecturers: {
-          include: {
-            departments: true, // ✅ Lấy department của lecturer khi thêm
-          },
-        },
+        majors: { include: { departments: true } },
+        lecturers: { include: { departments: true } },
       },
     });
 

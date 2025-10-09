@@ -23,7 +23,7 @@ const menuItems = [
   { name: "Quản lý khoa", href: "/departments", icon: Building2 },
   { name: "Quản lý chuyên ngành", href: "/majors", icon: GraduationCap },
   { name: "Quản lý lớp sinh hoạt", href: "/classes", icon: ClipboardList },
-  { name: "Quản lý khóa học", href: "/courses", icon: BookOpen },
+  { name: "Quản lý môn học", href: "/courses", icon: BookOpen },
   { name: "Quản lý đăng ký", href: "/enrollment", icon: UserPlus },
   { name: "Quản lý lớp học phần", href: "/class_section", icon: Layers },
   { name: "Quản lý điểm", href: "/grades", icon: FileText },
