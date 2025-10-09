@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar collapsed={collapsed} />
       <div className="flex flex-col flex-1">
-        <Header />
+        <Header collapsed={collapsed} setCollapsed={setCollapsed} />
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">{children}</main>
       </div>
     </div>
