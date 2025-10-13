@@ -45,12 +45,12 @@ export default function EnrollmentDetail({ enrollment }: { enrollment: any }) {
       {/* ✅ Chỉ hiển thị Grades nếu backend có */}
       {grades.length > 0 && (
         <>
-          <div className="col-span-4 text-gray-500 font-medium">Grades:</div>
+          <div className="col-span-4 text-gray-500 font-medium">Điểm số:</div>
           <div className="col-span-8 space-y-2">
             {grades.map((g: any) => (
               <div key={g.grade_id} className="p-2 border rounded bg-gray-50">
-                <div>Type: {g.type}</div>
-                <div>Score: {g.score}</div>
+                <div>Loại: {g.type}</div>
+                <div>Điểm: {g.score}</div>
               </div>
             ))}
           </div>

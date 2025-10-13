@@ -81,10 +81,14 @@ export const classSectionSchema = z.object({
 
 export type ClassSectionFormInputs = z.infer<typeof classSectionSchema>;
 
-export const enrollmentSchema = z.object({
-  student_id: z.number().min(1, { message: "Vui lòng chọn sinh viên" }),
-  class_section_id: z.number().min(1, { message: "Vui lòng chọn lớp học phần" }),
-  status: z.enum(["Đang học", "Hoàn thành", "Hủy"]),
+ export const enrollmentSchema = z.object({
+  student_id: z.coerce.number().int().refine((v) => v > 0, {
+    message: "Vui lòng chọn sinh viên",
+  }),
+  class_section_id: z.coerce.number().int().refine((v) => v > 0, {
+    message: "Vui lòng chọn lớp học phần",
+  }),
+  status: z.string(),
 });
 
 export type EnrollmentFormInputs = z.infer<typeof enrollmentSchema>;

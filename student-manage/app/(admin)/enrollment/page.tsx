@@ -21,15 +21,7 @@ import { useEnrollmentStore, Enrollment } from "@/store/useEnrollmentStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD"; // assumed present in your project
 import ControlPanelEnrollment from "@/components/enrollment/EnrollmentControlPanel";
-
-// Zod schema for add/edit forms
-const enrollmentSchema = z.object({
-  student_id: z.number().min(1, "Chọn sinh viên"),
-  class_section_id: z.number().min(1, "Chọn lớp học phần"),
-  status: z.enum(["Đang học", "Hoàn thành", "Hủy"]).optional(),
-});
-
-type EnrollmentFormInputs = z.infer<typeof enrollmentSchema>;
+import { EnrollmentFormInputs, enrollmentSchema } from "@/lib/zodSchemas";
 
 export default function EnrollmentsPage() {
   const {
@@ -108,7 +100,8 @@ export default function EnrollmentsPage() {
   // forms
   const formAdd = useForm<EnrollmentFormInputs>({
     resolver: zodResolver(enrollmentSchema),
-    defaultValues: { student_id: undefined as any, class_section_id: undefined as any, status: "Đang học" },
+    // set numeric defaults to 0 to avoid converting "" -> NaN
+    defaultValues: { student_id: 0 as any, class_section_id: 0 as any, status: "Đang học" },
   });
 
   const formEdit = useForm<EnrollmentFormInputs>({
@@ -187,24 +180,24 @@ export default function EnrollmentsPage() {
                 { key: "enrollment_id", header: "ID" },
                 {
                   key: "students",
-                  header: "Student",
+                  header: "Sinh viên",
                   render: (r: any) =>
                     r.students ? `${r.students.student_code} — ${r.students.last_name} ${r.students.first_name}` : "N/A",
                 },
                 {
                   key: "class_section",
-                  header: "Class Section",
+                  header: "Lớp học phần",
                   render: (r: any) => r.class_section ? r.class_section.section_code : "N/A",
                 },
                 {
                   key: "course",
-                  header: "Course",
+                  header: "Học phần",
                   render: (r: any) => r.class_section?.courses ? `${r.class_section.courses.course_code} - ${r.class_section.courses.course_name}` : "N/A",
                 },
-                { key: "status", header: "Status" },
+                { key: "status", header: "Trạng thái" },
                 {
                   key: "actions",
-                  header: "Actions",
+                  header: "Thao tác",
                   render: (r: Enrollment) => (
                     <div className="space-x-2">
                       <Button variant="secondary" onClick={() => handleView(r.enrollment_id)}>
@@ -216,14 +209,14 @@ export default function EnrollmentsPage() {
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(r.enrollment_id)}
                         title="Bạn đã chắc chắn?"
-                        description="Enrollment sẽ bị xóa vĩnh viễn."
+                        description="Học phần đã đăng kí sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                       />
                     </div>
                   ),
                 },
               ]}
               data={data?.items || []}
-              emptyMessage="Không có enrollment nào"
+              emptyMessage="Không có học phần nào đã được đăng kí"
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -241,36 +234,54 @@ export default function EnrollmentsPage() {
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Thêm Enrollment</DialogTitle>
+            <DialogTitle>Đăng kí học phần</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
             <div>
               <Label className="mb-2">Sinh viên</Label>
-              <select {...formAdd.register("student_id", { valueAsNumber: true })} defaultValue="" className="border rounded px-2 py-1 w-full">
-                <option value="" disabled>Chọn sinh viên</option>
+              <select
+                {...formAdd.register("student_id", { valueAsNumber: true })}
+                defaultValue={0}
+                className={`border rounded px-2 py-1 w-full ${formAdd.formState.errors.student_id ? "border-red-500" : ""}`}
+              >
+                <option value={0} disabled>Chọn sinh viên</option>
                 {students.map((s: any) => (
                   <option key={s.student_id} value={s.student_id}>
                     {s.student_code} — {s.last_name} {s.first_name}
                   </option>
                 ))}
               </select>
+              {formAdd.formState.errors.student_id?.message && (
+                <p className="text-red-500 text-sm mt-1">
+                  {String(formAdd.formState.errors.student_id.message)}
+                </p>
+              )}
             </div>
 
             <div>
               <Label className="mb-2">Lớp học phần</Label>
-              <select {...formAdd.register("class_section_id", { valueAsNumber: true })} defaultValue="" className="border rounded px-2 py-1 w-full">
-                <option value="" disabled>Chọn lớp học phần</option>
+              <select
+                {...formAdd.register("class_section_id", { valueAsNumber: true })}
+                defaultValue={0}
+                className={`border rounded px-2 py-1 w-full ${formAdd.formState.errors.class_section_id ? "border-red-500" : ""}`}
+              >
+                <option value={0} disabled>Chọn lớp học phần</option>
                 {classSections.map((c: any) => (
                   <option key={c.class_section_id} value={c.class_section_id}>
                     {c.section_code} — {c.courses?.course_code} {c.courses?.course_name}
                   </option>
                 ))}
               </select>
+              {formAdd.formState.errors.class_section_id?.message && (
+                <p className="text-red-500 text-sm mt-1">
+                  {String(formAdd.formState.errors.class_section_id.message)}
+                </p>
+              )}
             </div>
 
             <div>
-              <Label className="mb-2">Status</Label>
+              <Label className="mb-2">Trạng thái</Label>
               <select {...formAdd.register("status")} defaultValue="Đang học" className="border rounded px-2 py-1 w-full">
                 <option>Đang học</option>
                 <option>Hoàn thành</option>
@@ -290,37 +301,55 @@ export default function EnrollmentsPage() {
       <Dialog open={!!editingEnrollment} onOpenChange={(open) => { if (!open) setEditingEnrollment(null); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa Enrollment</DialogTitle>
+            <DialogTitle>Chỉnh sửa học phần đã đăng kí</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={formEdit.handleSubmit(handleUpdate)} className="space-y-4">
             <div>
               <Label className="mb-2">Sinh viên</Label>
-              <select {...formEdit.register("student_id", { valueAsNumber: true })} defaultValue="" className="border rounded px-2 py-1 w-full">
-                <option value="" disabled>Chọn sinh viên</option>
+              <select
+                {...formEdit.register("student_id", { valueAsNumber: true })}
+                defaultValue={editingEnrollment?.student_id ?? 0}
+                className={`border rounded px-2 py-1 w-full ${formEdit.formState.errors.student_id ? "border-red-500" : ""}`}
+              >
+                <option value={0} disabled>Chọn sinh viên</option>
                 {students.map((s: any) => (
                   <option key={s.student_id} value={s.student_id}>
                     {s.student_code} — {s.last_name} {s.first_name}
                   </option>
                 ))}
               </select>
+              {formEdit.formState.errors.student_id?.message && (
+                <p className="text-red-500 text-sm mt-1">
+                  {String(formEdit.formState.errors.student_id.message)}
+                </p>
+              )}
             </div>
 
             <div>
               <Label className="mb-2">Lớp học phần</Label>
-              <select {...formEdit.register("class_section_id", { valueAsNumber: true })} defaultValue="" className="border rounded px-2 py-1 w-full">
-                <option value="" disabled>Chọn lớp học phần</option>
+              <select
+                {...formEdit.register("class_section_id", { valueAsNumber: true })}
+                defaultValue={editingEnrollment?.class_section_id ?? 0}
+                className={`border rounded px-2 py-1 w-full ${formEdit.formState.errors.class_section_id ? "border-red-500" : ""}`}
+              >
+                <option value={0} disabled>Chọn lớp học phần</option>
                 {classSections.map((c: any) => (
                   <option key={c.class_section_id} value={c.class_section_id}>
                     {c.section_code} — {c.courses?.course_code} {c.courses?.course_name}
                   </option>
                 ))}
               </select>
+              {formEdit.formState.errors.class_section_id?.message && (
+                <p className="text-red-500 text-sm mt-1">
+                  {String(formEdit.formState.errors.class_section_id.message)}
+                </p>
+              )}
             </div>
 
             <div>
-              <Label className="mb-2">Status</Label>
-              <select {...formEdit.register("status")} className="border rounded px-2 py-1 w-full">
+              <Label className="mb-2">Trạng thái</Label>
+              <select {...formEdit.register("status")} className="border rounded px-2 py-1 w-full" defaultValue={editingEnrollment?.status ?? "Đang học"}>
                 <option>Đang học</option>
                 <option>Hoàn thành</option>
                 <option>Hủy</option>
@@ -336,7 +365,7 @@ export default function EnrollmentsPage() {
       </Dialog>
 
       {/* Detail */}
-      <DetailDialog open={!!selectedEnrollment} title="Chi tiết Enrollment" onClose={() => setSelectedEnrollment(null)}>
+      <DetailDialog open={!!selectedEnrollment} title="Chi tiết học phần đã đăng kí" onClose={() => setSelectedEnrollment(null)}>
         {selectedEnrollment && <EnrollmentDetail enrollment={selectedEnrollment} />}
       </DetailDialog>
     </div>

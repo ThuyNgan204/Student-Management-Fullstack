@@ -140,7 +140,7 @@ export default function ControlPanelEnrollment({ total, students, classSections,
         </div>
 
         <div>
-          <Label className="mb-1 text-sm">Status</Label>
+          <Label className="mb-1 text-sm">Trạng thái</Label>
           <select
             value={statusFilters[0] ?? ""}
             onChange={(e) => setStatusFilters(e.target.value ? [e.target.value] : [])}
