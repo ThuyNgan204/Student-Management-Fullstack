@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { toast } from "sonner";
 import { Eye, Pencil } from "lucide-react";
 
@@ -19,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import EnrollmentDetail from "@/components/enrollment/EnrollmentDetail";
 import { useEnrollmentStore, Enrollment } from "@/store/useEnrollmentStore";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useCRUD } from "@/hooks/useCRUD"; // assumed present in your project
+import { useCRUD } from "@/hooks/useCRUD";
 import ControlPanelEnrollment from "@/components/enrollment/EnrollmentControlPanel";
 import { EnrollmentFormInputs, enrollmentSchema } from "@/lib/zodSchemas";
 
@@ -29,15 +28,11 @@ export default function EnrollmentsPage() {
     pageSize,
     search,
     setPage,
-    setSearch,
     sortBy,
     sortOrder,
     studentFilters,
     classSectionFilters,
     statusFilters,
-    setStudentFilters,
-    setClassSectionFilters,
-    setStatusFilters,
     addOpen,
     setAddOpen,
     editingEnrollment,
@@ -56,7 +51,7 @@ export default function EnrollmentsPage() {
     const fetchLists = async () => {
       try {
         const [sRes, cRes] = await Promise.all([
-          axios.get("/api/students", { params: { page: 1, page_size: 1000 } }),
+          axios.get("/api/students", { params: { page: 1, page_size: 1000, sort_order: 'asc' } }),
           axios.get("/api/class_section", { params: { page: 1, page_size: 1000 } }),
         ]);
         // adapt shape: some endpoints return { items, total } or { data }
@@ -113,13 +108,13 @@ export default function EnrollmentsPage() {
       values,
       {
         onSuccess: () => {
-          toast.success("Thêm enrollment thành công");
+          toast.success("Đăng kí học phần thành công");
           formAdd.reset();
           setAddOpen(false);
           refetch?.();
         },
         onError: (err: any) => {
-          toast.error(err?.response?.data?.error || "Thêm thất bại");
+          toast.error(err?.response?.data?.error || "Đăng kí học phần thất bại");
         },
       }
     );
@@ -140,7 +135,7 @@ export default function EnrollmentsPage() {
       { ...editingEnrollment, ...values },
       {
         onSuccess: () => {
-          toast.success("Cập nhật enrollment thành công");
+          toast.success("Cập nhật học phần đã đăng kí thành công");
           setEditingEnrollment(null);
           refetch?.();
         },
@@ -154,7 +149,7 @@ export default function EnrollmentsPage() {
       const res = await axios.get(`/api/enrollment/${id}`);
       setSelectedEnrollment(res.data);
     } catch (err) {
-      toast.error("Không tải được chi tiết enrollment");
+      toast.error("Không tải được chi tiết học phần đã đăng kí");
     }
   };
 
@@ -171,7 +166,7 @@ export default function EnrollmentsPage() {
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
         {isLoading && <p>Đang tải...</p>}
-        {isError && <p>Tải danh sách enrollment thất bại.</p>}
+        {isError && <p>Tải danh sách học phần đã đăng kí thất bại.</p>}
 
         {!isLoading && !isError && (
           <>
