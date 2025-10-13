@@ -60,10 +60,23 @@ export const majorSchema = z.object({
 export type MajorFormInputs = z.infer<typeof majorSchema>;
 
 export const courseSchema = z.object({
-  course_name: z.string().min(1, { message: "Vui lòng nhập tên môn học" }),
-  course_code: z.string().min(1, { message: "Vui lòng nhập mã môn học" }),
+  course_name: z.string().min(1, { message: "Vui lòng nhập tên học phần" }),
+  course_code: z.string().min(1, { message: "Vui lòng nhập mã học phần" }),
   credits: z.number().min(1, { message: "Số tín chỉ phải lớn hơn 0" }),
   department_id: z.number().min(1, { message: "Vui lòng chọn khoa quản lý" }),
 });
 
 export type CourseFormInputs = z.infer<typeof courseSchema>;
+
+export const classSectionSchema = z.object({
+  section_code: z.string().min(1, { message: "Mã lớp học phần không được để trống" }),
+  academic_year: z.string().min(1, { message: "Năm học không được để trống" }),
+  semester: z.string().min(1, { message: "Học kỳ không được để trống" }),
+  course_id: z.coerce.number(),
+  lecturer_id: z.coerce.number(),
+  capacity: z.coerce.number().min(1, { message: "Sức chứa phải lớn hơn 0" }),
+  start_date: z.string().min(1, { message: "Ngày bắt đầu không được để trống" }),
+  end_date: z.string().min(1, { message: "Ngày kết thúc không được để trống" }),
+});
+
+export type ClassSectionFormInputs = z.infer<typeof classSectionSchema>;

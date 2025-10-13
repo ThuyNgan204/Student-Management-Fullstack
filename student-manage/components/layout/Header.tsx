@@ -21,7 +21,7 @@ export default function Header({
     "/departments": "QUẢN LÝ KHOA",
     "/majors": "QUẢN LÝ CHUYÊN NGÀNH",
     "/classes": "QUẢN LÝ LỚP SINH HOẠT",
-    "/courses": "QUẢN LÝ MÔN HỌC",
+    "/courses": "QUẢN LÝ HỌC PHẦN",
     "/enrollment": "QUẢN LÝ ĐĂNG KÝ",
     "/class_section": "QUẢN LÝ LỚP HỌC PHẦN",
     "/grades": "QUẢN LÝ ĐIỂM",

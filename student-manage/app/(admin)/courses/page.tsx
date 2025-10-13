@@ -26,7 +26,7 @@ import { useCRUD } from "@/hooks/useCRUD";
 import { useCourseStore, Course } from "@/store/useCourseStore";
 import { Department } from "@/store/useDepartmentStore";
 import { CourseFormInputs, courseSchema } from "@/lib/zodSchemas";
-import ControlPanel from "@/components/courses/Courses-ControlPanel";
+import ControlPanelCourse from "@/components/courses/Courses-ControlPanel";
 
 export default function CoursesPage() {
   const {
@@ -80,13 +80,13 @@ export default function CoursesPage() {
       .catch(() => toast.error("Không thể tải danh sách khoa"));
   }, []);
 
-  // 🔹 Form thêm môn học
+  // 🔹 Form thêm học phần
   const formAdd = useForm<CourseFormInputs>({
     resolver: zodResolver(courseSchema),
     defaultValues: { course_name: "", course_code: "", credits: 3, department_id: 0 },
   });
 
-  // 🔹 Form chỉnh sửa môn học
+  // 🔹 Form chỉnh sửa học phần
   const formEdit = useForm<CourseFormInputs>({
     resolver: zodResolver(courseSchema),
   });
@@ -94,11 +94,11 @@ export default function CoursesPage() {
   const onSubmitAdd = (dataForm: CourseFormInputs) => {
     addMutation.mutate(dataForm, {
       onSuccess: () => {
-        toast.success("Thêm môn học thành công");
+        toast.success("Thêm học phần thành công");
         formAdd.reset();
         setAddOpen(false);
       },
-      onError: () => toast.error("Thêm môn học thất bại"),
+      onError: () => toast.error("Thêm học phần thất bại"),
     });
   };
 
@@ -118,7 +118,7 @@ export default function CoursesPage() {
         { ...editingCourse, ...dataForm },
         {
           onSuccess: () => {
-            toast.success("Cập nhật môn học thành công");
+            toast.success("Cập nhật học phần thành công");
             formEdit.reset();
             setEditingCourse(null);
           },
@@ -132,24 +132,24 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
-      <ControlPanel
+      <ControlPanelCourse
         total={data?.total ?? 0}
-        addLabel="Thêm môn học"
-        addTotal="Tổng số môn học"
+        addLabel="Thêm học phần"
+        addTotal="Tổng số học phần"
         onAdd={() => setAddOpen(true)}
       />
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
         {isLoading && <p>Đang tải dữ liệu...</p>}
-        {isError && <p>Lỗi tải danh sách môn học.</p>}
+        {isError && <p>Lỗi tải danh sách học phần.</p>}
 
         {!isLoading && !isError && (
           <>
             <DataTable
               columns={[
                 { key: "course_id", header: "ID" },
-                { key: "course_name", header: "Tên môn học" },
-                { key: "course_code", header: "Mã môn học" },
+                { key: "course_name", header: "Tên học phần" },
+                { key: "course_code", header: "Mã học phần" },
                 { key: "credits", header: "Số tín chỉ" },
                 {
                   key: "department.department_name",
@@ -167,14 +167,14 @@ export default function CoursesPage() {
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(c.course_id)}
                         title="Bạn chắc chắn?"
-                        description="Môn học này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
+                        description="học phần này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                       />
                     </div>
                   ),
                 },
               ]}
               data={data?.items || []}
-              emptyMessage="Không có môn học nào được tìm thấy"
+              emptyMessage="Không có học phần nào được tìm thấy"
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -192,7 +192,7 @@ export default function CoursesPage() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Thêm môn học mới</DialogTitle>
+            <DialogTitle>Thêm học phần mới</DialogTitle>
           </DialogHeader>
 
           <form
@@ -200,7 +200,7 @@ export default function CoursesPage() {
             className="space-y-4"
           >
             <div>
-              <Label className="mb-2">Mã môn học</Label>
+              <Label className="mb-2">Mã học phần</Label>
               <Input {...formAdd.register("course_code")} />
               {formAdd.formState.errors.course_code && (
                 <p className="text-xs text-red-500">
@@ -210,7 +210,7 @@ export default function CoursesPage() {
             </div>
 
             <div>
-              <Label className="mb-2">Tên môn học</Label>
+              <Label className="mb-2">Tên học phần</Label>
               <Input {...formAdd.register("course_name")} />
               {formAdd.formState.errors.course_name && (
                 <p className="text-xs text-red-500">
@@ -269,7 +269,7 @@ export default function CoursesPage() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa môn học</DialogTitle>
+            <DialogTitle>Chỉnh sửa học phần</DialogTitle>
           </DialogHeader>
 
           <form
@@ -277,7 +277,7 @@ export default function CoursesPage() {
             className="space-y-4"
           >
             <div>
-              <Label className="mb-2">Mã môn học</Label>
+              <Label className="mb-2">Mã học phần</Label>
               <Input {...formEdit.register("course_code")} />
               {formAdd.formState.errors.course_code && (
                 <p className="text-xs text-red-500">
@@ -287,7 +287,7 @@ export default function CoursesPage() {
             </div>
 
             <div>
-              <Label className="mb-2">Tên môn học</Label>
+              <Label className="mb-2">Tên học phần</Label>
               <Input {...formEdit.register("course_name")} />
               {formAdd.formState.errors.course_name && (
                 <p className="text-xs text-red-500">

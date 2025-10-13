@@ -9,7 +9,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   });
 
   if (!course) {
-    return NextResponse.json({ error: "Không tìm thấy môn học." }, { status: 404 });
+    return NextResponse.json({ error: "Không tìm thấy học phần." }, { status: 404 });
   }
 
   return NextResponse.json(course);
@@ -29,7 +29,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json(updated);
   } catch (error) {
     console.error("PUT /api/courses/:id error:", error);
-    return NextResponse.json({ error: "Không thể cập nhật môn học." }, { status: 500 });
+    return NextResponse.json({ error: "Không thể cập nhật học phần." }, { status: 500 });
   }
 }
 
@@ -37,9 +37,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
   try {
     await prisma.courses.delete({ where: { course_id: Number(params.id) } });
-    return NextResponse.json({ message: "Đã xóa môn học thành công." });
+    return NextResponse.json({ message: "Đã xóa học phần thành công." });
   } catch (error) {
     console.error("DELETE /api/courses/:id error:", error);
-    return NextResponse.json({ error: "Không thể xóa môn học." }, { status: 500 });
+    return NextResponse.json({ error: "Không thể xóa học phần." }, { status: 500 });
   }
 }

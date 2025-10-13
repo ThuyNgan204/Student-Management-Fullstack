@@ -48,7 +48,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("❌ GET /courses error:", error);
     return NextResponse.json(
-      { error: "Lỗi khi tải danh sách môn học" },
+      { error: "Lỗi khi tải danh sách học phần" },
       { status: 500 }
     );
   }
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("❌ POST /courses error:", error);
     return NextResponse.json(
-      { error: "Không thể tạo môn học." },
+      { error: "Không thể tạo học phần." },
       { status: 500 }
     );
   }
