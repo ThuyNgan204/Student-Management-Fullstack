@@ -1,8 +1,6 @@
-// /app/api/grades/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Hàm tính điểm tổng và quy đổi letter grade + status
 function calculateGrade(scores: {
   attendance_score?: number;
   midterm_score?: number;
@@ -18,9 +16,9 @@ function calculateGrade(scores: {
 
   const total =
     attendance_score * 0.1 +
-    midterm_score * 0.3 +
+    midterm_score * 0.2 +
     assignment_score * 0.2 +
-    final_score * 0.4;
+    final_score * 0.5;
 
   let letter = "F";
   let status = "Trượt";
@@ -39,11 +37,7 @@ function calculateGrade(scores: {
     status = "Trượt";
   }
 
-  return {
-    total_score: Number(total.toFixed(1)),
-    letter_grade: letter,
-    status,
-  };
+  return { total_score: Number(total.toFixed(1)), letter_grade: letter, status };
 }
 
 export async function GET(req: Request) {
@@ -53,7 +47,9 @@ export async function GET(req: Request) {
   const pageSize = parseInt(searchParams.get("page_size") || "10");
   const search = searchParams.get("search") || undefined;
   const enrollmentId = searchParams.get("enrollment_id");
-  const statusFilters = searchParams.getAll("status").filter(Boolean);
+  const studentId = searchParams.get("student_id");
+  const classSectionId = searchParams.get("class_section_id");
+
   const sortBy = searchParams.get("sort_by") || "grade_id";
   const sortOrder = searchParams.get("sort_order") === "asc" ? "asc" : "desc";
 
@@ -81,8 +77,21 @@ export async function GET(req: Request) {
     });
   }
 
-  if (enrollmentId) and.push({ enrollment_id: Number(enrollmentId) });
-  if (statusFilters.length) and.push({ status: { in: statusFilters } });
+  // ✅ Lọc độc lập
+
+  if (studentId && classSectionId) {
+  and.push({
+    AND: [
+      { enrollment: { student_id: Number(studentId) } },
+      { enrollment: { class_section_id: Number(classSectionId) } },
+    ],
+  });
+} else if (studentId) {
+  and.push({ enrollment: { student_id: Number(studentId) } });
+} else if (classSectionId) {
+  and.push({ enrollment: { class_section_id: Number(classSectionId) } });
+}
+
   if (and.length) where.AND = and;
 
   try {
@@ -96,18 +105,13 @@ export async function GET(req: Request) {
           enrollment: {
             include: {
               students: true,
-              class_section: {
-                include: {
-                  courses: true,
-                },
-              },
+              class_section: { include: { courses: true } },
             },
           },
         },
       }),
       prisma.grades.count({ where }),
     ]);
-
     return NextResponse.json({ items, total });
   } catch (err) {
     console.error("GET /api/grades error:", err);
@@ -117,25 +121,18 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const {
-    enrollment_id,
-    attendance_score,
-    midterm_score,
-    assignment_score,
-    final_score,
-  } = body;
+  const { enrollment_id, attendance_score, midterm_score, assignment_score, final_score } = body;
 
   if (!enrollment_id)
     return NextResponse.json({ error: "enrollment_id is required" }, { status: 400 });
 
   try {
-    const existing = await prisma.grades.findUnique({
+    const existing = await prisma.grades.findFirst({
       where: { enrollment_id: Number(enrollment_id) },
     });
     if (existing)
       return NextResponse.json({ error: "Grade already exists for this enrollment" }, { status: 400 });
 
-    // Tính toán tự động
     const { total_score, letter_grade, status } = calculateGrade({
       attendance_score,
       midterm_score,

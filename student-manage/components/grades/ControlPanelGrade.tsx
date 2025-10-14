@@ -8,31 +8,32 @@ import { useEffect } from "react";
 
 interface Props {
   total: number;
-  enrollment: any[];
+  students: any[];
+  classSections: any[];
   onAdd: () => void;
 }
 
-export default function ControlPanelGrade({ total, enrollment, onAdd }: Props) {
+export default function ControlPanelGrade({ total, students, classSections, onAdd }: Props) {
   const {
     search,
     pageSize,
     sortBy,
     sortOrder,
-    enrollmentFilters,
-    gradeTypeFilters,
+    studentFilters,
+    classSectionFilters,
     setSearch,
     setPage,
     setPageSize,
     setSortBy,
     setSortOrder,
-    setEnrollmentFilters,
-    setGradeTypeFilters,
+    setStudentFilters,
+    setClassSectionFilters,
     fetchGrades,
   } = useGradeStore();
 
   useEffect(() => {
     fetchGrades();
-  }, [search, pageSize, sortBy, sortOrder, enrollmentFilters, gradeTypeFilters]);
+  }, [search, pageSize, sortBy, sortOrder, studentFilters, classSectionFilters]);
 
   return (
     <div className="p-4 mb-6 bg-gray-50 border rounded-lg shadow-sm">
@@ -66,7 +67,7 @@ export default function ControlPanelGrade({ total, enrollment, onAdd }: Props) {
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
               <option value="grade_id">ID</option>
-              <option value="score">Điểm</option>
+              <option value="total_score">Tổng điểm</option>
             </select>
             <select
               value={sortOrder}
@@ -88,37 +89,46 @@ export default function ControlPanelGrade({ total, enrollment, onAdd }: Props) {
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-4">
+        {/* Filter theo sinh viên */}
         <div>
-          <Label className="mb-1 text-sm">Đăng ký học phần</Label>
+          <Label className="mb-1 text-sm">Sinh viên</Label>
           <select
-            value={enrollmentFilters[0] ?? ""}
-            onChange={(e) =>
-              setEnrollmentFilters(e.target.value ? [Number(e.target.value)] : [])
-            }
+            value={studentFilters[0] ?? ""}
+            onChange={(e) => {
+              const val = e.target.value ? [Number(e.target.value)] : [];
+              setStudentFilters(val);
+              setPage(1);
+            }}
             className="border rounded px-2 py-1 w-full"
           >
             <option value="">Tất cả</option>
-            {enrollment.map((en) => (
-              <option key={en.enrollment_id} value={en.enrollment_id}>
-                {en.enrollment_id} — {en.students?.student_code}
+            {students.map((st) => (
+              <option key={st.student_id} value={st.student_id}>
+                {st.student_code} — {st.last_name} {st.first_name}
               </option>
             ))}
           </select>
+          
         </div>
 
+        {/* Filter theo lớp học phần */}
         <div>
-          <Label className="mb-1 text-sm">Loại điểm</Label>
+          <Label className="mb-1 text-sm">Lớp học phần</Label>
           <select
-            value={gradeTypeFilters[0] ?? ""}
-            onChange={(e) =>
-              setGradeTypeFilters(e.target.value ? [e.target.value] : [])
-            }
+            value={classSectionFilters[0] ?? ""}
+            onChange={(e) => {
+              const val = e.target.value ? [Number(e.target.value)] : [];
+              setClassSectionFilters(val);
+              setPage(1);
+            }}
             className="border rounded px-2 py-1 w-full"
           >
             <option value="">Tất cả</option>
-            <option value="Giữa kỳ">Giữa kỳ</option>
-            <option value="Cuối kỳ">Cuối kỳ</option>
-            <option value="Khác">Khác</option>
+            {classSections.map((e) => (
+              <option key={e.class_section_id} value={e.class_section_id}>
+                {e.section_code} — {e.courses?.course_code ?? "??"} - {e.courses?.course_name ?? "Không rõ"}
+              </option>
+            ))}
           </select>
         </div>
       </div>

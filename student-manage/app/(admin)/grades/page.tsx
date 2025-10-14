@@ -31,6 +31,8 @@ export default function GradePage() {
     page,
     pageSize,
     search,
+    studentFilters,
+    classSectionFilters,
     setPage,
     sortBy,
     sortOrder,
@@ -41,17 +43,41 @@ export default function GradePage() {
   } = useGradeStore();
 
   const debouncedSearch = useDebounce(search, 500);
-  const [enrollment, setEnrollment] = useState<any[]>([]);
 
-  // Load danh sách enrollment để chọn khi thêm điểm
+  const [students, setStudents] = useState<any[]>([]);
+  const [classSections, setClassSections] = useState<any[]>([]); // ✅ Thêm mới
+  const [enrollment, setEnrollment] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
+
+  // ✅ Load danh sách sinh viên
   useEffect(() => {
     axios
-      .get("/api/enrollment", { params: { page: 1, page_size: 1000 } })
-      .then((res) => setEnrollment(res.data.items || res.data))
-      .catch(() => toast.error("Không tải được danh sách đăng ký học phần"));
+      .get("/api/students", { params: { page: 1, page_size: 1000 } })
+      .then((res) => setStudents(res.data.items || res.data))
+      .catch(() => toast.error("Không tải được danh sách sinh viên"));
   }, []);
 
-  // CRUD
+  // ✅ Load toàn bộ class_section để filter riêng
+  useEffect(() => {
+    axios
+      .get("/api/class_section", { params: { page: 1, page_size: 1000 } })
+      .then((res) => setClassSections(res.data.items || res.data))
+      .catch(() => toast.error("Không tải được danh sách lớp học phần"));
+  }, []);
+
+  // ✅ Khi chọn sinh viên → load học phần riêng để dùng cho form Add
+  useEffect(() => {
+    if (!selectedStudent) {
+      setEnrollment([]);
+      return;
+    }
+    axios
+      .get("/api/enrollment", { params: { student_id: selectedStudent } })
+      .then((res) => setEnrollment(res.data.items || res.data))
+      .catch(() => toast.error("Không tải được danh sách học phần của sinh viên"));
+  }, [selectedStudent]);
+
+  // ✅ CRUD
   const {
     data,
     isLoading,
@@ -67,9 +93,13 @@ export default function GradePage() {
     search: debouncedSearch,
     sortBy,
     sortOrder,
+    filters: {
+      student_id: studentFilters,
+      class_section_id: classSectionFilters,
+    },
   });
 
-  // Form thêm
+  // ✅ Form thêm
   const formAdd = useForm<GradeFormInputs>({
     resolver: zodResolver(gradeSchema),
     defaultValues: {
@@ -81,7 +111,7 @@ export default function GradePage() {
     },
   });
 
-  // Form sửa
+  // ✅ Form sửa
   const formEdit = useForm<GradeFormInputs>({
     resolver: zodResolver(gradeSchema),
   });
@@ -128,10 +158,12 @@ export default function GradePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
+      {/* ✅ FILTER HOÀN CHỈNH */}
       <ControlPanelGrade
         total={data?.total ?? 0}
+        students={students}
+        classSections={classSections} // ✅ Dùng danh sách đầy đủ
         onAdd={() => setAddOpen(true)}
-        enrollment={enrollment}
       />
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
@@ -148,6 +180,14 @@ export default function GradePage() {
                   render: (r: any) =>
                     r.enrollment?.students
                       ? `${r.enrollment.students.student_code} - ${r.enrollment.students.last_name} ${r.enrollment.students.first_name}`
+                      : "N/A",
+                },
+                {
+                  key: "class_section",
+                  header: "Lớp học phần",
+                  render: (r: any) =>
+                    r.enrollment?.class_section
+                      ? `${r.enrollment.class_section.section_code}`
                       : "N/A",
                 },
                 {
@@ -199,21 +239,47 @@ export default function GradePage() {
           </DialogHeader>
 
           <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
+            {/* Chọn sinh viên */}
             <div>
-              <Label>Đăng ký học phần</Label>
+              <Label>Sinh viên</Label>
               <select
-                {...formAdd.register("enrollment_id", { valueAsNumber: true })}
+                value={selectedStudent ?? ""}
+                onChange={(e) =>
+                  setSelectedStudent(
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
                 className="border rounded w-full px-2 py-1"
               >
-                <option value={0}>Chọn</option>
-                {enrollment.map((e) => (
-                  <option key={e.enrollment_id} value={e.enrollment_id}>
-                    {e.enrollment_id} - {e.students?.student_code}
+                <option value="">Chọn sinh viên</option>
+                {students.map((s) => (
+                  <option key={s.student_id} value={s.student_id}>
+                    {s.student_code} - {s.last_name} {s.first_name}
                   </option>
                 ))}
               </select>
             </div>
 
+            {/* Chọn học phần */}
+            <div>
+              <Label>Học phần</Label>
+              <select
+                {...formAdd.register("enrollment_id", { valueAsNumber: true })}
+                disabled={!selectedStudent}
+                className="border rounded w-full px-2 py-1"
+              >
+                <option value={0}>Chọn học phần</option>
+                {enrollment.map((e) => (
+                  <option key={e.enrollment_id} value={e.enrollment_id}>
+                    {e.class_section?.section_code ?? "??"} -{" "}
+                    {e.class_section?.courses?.course_code ?? "??"} -{" "}
+                    {e.class_section?.courses?.course_name ?? "Không rõ"}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Nhập điểm */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Chuyên cần</Label>

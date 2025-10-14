@@ -1,13 +1,12 @@
-// /store/useGradeStore.ts
 import { create } from "zustand";
 import axios from "axios";
 
 export interface Grade {
   grade_id: number;
   enrollment_id: number;
-  grade_type: string; // Ví dụ: "Giữa kỳ", "Cuối kỳ"
-  score: number;
-  note?: string;
+  total_score: number;
+  letter_grade: string;
+  status: string;
   created_at?: string;
   updated_at?: string;
 
@@ -20,6 +19,7 @@ export interface Grade {
       last_name: string;
     };
     class_section?: {
+      class_section_id: number;
       section_code: string;
       courses?: {
         course_name: string;
@@ -36,8 +36,8 @@ interface GradeStore {
   sortBy: string;
   sortOrder: "asc" | "desc";
 
-  enrollmentFilters: number[];
-  gradeTypeFilters: string[];
+  studentFilters: number[];
+  classSectionFilters: number[];
 
   addOpen: boolean;
   editingGrade: Grade | null;
@@ -52,8 +52,10 @@ interface GradeStore {
   setSearch: (s: string) => void;
   setSortBy: (s: string) => void;
   setSortOrder: (s: "asc" | "desc") => void;
-  setEnrollmentFilters: (ids: number[] | ((prev: number[]) => number[])) => void;
-  setGradeTypeFilters: (types: string[] | ((prev: string[]) => string[])) => void;
+
+  setStudentFilters: (ids: number[]) => void;
+  setClassSectionFilters: (ids: number[]) => void;
+
   setAddOpen: (open: boolean) => void;
   setEditingGrade: (g: Grade | null) => void;
   setSelectedGrade: (g: Grade | null) => void;
@@ -68,8 +70,10 @@ export const useGradeStore = create<GradeStore>((set, get) => ({
   search: "",
   sortBy: "grade_id",
   sortOrder: "asc",
-  enrollmentFilters: [],
-  gradeTypeFilters: [],
+
+  studentFilters: [],
+  classSectionFilters: [],
+
   addOpen: false,
   editingGrade: null,
   selectedGrade: null,
@@ -79,43 +83,46 @@ export const useGradeStore = create<GradeStore>((set, get) => ({
 
   setPage: (p) => set({ page: p }),
   setPageSize: (n) => set({ pageSize: n }),
-  setSearch: (s) => set({ search: s }),
+  setSearch: (s) => set({ search: s, page: 1 }),
   setSortBy: (s) => set({ sortBy: s }),
   setSortOrder: (s) => set({ sortOrder: s }),
 
-  setEnrollmentFilters: (ids) =>
-    set((state) => ({
-      enrollmentFilters: typeof ids === "function" ? ids(state.enrollmentFilters) : ids,
-    })),
-  setGradeTypeFilters: (types) =>
-    set((state) => ({
-      gradeTypeFilters: typeof types === "function" ? types(state.gradeTypeFilters) : types,
-    })),
+  setStudentFilters: (ids) => set({ studentFilters: ids, page: 1 }),
+  setClassSectionFilters: (ids) => set({ classSectionFilters: ids, page: 1 }),
 
   setAddOpen: (open) => set({ addOpen: open }),
   setEditingGrade: (g) => set({ editingGrade: g }),
   setSelectedGrade: (g) => set({ selectedGrade: g }),
 
-  resetFilters: () => set({ enrollmentFilters: [], gradeTypeFilters: [] }),
+  resetFilters: () => set({ studentFilters: [], classSectionFilters: [], page: 1 }),
 
   fetchGrades: async () => {
-    const { page, pageSize, search, sortBy, sortOrder, enrollmentFilters, gradeTypeFilters } = get();
+    const {
+      page,
+      pageSize,
+      search,
+      sortBy,
+      sortOrder,
+      studentFilters,
+      classSectionFilters,
+    } = get();
 
     set({ loading: true });
     try {
-      const res = await axios.get("/api/grade", {
+      const res = await axios.get("/api/grades", {
         params: {
           page,
           page_size: pageSize,
           search,
-          enrollment_id: enrollmentFilters.join(","),
-          grade_type: gradeTypeFilters,
+          student_id: studentFilters.join(",") || undefined,
+          class_section_id: classSectionFilters.join(",") || undefined,
           sort_by: sortBy,
           sort_order: sortOrder,
         },
       });
+
       set({
-        grades: res.data.data || [],
+        grades: res.data.items || [],
         total: res.data.total || 0,
         loading: false,
       });
