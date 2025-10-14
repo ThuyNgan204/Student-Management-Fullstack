@@ -1,1 +1,324 @@
-// quản lý điểm
+"use client";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { Pencil } from "lucide-react";
+
+import DataTable from "@/components/shared/DataTable";
+import Pagination from "@/components/shared/Pagination";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+import { useGradeStore, Grade } from "@/store/useGradeStore";
+import { GradeFormInputs, gradeSchema } from "@/lib/zodSchemas";
+import { useCRUD } from "@/hooks/useCRUD";
+import { useDebounce } from "@/hooks/useDebounce";
+import ControlPanelGrade from "@/components/grades/ControlPanelGrade";
+
+export default function GradePage() {
+  const {
+    page,
+    pageSize,
+    search,
+    setPage,
+    sortBy,
+    sortOrder,
+    addOpen,
+    setAddOpen,
+    editingGrade,
+    setEditingGrade,
+  } = useGradeStore();
+
+  const debouncedSearch = useDebounce(search, 500);
+  const [enrollment, setEnrollment] = useState<any[]>([]);
+
+  // Load danh sách enrollment để chọn khi thêm điểm
+  useEffect(() => {
+    axios
+      .get("/api/enrollment", { params: { page: 1, page_size: 1000 } })
+      .then((res) => setEnrollment(res.data.items || res.data))
+      .catch(() => toast.error("Không tải được danh sách đăng ký học phần"));
+  }, []);
+
+  // CRUD
+  const {
+    data,
+    isLoading,
+    addMutation,
+    updateMutation,
+    deleteMutation,
+    refetch,
+  } = useCRUD<Grade, GradeFormInputs>({
+    resource: "grades",
+    idField: "grade_id",
+    page,
+    pageSize,
+    search: debouncedSearch,
+    sortBy,
+    sortOrder,
+  });
+
+  // Form thêm
+  const formAdd = useForm<GradeFormInputs>({
+    resolver: zodResolver(gradeSchema),
+    defaultValues: {
+      enrollment_id: 0 as any,
+      attendance_score: 0,
+      midterm_score: 0,
+      assignment_score: 0,
+      final_score: 0,
+    },
+  });
+
+  // Form sửa
+  const formEdit = useForm<GradeFormInputs>({
+    resolver: zodResolver(gradeSchema),
+  });
+
+  const onSubmitAdd = (values: GradeFormInputs) => {
+    addMutation.mutate(values, {
+      onSuccess: () => {
+        toast.success("Thêm điểm thành công");
+        formAdd.reset();
+        setAddOpen(false);
+        refetch?.();
+      },
+      onError: () => toast.error("Thêm điểm thất bại"),
+    });
+  };
+
+  const handleEdit = (g: Grade) => {
+    setEditingGrade(g);
+    formEdit.reset({
+      enrollment_id: g.enrollment_id,
+      attendance_score: g.attendance_score,
+      midterm_score: g.midterm_score,
+      assignment_score: g.assignment_score,
+      final_score: g.final_score,
+    });
+  };
+
+  const handleUpdate = (values: GradeFormInputs) => {
+    if (!editingGrade) return;
+    updateMutation.mutate(
+      { ...editingGrade, ...values },
+      {
+        onSuccess: () => {
+          toast.success("Cập nhật điểm thành công");
+          setEditingGrade(null);
+          refetch?.();
+        },
+        onError: () => toast.error("Cập nhật thất bại"),
+      }
+    );
+  };
+
+  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white text-gray-900">
+      <ControlPanelGrade
+        total={data?.total ?? 0}
+        onAdd={() => setAddOpen(true)}
+        enrollment={enrollment}
+      />
+
+      <main className="flex-1 overflow-x-auto px-6 py-4">
+        {isLoading ? (
+          <p>Đang tải...</p>
+        ) : (
+          <>
+            <DataTable
+              columns={[
+                { key: "grade_id", header: "ID" },
+                {
+                  key: "student",
+                  header: "Sinh viên",
+                  render: (r: any) =>
+                    r.enrollment?.students
+                      ? `${r.enrollment.students.student_code} - ${r.enrollment.students.last_name} ${r.enrollment.students.first_name}`
+                      : "N/A",
+                },
+                {
+                  key: "course",
+                  header: "Học phần",
+                  render: (r: any) =>
+                    r.enrollment?.class_section?.courses
+                      ? `${r.enrollment.class_section.courses.course_code} - ${r.enrollment.class_section.courses.course_name}`
+                      : "N/A",
+                },
+                { key: "attendance_score", header: "Chuyên cần" },
+                { key: "midterm_score", header: "Giữa kỳ" },
+                { key: "assignment_score", header: "Bài tập" },
+                { key: "final_score", header: "Cuối kỳ" },
+                { key: "total_score", header: "Tổng điểm" },
+                { key: "letter_grade", header: "Điểm chữ" },
+                { key: "status", header: "Trạng thái" },
+                {
+                  key: "actions",
+                  header: "Thao tác",
+                  render: (r: Grade) => (
+                    <div className="space-x-2">
+                      <Button variant="default" onClick={() => handleEdit(r)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <ConfirmDialog
+                        onConfirm={() => deleteMutation.mutate(r.grade_id)}
+                        title="Xóa điểm này?"
+                        description="Hành động này không thể hoàn tác."
+                      />
+                    </div>
+                  ),
+                },
+              ]}
+              data={data?.items || []}
+              emptyMessage="Không có dữ liệu điểm"
+            />
+
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          </>
+        )}
+      </main>
+
+      {/* ADD DIALOG */}
+      <Dialog open={addOpen} onOpenChange={(o) => setAddOpen(o)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Thêm điểm</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
+            <div>
+              <Label>Đăng ký học phần</Label>
+              <select
+                {...formAdd.register("enrollment_id", { valueAsNumber: true })}
+                className="border rounded w-full px-2 py-1"
+              >
+                <option value={0}>Chọn</option>
+                {enrollment.map((e) => (
+                  <option key={e.enrollment_id} value={e.enrollment_id}>
+                    {e.enrollment_id} - {e.students?.student_code}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Chuyên cần</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formAdd.register("attendance_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+              <div>
+                <Label>Giữa kỳ</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formAdd.register("midterm_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+              <div>
+                <Label>Bài tập</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formAdd.register("assignment_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+              <div>
+                <Label>Cuối kỳ</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formAdd.register("final_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setAddOpen(false)}>
+                Hủy
+              </Button>
+              <Button type="submit">Lưu</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* EDIT DIALOG */}
+      <Dialog open={!!editingGrade} onOpenChange={(o) => !o && setEditingGrade(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa điểm</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={formEdit.handleSubmit(handleUpdate)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Chuyên cần</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formEdit.register("attendance_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+              <div>
+                <Label>Giữa kỳ</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formEdit.register("midterm_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+              <div>
+                <Label>Bài tập</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formEdit.register("assignment_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+              <div>
+                <Label>Cuối kỳ</Label>
+                <input
+                  type="number"
+                  step="0.1"
+                  {...formEdit.register("final_score")}
+                  className="border rounded w-full px-2 py-1"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setEditingGrade(null)}>
+                Hủy
+              </Button>
+              <Button type="submit">Cập nhật</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

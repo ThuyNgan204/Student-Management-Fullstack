@@ -92,3 +92,27 @@ export type ClassSectionFormInputs = z.infer<typeof classSectionSchema>;
 });
 
 export type EnrollmentFormInputs = z.infer<typeof enrollmentSchema>;
+
+export const gradeSchema = z.object({
+  enrollment_id: z.coerce.number().int().refine((v) => v > 0, {
+    message: "Vui lòng chọn học phần đã đăng ký",
+  }),
+  attendance_score: z.coerce
+    .number()
+    .min(0, { message: "Điểm chuyên cần phải ≥ 0" })
+    .max(10, { message: "Điểm chuyên cần phải ≤ 10" }),
+  midterm_score: z.coerce
+    .number()
+    .min(0, { message: "Điểm giữa kỳ phải ≥ 0" })
+    .max(10, { message: "Điểm giữa kỳ phải ≤ 10" }),
+  assignment_score: z.coerce
+    .number()
+    .min(0, { message: "Điểm bài tập phải ≥ 0" })
+    .max(10, { message: "Điểm bài tập phải ≤ 10" }),
+  final_score: z.coerce
+    .number()
+    .min(0, { message: "Điểm cuối kỳ phải ≥ 0" })
+    .max(10, { message: "Điểm cuối kỳ phải ≤ 10" }),
+});
+
+export type GradeFormInputs = z.infer<typeof gradeSchema>;
