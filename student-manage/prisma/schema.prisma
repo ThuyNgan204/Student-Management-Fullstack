@@ -148,6 +148,7 @@ model user_account {
   username    String     @unique @db.VarChar(50)
   password    String     @db.VarChar(255)
   role        String     @db.VarChar(20)
+  is_active    Boolean   @default(true)
   student_id  Int?
   lecturer_id Int?
   lecturers   lecturers? @relation(fields: [lecturer_id], references: [lecturer_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_lecturer")

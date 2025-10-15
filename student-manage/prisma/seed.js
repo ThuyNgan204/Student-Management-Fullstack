@@ -278,30 +278,42 @@ async function main() {
     }
   }
 
-  // ===== User Accounts =====
-  for (const student of students) {
-    await prisma.user_account.create({
-      data: {
-        username: student.student_code,
-        password: "123456",
-        role: "student",
-        student_id: student.student_id,
-      },
-    });
-  }
+ // ===== User Accounts =====
+for (const student of students) {
+  await prisma.user_account.create({
+    data: {
+      username: student.student_code,
+      password: student.student_code, // Mật khẩu = mã SV
+      role: "student",
+      student_id: student.student_id,
+      is_active: true,
+    },
+  });
+}
 
-  for (const lecturer of lecturers) {
-    await prisma.user_account.create({
-      data: {
-        username: lecturer.lecturer_code,
-        password: "123456",
-        role: "lecturer",
-        lecturer_id: lecturer.lecturer_id,
-      },
-    });
-  }
+for (const lecturer of lecturers) {
+  await prisma.user_account.create({
+    data: {
+      username: lecturer.lecturer_code,
+      password: lecturer.lecturer_code, // Mật khẩu = mã GV
+      role: "lecturer",
+      lecturer_id: lecturer.lecturer_id,
+      is_active: true,
+    },
+  });
+}
 
-  console.log("✅ Seeding finished!");
+// ===== Admin Account =====
+await prisma.user_account.create({
+  data: {
+    username: "admin",
+    password: "admin123",
+    role: "admin",
+    is_active: true,
+  },
+});
+
+console.log("✅ Seeding finished!");
 }
 
 main().finally(() => prisma.$disconnect());
