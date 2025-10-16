@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 
 export interface Column<T> {
   key: keyof T | string;
-  header: string;
+  header: ReactNode;
   render?: (item: T) => ReactNode;
   className?: string;
 }
@@ -51,12 +51,12 @@ export default function DataTable<T>({
           ))
         ) : (
           <TableRow>
-            <TableHead
+            <TableCell
               colSpan={columns.length}
               className="text-center p-3 text-gray-500"
             >
               {emptyMessage}
-            </TableHead>
+            </TableCell>
           </TableRow>
         )}
       </TableBody>

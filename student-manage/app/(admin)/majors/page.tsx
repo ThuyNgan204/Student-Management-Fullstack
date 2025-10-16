@@ -159,8 +159,8 @@ export default function MajorsPage() {
                   header: "Thao tác",
                   render: (mj: Major) => (
                     <div className="space-x-2">
-                      <Button variant="default" onClick={() => handleEdit(mj)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(mj)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(mj.major_id)}

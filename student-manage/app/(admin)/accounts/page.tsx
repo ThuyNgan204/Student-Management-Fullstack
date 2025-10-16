@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import DataTable from "@/components/shared/DataTable";
+import { Checkbox } from "@/components/ui/checkbox";
+import DataTable, { Column } from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
 import { Pencil, Trash2, RefreshCw } from "lucide-react";
 import UserControlPanel from "@/components/accounts/UserControlPanel";
@@ -16,8 +17,8 @@ export interface UserAccount {
   username: string;
   role: string;
   is_active: boolean;
-  student?: { student_code: string; first_name: string; last_name: string } | null;
-  lecturer?: { lecturer_code: string; first_name: string; last_name: string } | null;
+  students?: { student_code: string; first_name: string; last_name: string; phone: string; email: string } | null;
+  lecturers?: { lecturer_code: string; first_name: string; last_name: string; phone: string; email: string } | null;
 }
 
 export default function UserAccountPage() {
@@ -30,6 +31,8 @@ export default function UserAccountPage() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+
+  const headerCheckboxRef = useRef<HTMLInputElement | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -50,6 +53,7 @@ export default function UserAccountPage() {
     fetchUsers();
   }, [page, search]);
 
+  // keep original handlers (logic preserved)
   const handleDelete = async (user_id: number) => {
     try {
       await axios.delete(`/api/user_account/${user_id}`);
@@ -100,10 +104,135 @@ export default function UserAccountPage() {
     }
   };
 
+  // Checkbox helpers
+  const isAllSelected = users.length > 0 && selectedUsers.length === users.length;
+  const isSomeSelected = selectedUsers.length > 0 && selectedUsers.length < users.length;
+
+  useEffect(() => {
+    // set indeterminate property on the header checkbox DOM node
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(users.map((u) => u.user_id));
+    }
+  };
+
+  const toggleSelectOne = (id: number) => {
+    setSelectedUsers((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   const totalPages = Math.ceil(total / pageSize);
 
+  const columns: Column<UserAccount>[] = [
+    {
+      key: "select",
+      header: (
+        <Checkbox
+          ref={headerCheckboxRef as any}
+          checked={isAllSelected}
+          onCheckedChange={toggleSelectAll}
+          aria-label="Select all users"
+        />
+      ) as any,
+      className: "w-12 text-left",
+      render: (u: UserAccount) => (
+        <div className="flex items-left justify-left">
+          <Checkbox
+            checked={selectedUsers.includes(u.user_id)}
+            onCheckedChange={() => toggleSelectOne(u.user_id)}
+            aria-label={`Select user ${u.user_id}`}
+          />
+        </div>
+      ),
+    },
+    { key: "user_id", header: "ID", className: "w-16" } as Column<UserAccount>,
+    { key: "username", header: "Username" } as Column<UserAccount>,
+    {
+      key: "full_name",
+      header: "Thông tin tài khoản",
+      render: (u: UserAccount) => {
+        if (u.students) {
+          return (
+            <div>
+              <div>{u.students.last_name} {u.students.first_name}</div>
+              <div className="text-gray-500 text-sm">{u.students.student_code}</div>
+              <div className="text-gray-500 text-sm">{u.students.phone}</div>
+              <div className="text-gray-500 text-sm">{u.students.email}</div>
+            </div>
+          );
+        }
+        if (u.lecturers) {
+          return (
+            <div>
+              <div>{u.lecturers.last_name} {u.lecturers.first_name}</div>
+              <div className="text-gray-500 text-sm">{u.lecturers.lecturer_code}</div>
+              <div className="text-gray-500 text-sm">{u.lecturers.phone}</div>
+              <div className="text-gray-500 text-sm">{u.lecturers.email}</div>
+            </div>
+          );
+        }
+        return "-";
+      },
+    } as Column<UserAccount>,
+    { key: "role", header: "Vai trò" } as Column<UserAccount>,
+    {
+      key: "is_active",
+      header: "Trạng thái",
+      render: (u: UserAccount) => (
+        <Button
+          size="sm"
+          variant={u.is_active ? "default" : "outline"}
+          // keep original logic (uses handleBulkAction) — we do not change it
+          onClick={() =>
+            handleBulkAction(u.is_active ? "deactivate" : "activate")
+          }
+        >
+          {u.is_active ? "Active" : "Inactive"}
+        </Button>
+      ),
+    } as Column<UserAccount>,
+    {
+      key: "actions",
+      header: "Hành động",
+      className: "text-center",
+      render: (u: UserAccount) => (
+        <div className="flex gap-2 justify-center">
+          <Button variant="ghost" onClick={() => setEditingUser(u)}>
+            <Pencil className="size-4" />
+          </Button>
+          <ConfirmDialog
+            onConfirm={() => handleDelete(u.user_id)}
+            title="Bạn chắc chắn?"
+            description="Người dùng sẽ bị xóa vĩnh viễn"
+          >
+            <Button variant="ghost">
+              <Trash2 className="size-4" />
+            </Button>
+          </ConfirmDialog>
+          <Button
+            variant="ghost"
+            onClick={() =>
+              // keep original logic (bulk reset) — we do not change it
+              handleBulkAction("reset")
+            }
+          >
+            <RefreshCw className="size-4" />
+          </Button>
+        </div>
+      ),
+    } as Column<UserAccount>,
+  ];
+
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <UserControlPanel
         total={total}
         onAdd={() => setAddOpen(true)}
@@ -112,77 +241,25 @@ export default function UserAccountPage() {
         setSearch={setSearch}
       />
 
-      <div className="overflow-x-auto mt-4 bg-white shadow rounded">
-        {loading ? (
-          <p className="p-4">Đang tải...</p>
-        ) : (
-          <DataTable
-            data={users}
-            rowSelection={{ selected: selectedUsers, setSelected: setSelectedUsers }}
-            columns={[
-              { key: "user_id", header: "ID" },
-              { key: "username", header: "Username" },
-              {
-                key: "full_name",
-                header: "Họ & Tên",
-                render: (u) =>
-                  u.student
-                    ? `${u.student.last_name} ${u.student.first_name}`
-                    : u.lecturer
-                    ? `${u.lecturer.last_name} ${u.lecturer.first_name}`
-                    : "-",
-              },
-              { key: "role", header: "Vai trò" },
-              {
-                key: "is_active",
-                header: "Trạng thái",
-                render: (u) => (
-                  <Button
-                    size="sm"
-                    variant={u.is_active ? "default" : "outline"}
-                    onClick={() =>
-                      handleBulkAction(u.is_active ? "deactivate" : "activate")
-                    }
-                  >
-                    {u.is_active ? "Active" : "Inactive"}
-                  </Button>
-                ),
-              },
-              {
-                key: "actions",
-                header: "Hành động",
-                className: "text-center",
-                render: (u) => (
-                  <div className="flex gap-2 justify-center">
-                    <Button size="sm" onClick={() => setEditingUser(u)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <ConfirmDialog
-                      onConfirm={() => handleDelete(u.user_id)}
-                      title="Bạn chắc chắn?"
-                      description="Người dùng sẽ bị xóa vĩnh viễn"
-                    >
-                      <Button size="sm" variant="destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </ConfirmDialog>
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        handleBulkAction("reset")
-                      }
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ),
-              },
-            ]}
-            emptyMessage="Không có người dùng"
-          />
-        )}
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-      </div>
+      <main className="flex-1 overflow-x-auto px-6 py-4">
+        <div className="overflow-x-auto mt-4 bg-white shadow rounded">
+          {loading ? (
+            <p className="p-4">Đang tải...</p>
+          ) : (
+            <>
+              <DataTable
+                data={users}
+                columns={columns}
+                emptyMessage="Không có người dùng"
+              />
+
+              <div className="px-4 py-3">
+                <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+              </div>
+            </>
+          )}
+        </div>
+      </main>
 
       {(addOpen || editingUser) && (
         <UserForm

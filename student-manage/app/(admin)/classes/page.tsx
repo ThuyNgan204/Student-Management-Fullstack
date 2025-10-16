@@ -207,11 +207,11 @@ export default function ClassesPage() {
                   header: "Thao tác",
                   render: (c: AcademicClass) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(c.academic_class_id)}>
-                        <Eye className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleView(c.academic_class_id)}>
+                        <Eye className="size-4" />
                       </Button>
-                      <Button variant="default" onClick={() => handleEdit(c)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(c)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(c.academic_class_id)}

@@ -136,8 +136,8 @@ export default function DepartmentsPage() {
                   header: "Thao tác",
                   render: (dep: Department) => (
                     <div className="space-x-2">
-                      <Button variant="default" onClick={() => handleEdit(dep)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(dep)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() =>

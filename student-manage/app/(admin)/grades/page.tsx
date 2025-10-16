@@ -157,7 +157,7 @@ export default function GradePage() {
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-900">
+    <div className="min-h-screen bg-gray-50">
       {/* ✅ FILTER HOÀN CHỈNH */}
       <ControlPanelGrade
         total={data?.total ?? 0}
@@ -195,23 +195,23 @@ export default function GradePage() {
                   header: "Học phần",
                   render: (r: any) =>
                     r.enrollment?.class_section?.courses
-                      ? `${r.enrollment.class_section.courses.course_code} - ${r.enrollment.class_section.courses.course_name}`
+                      ? `${r.enrollment.class_section.courses.course_name}`
                       : "N/A",
                 },
                 { key: "attendance_score", header: "Chuyên cần" },
                 { key: "midterm_score", header: "Giữa kỳ" },
                 { key: "assignment_score", header: "Bài tập" },
                 { key: "final_score", header: "Cuối kỳ" },
-                { key: "total_score", header: "Tổng điểm" },
-                { key: "letter_grade", header: "Điểm chữ" },
+                { key: "total_score", header: "Tổng" },
+                { key: "letter_grade", header: "Loại" },
                 { key: "status", header: "Trạng thái" },
                 {
                   key: "actions",
                   header: "Thao tác",
                   render: (r: Grade) => (
                     <div className="space-x-2">
-                      <Button variant="default" onClick={() => handleEdit(r)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(r)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(r.grade_id)}

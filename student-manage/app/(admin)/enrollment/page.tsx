@@ -195,11 +195,11 @@ export default function EnrollmentsPage() {
                   header: "Thao tác",
                   render: (r: Enrollment) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(r.enrollment_id)}>
-                        <Eye className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleView(r.enrollment_id)}>
+                        <Eye className="size-4" />
                       </Button>
-                      <Button variant="default" onClick={() => handleEdit(r)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(r)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(r.enrollment_id)}

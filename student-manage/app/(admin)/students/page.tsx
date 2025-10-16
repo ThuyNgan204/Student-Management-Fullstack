@@ -276,11 +276,11 @@ export default function Home() {
                   className: "text-center",
                   render: (s) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(s.student_id)}>
-                        <Eye className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleView(s.student_id)}>
+                        <Eye className="size-4" />
                       </Button>
-                      <Button variant="default" onClick={() => handleEdit(s)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(s)}>
+                        <Pencil className="size-4" />
                       </Button>
 
                       <ConfirmDialog

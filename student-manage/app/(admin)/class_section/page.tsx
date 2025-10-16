@@ -216,10 +216,10 @@ export default function ClassSectionsPage() {
                         variant="secondary"
                         onClick={() => handleView(s.class_section_id)}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="size-4" />
                       </Button>
-                      <Button variant="default" onClick={() => handleEdit(s)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(s)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() =>

@@ -59,7 +59,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                 collapsed && "justify-center"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="size-4" />
               {!collapsed && <span>{item.name}</span>}
             </Link>
           );

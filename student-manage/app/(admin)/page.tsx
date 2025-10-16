@@ -9,7 +9,7 @@ export default function DashboardPage() {
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Students</CardTitle>
-          <Users className="h-4 w-4 text-gray-500" />
+          <Users className="size-4 text-gray-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">1,200</div>
@@ -20,7 +20,7 @@ export default function DashboardPage() {
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Teachers</CardTitle>
-          <GraduationCap className="h-4 w-4 text-gray-500" />
+          <GraduationCap className="size-4 text-gray-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">85</div>
@@ -31,7 +31,7 @@ export default function DashboardPage() {
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Courses</CardTitle>
-          <BookOpen className="h-4 w-4 text-gray-500" />
+          <BookOpen className="size-4 text-gray-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">36</div>
@@ -42,7 +42,7 @@ export default function DashboardPage() {
       <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Classes</CardTitle>
-          <ClipboardList className="h-4 w-4 text-gray-500" />
+          <ClipboardList className="size-4 text-gray-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">120</div>

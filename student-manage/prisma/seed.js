@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { faker } = require('@faker-js/faker');
+const { faker } = require('@faker-js/faker/locale/vi');
 
 const prisma = new PrismaClient();
 const truncate = (str, max) => (str ? String(str).slice(0, max) : null);
@@ -141,23 +141,28 @@ async function main() {
   const students = [];
   for (let i = 1; i <= 70; i++) {
     const gender = faker.helpers.arrayElement(GENDER_OPTIONS);
-    const firstName =
-      gender === "Nam"
-        ? faker.person.firstName({ sex: "male" })
-        : gender === "Nữ"
-        ? faker.person.firstName({ sex: "female" })
-        : faker.person.firstName();
-    const lastName = faker.person.lastName();
+
+    // ✅ Name Fix (Họ + Tên đệm + Tên chính chuẩn Việt Nam)
+    const fullFirstName = faker.person.firstName(); // Ví dụ "Ánh Dương"
+    const parts = fullFirstName.split(" ");
+
+    const firstNameVN = parts[parts.length - 1]; // Dương
+    const middleNameVN = parts.slice(0, -1).join(" "); // Ánh
+
+    const lastName = faker.person.lastName(); // Nguyễn
+    const lastWithMiddle = middleNameVN ? `${lastName} ${middleNameVN}` : lastName; // Nguyễn Ánh
+
     const major = majors[i % majors.length];
     const classCandidates = academicClasses.filter((c) => c.major_id === major.major_id);
     const academicClassId = classCandidates.length
       ? classCandidates[faker.number.int({ min: 0, max: classCandidates.length - 1 })].academic_class_id
       : null;
+
     const student = await prisma.students.create({
       data: {
         student_code: `SV${String(i).padStart(3, "0")}`,
-        first_name: firstName,
-        last_name: lastName,
+        first_name: firstNameVN,        // "Dương"
+        last_name: lastWithMiddle,      // "Nguyễn Ánh"
         gender,
         dob: faker.date.birthdate({ min: 18, max: 23, mode: "age" }),
         address: `${faker.location.streetAddress()}, ${faker.location.city()}, Việt Nam`,
@@ -284,7 +289,7 @@ for (const student of students) {
     data: {
       username: student.student_code,
       password: student.student_code, // Mật khẩu = mã SV
-      role: "student",
+      role: "Sinh viên",
       student_id: student.student_id,
       is_active: true,
     },
@@ -296,7 +301,7 @@ for (const lecturer of lecturers) {
     data: {
       username: lecturer.lecturer_code,
       password: lecturer.lecturer_code, // Mật khẩu = mã GV
-      role: "lecturer",
+      role: "Giảng viên",
       lecturer_id: lecturer.lecturer_id,
       is_active: true,
     },

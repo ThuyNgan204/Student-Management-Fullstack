@@ -161,8 +161,8 @@ export default function CoursesPage() {
                   header: "Thao tác",
                   render: (c: Course) => (
                     <div className="space-x-2">
-                      <Button variant="default" onClick={() => handleEdit(c)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(c)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(c.course_id)}

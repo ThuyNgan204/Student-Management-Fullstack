@@ -28,7 +28,7 @@ export default function ConfirmDialog({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive"><Trash className="h-4 w-4"/></Button>
+        <Button variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-100"><Trash className="size-4"/></Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

@@ -224,11 +224,11 @@ const {
                   className: "text-center",
                   render: (l: Lecturer) => (
                     <div className="space-x-2">
-                      <Button variant="secondary" onClick={() => handleView(l.lecturer_id)}>
-                        <Eye className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleView(l.lecturer_id)}>
+                        <Eye className="size-4" />
                       </Button>
-                      <Button variant="default" onClick={() => handleEdit(l)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="ghost" onClick={() => handleEdit(l)}>
+                        <Pencil className="size-4" />
                       </Button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(l.lecturer_id)}

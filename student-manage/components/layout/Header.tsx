@@ -40,9 +40,9 @@ export default function Header({
           className="flex items-center justify-center p-2 rounded-md hover:bg-gray-100 transition-colors"
         >
           {collapsed ? (
-            <UnfoldHorizontal className="h-4 w-4" />
+            <UnfoldHorizontal className="size-4" />
           ) : (
-            <FoldHorizontal className="h-4 w-4" />
+            <FoldHorizontal className="size-4" />
           )}
         </button>
         <h1 className="text-gray-300">| </h1>
