@@ -1,6 +1,7 @@
+// app/api/user_account/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs"; // 👈 để mã hoá mật khẩu
+import bcrypt from "bcryptjs";
 
 // ================= GET ALL =================
 // GET /api/user_accounts
@@ -30,7 +31,6 @@ export async function GET(req: Request) {
             OR: [
               { lecturer_code: { contains: search, mode: "insensitive" } },
               { first_name: { contains: search, mode: "insensitive" } },
-              { last_name: { contains: search, mode: "insensitive" } },
             ],
           },
         },
@@ -39,7 +39,6 @@ export async function GET(req: Request) {
             OR: [
               { student_code: { contains: search, mode: "insensitive" } },
               { first_name: { contains: search, mode: "insensitive" } },
-              { last_name: { contains: search, mode: "insensitive" } },
             ],
           },
         },
@@ -83,8 +82,60 @@ export async function POST(req: Request) {
   const body = await req.json();
 
   try {
-    // Mã hoá mật khẩu
-    const hashedPassword = await bcrypt.hash(body.password, 10);
+    // If client provides selected_user info (preferred)
+    // selected_user: { type: 'student' | 'lecturer', id: number }
+    if (body.selected_user && body.selected_user.type && body.selected_user.id) {
+      const { type, id } = body.selected_user;
+      if (type === "student") {
+        const student = await prisma.students.findUnique({ where: { student_id: Number(id) } });
+        if (!student) {
+          return NextResponse.json({ error: "Student not found" }, { status: 404 });
+        }
+
+        // default username & password = student_code
+        const code = student.student_code || "student123";
+        const hashedPassword = await bcrypt.hash(code, 10);
+
+        const account = await prisma.user_account.create({
+          data: {
+            username: code,
+            password: hashedPassword,
+            role: "student",
+            student_id: student.student_id,
+            is_active: body.is_active ?? true,
+          },
+          include: { students: true, lecturers: true },
+        });
+
+        return NextResponse.json(account);
+      } else if (type === "lecturer") {
+        const lecturer = await prisma.lecturers.findUnique({ where: { lecturer_id: Number(id) } });
+        if (!lecturer) {
+          return NextResponse.json({ error: "Lecturer not found" }, { status: 404 });
+        }
+
+        const code = lecturer.lecturer_code || "lecturer123";
+        const hashedPassword = await bcrypt.hash(code, 10);
+
+        const account = await prisma.user_account.create({
+          data: {
+            username: code,
+            password: hashedPassword,
+            role: "lecturer",
+            lecturer_id: lecturer.lecturer_id,
+            is_active: body.is_active ?? true,
+          },
+          include: { students: true, lecturers: true },
+        });
+
+        return NextResponse.json(account);
+      } else {
+        return NextResponse.json({ error: "Invalid selected_user type" }, { status: 400 });
+      }
+    }
+
+    // Fallback: create account from provided username/password/role (existing behavior)
+    const hashedPassword = await bcrypt.hash(body.password || "admin123", 10);
 
     const account = await prisma.user_account.create({
       data: {
@@ -93,6 +144,7 @@ export async function POST(req: Request) {
         role: body.role,
         student_id: body.student_id || null,
         lecturer_id: body.lecturer_id || null,
+        is_active: body.is_active ?? true,
       },
       include: {
         lecturers: true,

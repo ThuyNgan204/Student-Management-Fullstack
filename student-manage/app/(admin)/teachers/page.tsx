@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { toast } from "sonner";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
@@ -214,26 +214,39 @@ const {
                 { key: "first_name", header: "Tên", render: (l: Lecturer) => l.first_name },
                 { key: "lecturer_code", header: "Mã GV" },
                 { key: "gender", header: "Giới tính" },
-                { key: "phone", header: "Phone" },
+                { key: "phone", header: "Số điện thoại" },
                 { key: "email", header: "Email" },
                 { key: "departments", header: "Khoa", render: (l: Lecturer) => l.departments?.department_name ?? "N/A" },
                 { key: "position", header: "Chức vụ" },
                 {
                   key: "actions",
-                  header: "Actions",
+                  header: "Thao tác",
                   className: "text-center",
                   render: (l: Lecturer) => (
-                    <div className="space-x-2">
-                      <Button variant="ghost" onClick={() => handleView(l.lecturer_id)}>
+                    <div className="flex justify-center space-x-2 gap-2">
+                      <button
+                        className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
+                        onClick={() => handleView(l.lecturer_id)}
+                      >
                         <Eye className="size-4" />
-                      </Button>
-                      <Button variant="ghost" onClick={() => handleEdit(l)}>
+                      </button>
+                      <button
+                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
+                        onClick={() => handleEdit(l)}
+                      >
                         <Pencil className="size-4" />
-                      </Button>
+                      </button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(l.lecturer_id)}
                         title="Bạn đã chắc chắn?"
                         description="Giảng viên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
+                        trigger={
+                          <button
+                            className="text-red-500 hover:text-red-700 cursor-pointer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        }
                       />
                     </div>
                   ),

@@ -116,3 +116,19 @@ export const gradeSchema = z.object({
 });
 
 export type GradeFormInputs = z.infer<typeof gradeSchema>;
+
+export const userAccountSchema = z.object({
+  selected_user: z.object({
+    type: z.enum(["student", "lecturer"]),
+    id: z.number(),
+  }, { message: "Vui lòng chọn người dùng" }),
+
+  is_active: z.boolean().default(true),
+})
+.transform((data) => ({
+  student_id: data.selected_user.type === "student" ? data.selected_user.id : null,
+  lecturer_id: data.selected_user.type === "lecturer" ? data.selected_user.id : null,
+  is_active: data.is_active,
+}));
+
+export type UserAccountFormInputs = z.infer<typeof userAccountSchema>;

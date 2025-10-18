@@ -5,7 +5,7 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
@@ -193,18 +193,32 @@ export default function EnrollmentsPage() {
                 {
                   key: "actions",
                   header: "Thao tác",
+                  className: "text-center",
                   render: (r: Enrollment) => (
-                    <div className="space-x-2">
-                      <Button variant="ghost" onClick={() => handleView(r.enrollment_id)}>
+                    <div className="flex justify-center space-x-2 gap-2">
+                      <button
+                        className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
+                        onClick={() => handleView(r.enrollment_id)}
+                      >
                         <Eye className="size-4" />
-                      </Button>
-                      <Button variant="ghost" onClick={() => handleEdit(r)}>
+                      </button>
+                      <button
+                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
+                        onClick={() => handleEdit(r)}
+                      >
                         <Pencil className="size-4" />
-                      </Button>
+                      </button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(r.enrollment_id)}
                         title="Bạn đã chắc chắn?"
                         description="Học phần đã đăng kí sẽ bị xóa vĩnh viễn và không thể hoàn tác."
+                        trigger={
+                          <button
+                            className="text-red-500 hover:text-red-700 cursor-pointer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        }
                       />
                     </div>
                   ),

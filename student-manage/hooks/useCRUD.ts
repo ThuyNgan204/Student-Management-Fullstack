@@ -3,18 +3,18 @@ import axios from "axios";
 
 interface UseCRUDProps {
   resource: string;
-  idField?: string; // <--- Chìa khóa chính để update/delete (vd: student_id, lecturer_id...)
+  idField?: string;
   page: number;
   pageSize: number;
   search?: string;
-  filters?: Record<string, any[]>; // <--- Tự do truyền các filters: { gender: ['Male'], major_id: [1, 2] }
+  filters?: Record<string, any[]>;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
 
 export const useCRUD = <TData extends Record<string, any>, TForm>({
   resource,
-  idField = "id", // <--- Mặc định là "id", nhưng khi dùng thì truyền "student_id" hoặc "lecturer_id"
+  idField = "id",
   page,
   pageSize,
   search,
@@ -25,8 +25,8 @@ export const useCRUD = <TData extends Record<string, any>, TForm>({
   const queryClient = useQueryClient();
   const queryKey = [resource, page, pageSize, search, filters, sortBy, sortOrder];
 
-  // GET
-  const query = useQuery({
+  // ✅ GET với kiểu rõ ràng
+  const query = useQuery<{ items: TData[]; total: number }>({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -48,16 +48,14 @@ export const useCRUD = <TData extends Record<string, any>, TForm>({
     keepPreviousData: true,
   });
 
-  // CREATE
   const addMutation = useMutation({
     mutationFn: async (newData: TForm) => {
       const res = await axios.post(`/api/${resource}`, newData);
       return res.data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
-  // UPDATE
   const updateMutation = useMutation({
     mutationFn: async (updatedData: TData) => {
       if (!updatedData[idField]) {
@@ -69,17 +67,24 @@ export const useCRUD = <TData extends Record<string, any>, TForm>({
       );
       return res.data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
-  // DELETE
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await axios.delete(`/api/${resource}/${id}`);
       return res.data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [resource] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
-  return { ...query, addMutation, updateMutation, deleteMutation };
+  const bulkMutation = useMutation({
+    mutationFn: async ({ ids, action }: { ids: number[]; action: string }) => {
+      const res = await axios.post(`/api/${resource}/bulk`, { ids, action });
+      return res.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+
+  return { ...query, addMutation, updateMutation, deleteMutation, bulkMutation };
 };

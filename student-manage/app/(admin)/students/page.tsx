@@ -9,7 +9,6 @@ import Link from "next/link";
 import axios from "axios";
 
 // Components
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ControlPanel from "@/components/shared/ControlPanel";
@@ -24,7 +23,7 @@ import { formatDate } from "@/utils/date";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
 import { StudentFormInputs, studentSchema } from "@/lib/zodSchemas";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Home() {
@@ -210,13 +209,14 @@ export default function Home() {
     }
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  const { items: students = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       {/* Control Panel */}
       <ControlPanel
-        total={data?.total ?? 0}
+        total={total}
         addLabel="Thêm Sinh viên"
         addTotal="Tổng Sinh viên"
         onAdd={() => setAddOpen(true)}
@@ -272,27 +272,39 @@ export default function Home() {
                 },
                 {
                   key: "actions",
-                  header: "Actions",
+                  header: "Thao tác",
                   className: "text-center",
-                  render: (s) => (
-                    <div className="space-x-2">
-                      <Button variant="ghost" onClick={() => handleView(s.student_id)}>
+                  render: (s: Student) => (
+                    <div className="flex justify-center space-x-2 gap-2">
+                      <button
+                        className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
+                        onClick={() => handleView(s.student_id)}
+                      >
                         <Eye className="size-4" />
-                      </Button>
-                      <Button variant="ghost" onClick={() => handleEdit(s)}>
+                      </button>
+                      <button
+                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
+                        onClick={() => handleEdit(s)}
+                      >
                         <Pencil className="size-4" />
-                      </Button>
-
+                      </button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(s.student_id)}
                         title="Bạn đã chắc chắn?"
                         description="Sinh viên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
+                        trigger={
+                          <button
+                            className="text-red-500 hover:text-red-700 cursor-pointer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        }
                       />
                     </div>
                   ),
                 },
               ]}
-              data={isError || isLoading ? [] : data?.items || []}
+              data={isError || isLoading ? [] : students}
               emptyMessage={isError ? "Lỗi tải Sinh viên" : "Không có Sinh viên nào"}
             />
 

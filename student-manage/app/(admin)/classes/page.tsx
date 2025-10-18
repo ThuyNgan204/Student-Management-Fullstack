@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { toast } from "sonner";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import DataTable from "@/components/shared/DataTable";
@@ -205,18 +205,32 @@ export default function ClassesPage() {
                 {
                   key: "actions",
                   header: "Thao tác",
+                  className: "text-center",
                   render: (c: AcademicClass) => (
-                    <div className="space-x-2">
-                      <Button variant="ghost" onClick={() => handleView(c.academic_class_id)}>
+                    <div className="flex justify-center space-x-2 gap-2">
+                      <button
+                        className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
+                        onClick={() => handleView(c.academic_class_id)}
+                      >
                         <Eye className="size-4" />
-                      </Button>
-                      <Button variant="ghost" onClick={() => handleEdit(c)}>
+                      </button>
+                      <button
+                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
+                        onClick={() => handleEdit(c)}
+                      >
                         <Pencil className="size-4" />
-                      </Button>
+                      </button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(c.academic_class_id)}
                         title="Bạn đã chắc chắn?"
                         description="Lớp sinh hoạt này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
+                        trigger={
+                          <button
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        }
                       />
                     </div>
                   ),

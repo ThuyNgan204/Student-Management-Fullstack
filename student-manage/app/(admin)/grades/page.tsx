@@ -5,7 +5,7 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
@@ -103,7 +103,7 @@ export default function GradePage() {
   const formAdd = useForm<GradeFormInputs>({
     resolver: zodResolver(gradeSchema),
     defaultValues: {
-      enrollment_id: 0 as any,
+      enrollment_id: undefined as any,
       attendance_score: 0,
       midterm_score: 0,
       assignment_score: 0,
@@ -208,15 +208,26 @@ export default function GradePage() {
                 {
                   key: "actions",
                   header: "Thao tác",
+                  className: "text-center",
                   render: (r: Grade) => (
-                    <div className="space-x-2">
-                      <Button variant="ghost" onClick={() => handleEdit(r)}>
+                    <div className="flex justify-center space-x-2 gap-2">
+                      <button
+                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
+                        onClick={() => handleEdit(r)}
+                      >
                         <Pencil className="size-4" />
-                      </Button>
+                      </button>
                       <ConfirmDialog
                         onConfirm={() => deleteMutation.mutate(r.grade_id)}
                         title="Xóa điểm này?"
                         description="Hành động này không thể hoàn tác."
+                        trigger={
+                          <button
+                            className="text-red-500 hover:text-red-700 cursor-pointer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        }
                       />
                     </div>
                   ),
@@ -268,7 +279,7 @@ export default function GradePage() {
                 disabled={!selectedStudent}
                 className="border rounded w-full px-2 py-1"
               >
-                <option value={0}>Chọn học phần</option>
+                <option value="" disabled>Chọn học phần</option>
                 {enrollment.map((e) => (
                   <option key={e.enrollment_id} value={e.enrollment_id}>
                     {e.class_section?.section_code ?? "??"} -{" "}

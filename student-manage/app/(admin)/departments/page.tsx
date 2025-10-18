@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import DataTable from "@/components/shared/DataTable";
@@ -134,17 +134,28 @@ export default function DepartmentsPage() {
                 {
                   key: "actions",
                   header: "Thao tác",
+                  className: "text-center",
                   render: (dep: Department) => (
-                    <div className="space-x-2">
-                      <Button variant="ghost" onClick={() => handleEdit(dep)}>
+                    <div className="flex justify-center space-x-2 gap-2">
+                      <button
+                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
+                        onClick={() => handleEdit(dep)}
+                      >
                         <Pencil className="size-4" />
-                      </Button>
+                      </button>
                       <ConfirmDialog
                         onConfirm={() =>
                           deleteMutation.mutate(dep.department_id)
                         }
-                        title="Bạn đã chắc chắn"
+                        title="Bạn đã chắc chắn?"
                         description="Khoa này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
+                        trigger={
+                          <button
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        }
                       />
                     </div>
                   ),

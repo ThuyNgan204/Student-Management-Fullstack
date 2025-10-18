@@ -289,7 +289,7 @@ for (const student of students) {
     data: {
       username: student.student_code,
       password: student.student_code, // Mật khẩu = mã SV
-      role: "Sinh viên",
+      role: "student",
       student_id: student.student_id,
       is_active: true,
     },
@@ -301,7 +301,7 @@ for (const lecturer of lecturers) {
     data: {
       username: lecturer.lecturer_code,
       password: lecturer.lecturer_code, // Mật khẩu = mã GV
-      role: "Giảng viên",
+      role: "lecturer",
       lecturer_id: lecturer.lecturer_id,
       is_active: true,
     },

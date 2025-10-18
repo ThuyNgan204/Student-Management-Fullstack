@@ -7,8 +7,10 @@ export interface Grade {
   total_score: number;
   letter_grade: string;
   status: string;
-  created_at?: string;
-  updated_at?: string;
+  attendance_score: number;
+  midterm_score: number;
+  assignment_score: number;
+  final_score: number;
 
   enrollment?: {
     enrollment_id: number;

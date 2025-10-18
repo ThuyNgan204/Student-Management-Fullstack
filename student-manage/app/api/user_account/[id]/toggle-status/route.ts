@@ -1,3 +1,4 @@
+// app/api/user_account/[id]/toggle-status/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -8,24 +9,23 @@ export async function PATCH(
   const { id } = await context.params;
   const userId = Number(id);
 
-  try {
-    const user = await prisma.user_account.findUnique({
-      where: { user_id: userId },
-    });
+  if (isNaN(userId)) {
+    return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
+  }
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+  try {
+    const existing = await prisma.user_account.findUnique({ where: { user_id: userId } });
+    if (!existing) {
+      return NextResponse.json({ error: "User account not found" }, { status: 404 });
     }
 
     const updated = await prisma.user_account.update({
       where: { user_id: userId },
-      data: { is_active: !user.is_active },
+      data: { is_active: !existing.is_active },
+      include: { students: true, lecturers: true },
     });
 
-    return NextResponse.json({
-      message: `User ${updated.is_active ? "activated" : "deactivated"} successfully`,
-      user: updated,
-    });
+    return NextResponse.json({ message: "Toggled status", account: updated });
   } catch (error) {
     console.error("Toggle status error:", error);
     return NextResponse.json({ error: "Failed to toggle status" }, { status: 500 });

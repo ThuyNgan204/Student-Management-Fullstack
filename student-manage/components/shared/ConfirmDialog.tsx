@@ -11,25 +11,23 @@ import {
   AlertDialogAction,
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { Button } from "../ui/button";
-import { Trash } from "lucide-react";
 
 interface ConfirmDialogProps {
   onConfirm: () => void;
   title?: string;
   description?: string;
+  trigger: React.ReactNode;
 }
 
 export default function ConfirmDialog({
   onConfirm,
   title = "",
-  description = ""
+  description = "",
+  trigger,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-100"><Trash className="size-4"/></Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -37,9 +35,7 @@ export default function ConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Hủy</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
-            Xóa
-          </AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm}>Xác nhận</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
