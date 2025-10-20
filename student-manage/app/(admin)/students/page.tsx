@@ -48,6 +48,7 @@ export default function Home() {
 
   const [majors, setMajors] = useState<Major[]>([]);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -209,6 +210,35 @@ export default function Home() {
     }
   };
 
+  // ✅ Hàm chọn / bỏ chọn tất cả
+  const handleSelectAll = (checked: boolean, data: Student[]) => {
+    if (checked) {
+      setSelectedIds(data.map((s) => s.student_id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  // ✅ Hàm chọn / bỏ chọn từng sinh viên
+  const handleSelectOne = (id: number, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((x) => x !== id)
+    );
+  };
+
+  // ✅ Hàm xóa hàng loạt
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return toast.warning("Chưa chọn sinh viên nào!");
+
+    try {
+      await Promise.all(selectedIds.map((id) => deleteMutation.mutateAsync(id)));
+      toast.success("Xóa thành công các sinh viên đã chọn!");
+      setSelectedIds([]);
+    } catch (err) {
+      toast.error("Xóa thất bại!");
+    }
+  };
+
   const { items: students = [], total = 0 } = data ?? {};
   const totalPages = Math.ceil(total / pageSize);
 
@@ -220,6 +250,8 @@ export default function Home() {
         addLabel="Thêm Sinh viên"
         addTotal="Tổng Sinh viên"
         onAdd={() => setAddOpen(true)}
+        selectedCount={selectedIds.length}
+        onBulkDelete={handleBulkDelete}
       />
 
       {/* Table */}
@@ -231,6 +263,24 @@ export default function Home() {
           <>
             <DataTable
               columns={[
+                {
+                  key: "select",
+                  header: (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === students.length && students.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked, students)}
+                    />
+                  ),
+                  render: (s: Student) => (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(s.student_id)}
+                      onChange={(e) => handleSelectOne(s.student_id, e.target.checked)}
+                    />
+                  ),
+                  className: "w-8 text-center",
+                },
                 { key: "student_id", header: "ID" },
                 {
                   key: "last_name",

@@ -1,17 +1,22 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useStudentStore } from "@/store/useStudentStore";
-import SearchBar from "./SearchBar";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import SearchBar from "./SearchBar";
+import { useStudentStore } from "@/store/useStudentStore";
+import { Trash2 } from "lucide-react";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface ControlPanelProps {
   total: number;
   addLabel: string;
   addTotal: string;
   onAdd: () => void;
+  selectedCount: number;       // ✅ thêm
+  onBulkDelete: () => void; 
 }
 
 export default function ControlPanel({
@@ -19,6 +24,8 @@ export default function ControlPanel({
   addLabel,
   addTotal,
   onAdd,
+  selectedCount,
+  onBulkDelete,
 }: ControlPanelProps) {
   const {
     search,
@@ -42,19 +49,30 @@ export default function ControlPanel({
 
   const [majors, setMajors] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
-
   const filterRef = useRef<HTMLDivElement | null>(null);
 
-  // 🔹 Fetch majors & classes
+  // Fetch majors & classes
   useEffect(() => {
-    axios.get("/api/majors").then((r) => setMajors(r.data.items)).catch(() => setMajors([]));
-    axios.get("/api/academic_class").then((r) => setClasses(r.data.items)).catch(() => setClasses([]));
+    const fetchData = async () => {
+      try {
+        const [majorsRes, classesRes] = await Promise.all([
+          axios.get("/api/majors"),
+          axios.get("/api/academic_class"),
+        ]);
+        setMajors(majorsRes.data.items);
+        setClasses(classesRes.data.items);
+      } catch {
+        setMajors([]);
+        setClasses([]);
+      }
+    };
+    fetchData();
   }, []);
 
-  // 🔹 Tắt dropdown khi click ra ngoài
+  // Close filter dropdown on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
         setOpenFilter(false);
       }
     };
@@ -62,22 +80,86 @@ export default function ControlPanel({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setOpenFilter]);
 
+  // Handlers
+  const handleExport = async () => {
+    const res = await fetch("/api/students/export");
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "students.xlsx";
+    a.click();
+    a.remove();
+  };
+
+  const handleImport = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/students/import", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    if (res.ok) toast.success(data.message);
+    else toast.error(data.error);
+  };
+
+  const handleBackup = async () => {
+    const res = await fetch("/api/students/backup", { method: "POST" });
+    const data = await res.json();
+    if (res.ok) toast.success(`Backup thành công: ${data.filename}`);
+    else toast.error(data.error);
+  };
+
+  const handleResetFilters = () => {
+    setGenderFilters([]);
+    setClassFilters([]);
+    setMajorFilters([]);
+    setOpenFilter(false);
+  };
+
   return (
-    <div className="p-4 mb-6 bg-gray-50 border rounded-lg shadow-sm">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        {/* ➕ Add button */}
-        <div className="flex flex-col">
-          <Button onClick={onAdd} className="whitespace-nowrap">
-            {addLabel}
-          </Button>
+    <div className="p-4 mb-6 bg-gray-50 border rounded-lg shadow-sm space-y-4">
+      {/* =========================
+          HÀNG 1: BUTTONS + SEARCH
+      ========================== */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Button onClick={onAdd}>{addLabel}</Button>
+          <Button variant="ghost" className="bg-gray-200 hover:bg-gray-300 transition" onClick={handleExport}>Xuất dữ liệu</Button>
+          <label className="cursor-pointer bg-gray-200 px-3 py-2 rounded text-sm font-medium hover:bg-gray-300 transition">
+            Import Excel
+            <input
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImport(file);
+              }}
+            />
+          </label>
+          <Button variant="ghost" className="bg-gray-200 hover:bg-gray-300 transition" onClick={handleBackup}>Sao lưu</Button>
         </div>
 
-        {/* 🔢 Hiển thị
- */}
-        <div className="flex flex-col">
+        <div className="ml-auto">
+          <SearchBar
+            search={search}
+            onChange={setSearch}
+            onClear={() => setSearch("")}
+          />
+        </div>
+      </div>
+
+      {/* =========================
+          HÀNG 2: FILTER + SORT + PAGE SIZE + TOTAL
+      ========================== */}
+      <div className="flex items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+        {/* Hiển thị */}
+        <div className="flex items-center gap-2">
           <Label htmlFor="pageSize" className="mb-1 text-sm font-medium">
             Hiển thị
-
           </Label>
           <select
             id="pageSize"
@@ -96,35 +178,28 @@ export default function ControlPanel({
           </select>
         </div>
 
-        {/* Sorting */}
-        <div className="flex flex-col">
+        {/* Sắp xếp */}
+        <div className="flex items-center gap-2">
           <Label className="mb-1 text-sm font-medium">Sắp xếp</Label>
           <div className="flex gap-2">
-            {/* Field select */}
             <select
               value={sortBy}
               onChange={(e) => {
-                const newField = e.target.value;
-                setSortBy(newField);
+                setSortBy(e.target.value);
                 setPage(1);
-                // Không gọi fetch trực tiếp ở đây — parent sẽ refetch dựa vào sortBy/sortOrder/page
               }}
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
-              {/* <option value="" disabled>Chọn trường</option> */}
               <option value="student_id">ID sinh viên</option>
               <option value="first_name">Tên sinh viên</option>
               <option value="student_code">MSSV</option>
             </select>
 
-            {/* Order select */}
             <select
               value={sortOrder}
               onChange={(e) => {
-                const newOrder = e.target.value as "asc" | "desc";
-                setSortOrder(newOrder);
+                setSortOrder(e.target.value as "asc" | "desc");
                 setPage(1);
-                // Không gọi fetch trực tiếp ở đây; parent sẽ refetch nếu sortBy đã có giá trị
               }}
               className="border rounded-md px-3 py-2 text-sm bg-white shadow-sm"
             >
@@ -134,9 +209,10 @@ export default function ControlPanel({
           </div>
         </div>
 
-        {/* 🔍 Filters dropdown */}
+        {/* Bộ lọc */}
+        <div className="flex items-center gap-2">
+        <Label className="mb-1 text-sm font-medium">Bộ lọc</Label>
         <div className="relative inline-block text-left" ref={filterRef}>
-          <Label className="mb-1 text-sm font-medium">Bộ lọc</Label>
           <button
             onClick={() => setOpenFilter(!openFilter)}
             className="w-40 border rounded-md px-3 py-2 text-sm bg-white shadow-sm flex items-center justify-between hover:bg-gray-50"
@@ -148,7 +224,9 @@ export default function ControlPanel({
               </span>
             )}
             <svg
-              className={`w-4 h-4 text-gray-500 ml-2 transform ${openFilter ? "rotate-180" : "rotate-0"}`}
+              className={`w-4 h-4 text-gray-500 ml-2 transform ${
+                openFilter ? "rotate-180" : "rotate-0"
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -158,8 +236,8 @@ export default function ControlPanel({
           </button>
 
           {openFilter && (
-            <div className="absolute left-0 mt-2 w-100 rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
-              {/* Gender */}
+            <div className="absolute left-0 mt-2 w-[420px] rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
+              {/* Giới tính */}
               <div>
                 <p className="font-medium text-base mb-3">Giới tính</p>
                 <div className="grid grid-cols-3 gap-2">
@@ -171,17 +249,19 @@ export default function ControlPanel({
                         checked={genderFilters.includes(g)}
                         onChange={(e) =>
                           setGenderFilters((prev) =>
-                            e.target.checked ? [...prev, g] : prev.filter((x) => x !== g)
+                            e.target.checked
+                              ? [...prev, g]
+                              : prev.filter((x) => x !== g)
                           )
                         }
                       />
                       {g}
                     </label>
                   ))}
-                </div>
               </div>
+             </div>
 
-              {/* Class filter */}
+              {/* Lớp */}
               <div>
                 <p className="font-medium text-base mb-3">Lớp sinh hoạt</p>
                 <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
@@ -193,17 +273,19 @@ export default function ControlPanel({
                         checked={classFilters.includes(cls.class_code)}
                         onChange={(e) =>
                           setClassFilters((prev) =>
-                            e.target.checked ? [...prev, cls.class_code] : prev.filter((x) => x !== cls.class_code)
+                            e.target.checked
+                              ? [...prev, cls.class_code]
+                              : prev.filter((x) => x !== cls.class_code)
                           )
                         }
                       />
                       {cls.class_code}
                     </label>
                   ))}
-                </div>
+              </div>
               </div>
 
-              {/* Major filter */}
+              {/* Ngành */}
               <div>
                 <p className="font-medium text-base mb-3">Chuyên ngành</p>
                 <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
@@ -215,40 +297,48 @@ export default function ControlPanel({
                         checked={majorFilters.includes(dept.major_code)}
                         onChange={(e) =>
                           setMajorFilters((prev) =>
-                            e.target.checked ? [...prev, dept.major_code] : prev.filter((x) => x !== dept.major_code)
+                            e.target.checked
+                              ? [...prev, dept.major_code]
+                              : prev.filter((x) => x !== dept.major_code)
                           )
                         }
                       />
                       {dept.major_code}
                     </label>
                   ))}
-                </div>
+              </div>
               </div>
 
-              {/* Reset */}
-              <button
-                onClick={() => {
-                  setGenderFilters([]);
-                  setClassFilters([]);
-                  setMajorFilters([]);
-                  setOpenFilter(false);
-                }}
-                className="w-full px-3 py-2 text-base rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
+              <Button
+                variant="secondary"
+                onClick={handleResetFilters}
+                className="w-full mt-2"
               >
                 Thiết lập lại
-              </button>
+              </Button>
             </div>
           )}
         </div>
-
-        {/* 🔎 Search + total */}
-        <div className="flex flex-col flex-1 max-w-xs ml-auto">
-          <SearchBar search={search} onChange={setSearch} onClear={() => setSearch("")} />
-          <span className="mt-1 text-xs text-gray-600 text-right">
-            {addTotal}: <span className="font-semibold">{total}</span>
-          </span>
-        </div>
       </div>
+      </div>
+
+         <div className="flex items-center gap-2 text-sm ml-auto">
+          <span>Đã chọn: {selectedCount} / {total}</span>
+          <ConfirmDialog
+            onConfirm={onBulkDelete}
+            title={`Xóa ${selectedCount} sinh viên?`}
+            description="Sinh viên sẽ bị xóa vĩnh viễn và không thể hoàn tác."
+            trigger={
+              <button
+                disabled={!selectedCount}
+                className={`ml-2 p-1 ${selectedCount ? "text-red-600" : "text-gray-400 cursor-not-allowed"}`}
+              >
+                 <Trash2 size={16} />
+              </button>
+            }
+        />
+        </div>
+        </div>
     </div>
   );
 }

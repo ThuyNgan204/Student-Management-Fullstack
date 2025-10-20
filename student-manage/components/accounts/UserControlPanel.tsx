@@ -99,8 +99,6 @@ export default function UserControlPanel({ total, onAdd }: Props) {
         {/* Thêm / Import / Export */}
         <div className="flex gap-2">
           <Button onClick={onAdd}>Thêm tài khoản</Button>
-          <Button variant="outline">Import</Button>
-          <Button variant="outline">Export</Button>
         </div>
 
         {/* Hiển thị */}
