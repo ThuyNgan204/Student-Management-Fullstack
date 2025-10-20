@@ -135,6 +135,7 @@ export default function Home() {
   addMutation,
   updateMutation,
   deleteMutation,
+  refetch,
 } = useCRUD<Student, StudentFormInputs>({
   resource: "students",
   idField: "student_id",             // ✅ BẮT BUỘC THÊM
@@ -248,10 +249,10 @@ export default function Home() {
       <ControlPanel
         total={total}
         addLabel="Thêm Sinh viên"
-        addTotal="Tổng Sinh viên"
         onAdd={() => setAddOpen(true)}
         selectedCount={selectedIds.length}
         onBulkDelete={handleBulkDelete}
+        onReload={refetch}
       />
 
       {/* Table */}

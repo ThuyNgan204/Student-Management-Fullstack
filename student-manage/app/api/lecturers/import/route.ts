@@ -28,10 +28,10 @@ export async function POST(req: Request) {
       const row = sheet.getRow(i);
       if (!row.getCell("B").value) continue; // bỏ qua hàng trống
 
-      const studentData = {
+      const lecturerData = {
         last_name: row.getCell(headers.indexOf("Họ")).value as string,
         first_name: row.getCell(headers.indexOf("Tên")).value as string,
-        student_code: row.getCell(headers.indexOf("MSSV")).value as string,
+        lecturer_code: row.getCell(headers.indexOf("Mã GV")).value as string,
         gender: row.getCell(headers.indexOf("Giới tính")).value as string,
         dob: row.getCell(headers.indexOf("Ngày sinh")).value
           ? new Date(row.getCell(headers.indexOf("Ngày sinh")).value as string)
@@ -39,18 +39,16 @@ export async function POST(req: Request) {
         phone: row.getCell(headers.indexOf("Số điện thoại")).value as string,
         email: row.getCell(headers.indexOf("Email")).value as string,
         address: row.getCell(headers.indexOf("Địa chỉ")).value as string,
-        cohort: row.getCell(headers.indexOf("Khóa")).value as string,
-        status: row.getCell(headers.indexOf("Tình trạng")).value as string,
-        academic_class_id: Number(row.getCell(headers.indexOf("ID lớp")).value),
-        major_id: Number(row.getCell(headers.indexOf("ID ngành")).value),
+        position: row.getCell(headers.indexOf("Chức vụ")).value as string,
+        department_id: Number(row.getCell(headers.indexOf("ID Khoa")).value),
       };
 
-      const student = await prisma.students.create({ data: studentData });
-      created.push(student);
+      const lecturer = await prisma.lecturers.create({ data: lecturerData });
+      created.push(lecturer);
     }
 
     return NextResponse.json({
-      message: `Đã nhập ${created.length} sinh viên`,
+      message: `Đã nhập ${created.length} giảng viên`,
       created,
     });
   } catch (error) {

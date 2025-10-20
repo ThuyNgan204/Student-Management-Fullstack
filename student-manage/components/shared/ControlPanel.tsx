@@ -13,19 +13,19 @@ import ConfirmDialog from "./ConfirmDialog";
 interface ControlPanelProps {
   total: number;
   addLabel: string;
-  addTotal: string;
   onAdd: () => void;
   selectedCount: number;       // ✅ thêm
   onBulkDelete: () => void; 
+  onReload: () => void;
 }
 
 export default function ControlPanel({
   total,
   addLabel,
-  addTotal,
   onAdd,
   selectedCount,
   onBulkDelete,
+  onReload,
 }: ControlPanelProps) {
   const {
     search,
@@ -100,7 +100,10 @@ export default function ControlPanel({
       body: formData,
     });
     const data = await res.json();
-    if (res.ok) toast.success(data.message);
+    if (res.ok) {
+      toast.success(data.message);
+      onReload?.();
+    }
     else toast.error(data.error);
   };
 
@@ -128,7 +131,7 @@ export default function ControlPanel({
           <Button onClick={onAdd}>{addLabel}</Button>
           <Button variant="ghost" className="bg-gray-200 hover:bg-gray-300 transition" onClick={handleExport}>Xuất dữ liệu</Button>
           <label className="cursor-pointer bg-gray-200 px-3 py-2 rounded text-sm font-medium hover:bg-gray-300 transition">
-            Import Excel
+            Nhập dữ liệu
             <input
               type="file"
               accept=".xlsx"

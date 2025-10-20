@@ -43,6 +43,7 @@ export default function LecturersPage() {
   } = useLecturerStore();
 
   const [departments, setDepartments] = useState<Department[]>([]);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -108,6 +109,7 @@ const {
   addMutation,
   updateMutation,
   deleteMutation,
+  refetch,
 } = useCRUD<Lecturer, TeacherFormInputs>({
   resource: "lecturers",
   idField: "lecturer_id",         // ✅ BẮT BUỘC THÊM
@@ -182,15 +184,47 @@ const {
     }
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  // ✅ Hàm chọn / bỏ chọn tất cả
+    const handleSelectAll = (checked: boolean, data: Lecturer[]) => {
+      if (checked) {
+        setSelectedIds(data.map((l) => l.lecturer_id));
+      } else {
+        setSelectedIds([]);
+      }
+    };
+  
+    // ✅ Hàm chọn / bỏ chọn từng sinh viên
+    const handleSelectOne = (id: number, checked: boolean) => {
+      setSelectedIds((prev) =>
+        checked ? [...prev, id] : prev.filter((x) => x !== id)
+      );
+    };
+  
+    // ✅ Hàm xóa hàng loạt
+    const handleBulkDelete = async () => {
+      if (selectedIds.length === 0) return toast.warning("Chưa chọn giảng viên nào!");
+  
+      try {
+        await Promise.all(selectedIds.map((id) => deleteMutation.mutateAsync(id)));
+        toast.success("Xóa thành công các giảng viên đã chọn!");
+        setSelectedIds([]);
+      } catch (err) {
+        toast.error("Xóa thất bại!");
+      }
+    };
+
+  const { items: lecturers = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelLecturer
-        total={data?.total ?? 0}
+        total={total}
         addLabel="Thêm Giảng viên"
-        addTotal="Tổng Giảng viên"
         onAdd={() => setAddOpen(true)}
+        selectedCount={selectedIds.length}
+        onBulkDelete={handleBulkDelete}
+        onReload={refetch}
       />
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
@@ -201,6 +235,24 @@ const {
           <>
             <DataTable
               columns={[
+                {
+                  key: "select",
+                  header: (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === lecturers.length && lecturers.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked, lecturers)}
+                    />
+                  ),
+                  render: (l: Lecturer) => (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(l.lecturer_id)}
+                      onChange={(e) => handleSelectOne(l.lecturer_id, e.target.checked)}
+                    />
+                  ),
+                  className: "w-8 text-center",
+                },
                 { key: "lecturer_id", header: "ID" },
                 {
                   key: "last_name",
