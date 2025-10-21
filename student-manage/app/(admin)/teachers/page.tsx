@@ -1,4 +1,3 @@
-// app/lecturers/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,12 +14,11 @@ import DetailDialog from "@/components/shared/DetailModal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
 import { Department, Lecturer, useLecturerStore } from "@/store/useLecturerStore";
-import LecturerForm from "@/components/lecturers/Lecturers";
 import LecturerDetail from "@/components/lecturers/LecturerDetailModal";
 import { TeacherFormInputs, teacherSchema } from "@/lib/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ControlPanelLecturer from "@/components/lecturers/Lecturer-ControlPanel";
-import { Button } from "@/components/ui/button";
+import LecturerForm from "@/components/lecturers/Lecturers";
 
 export default function LecturersPage() {
   const {
@@ -43,8 +41,7 @@ export default function LecturersPage() {
   } = useLecturerStore();
 
   const [departments, setDepartments] = useState<Department[]>([]);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
@@ -52,28 +49,27 @@ export default function LecturersPage() {
   }, [debouncedSearch, genderFilters, departmentFilters, positionFilters, sortBy, sortOrder, setPage]);
 
   useEffect(() => {
-  let isMounted = true;
-
-  (async () => {
-    try {
-      const res = await axios.get("/api/departments");
-      if (isMounted) setDepartments(res.data.items);
-    } catch (error) {
-      console.error("Failed to load departments:", error);
-    }
-  })();
-
-  return () => {
-    isMounted = false;
-  };
-}, []);
-
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await axios.get("/api/departments", { params: { page: 1, page_size: 100 } });
+        if (isMounted) setDepartments(res.data.items);
+      } catch (error) {
+        console.error("Failed to load departments:", error);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Form Add
   const {
     register: registerAdd,
     handleSubmit: handleSubmitAdd,
     reset: resetAdd,
+    setValue: setValueAdd, // ✅ thêm
+    watch: watchAdd,
     formState: { errors: errorsAdd },
   } = useForm<TeacherFormInputs>({
     resolver: zodResolver(teacherSchema),
@@ -97,35 +93,36 @@ export default function LecturersPage() {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
     reset: resetEdit,
+    setValue: setValueEdit, // ✅ thêm
+    watch: watchEdit,
     formState: { errors: errorsEdit },
   } = useForm<TeacherFormInputs>({
-    resolver: zodResolver(teacherSchema),});
+    resolver: zodResolver(teacherSchema),
+  });
 
-  // CRUD hooks (reuses your existing useCRUD)
-const {
-  data,
-  isLoading,
-  isError,
-  addMutation,
-  updateMutation,
-  deleteMutation,
-  refetch,
-} = useCRUD<Lecturer, TeacherFormInputs>({
-  resource: "lecturers",
-  idField: "lecturer_id",         // ✅ BẮT BUỘC THÊM
-  page,
-  pageSize,
-  search: debouncedSearch,
-  sortBy: sortBy || "lecturer_id",
-  sortOrder,
-  filters: {
-  gender: genderFilters,
-  department_code: departmentFilters || [], // ✅ đổi từ department_id → department_code
-  position: positionFilters || [],          // ⚠️ thêm nếu bạn cũng lọc position
-},
-
-});
-
+  // CRUD hooks
+  const {
+    data,
+    isLoading,
+    isError,
+    addMutation,
+    updateMutation,
+    deleteMutation,
+    refetch,
+  } = useCRUD<Lecturer, TeacherFormInputs>({
+    resource: "lecturers",
+    idField: "lecturer_id",
+    page,
+    pageSize,
+    search: debouncedSearch,
+    sortBy: sortBy || "lecturer_id",
+    sortOrder,
+    filters: {
+      gender: genderFilters,
+      department_code: departmentFilters || [],
+      position: positionFilters || [],
+    },
+  });
 
   const onSubmitAdd = (dataForm: TeacherFormInputs) => {
     addMutation.mutate(dataForm, {
@@ -179,39 +176,33 @@ const {
     try {
       const res = await axios.get(`/api/lecturers/${lecturer_id}`);
       setSelectedLecturer(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Không tải được chi tiết giảng viên");
     }
   };
 
-  // ✅ Hàm chọn / bỏ chọn tất cả
-    const handleSelectAll = (checked: boolean, data: Lecturer[]) => {
-      if (checked) {
-        setSelectedIds(data.map((l) => l.lecturer_id));
-      } else {
-        setSelectedIds([]);
-      }
-    };
-  
-    // ✅ Hàm chọn / bỏ chọn từng sinh viên
-    const handleSelectOne = (id: number, checked: boolean) => {
-      setSelectedIds((prev) =>
-        checked ? [...prev, id] : prev.filter((x) => x !== id)
-      );
-    };
-  
-    // ✅ Hàm xóa hàng loạt
-    const handleBulkDelete = async () => {
-      if (selectedIds.length === 0) return toast.warning("Chưa chọn giảng viên nào!");
-  
-      try {
-        await Promise.all(selectedIds.map((id) => deleteMutation.mutateAsync(id)));
-        toast.success("Xóa thành công các giảng viên đã chọn!");
-        setSelectedIds([]);
-      } catch (err) {
-        toast.error("Xóa thất bại!");
-      }
-    };
+  // Bulk actions
+  const handleSelectAll = (checked: boolean, data: Lecturer[]) => {
+    if (checked) setSelectedIds(data.map((l) => l.lecturer_id));
+    else setSelectedIds([]);
+  };
+
+  const handleSelectOne = (id: number, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((x) => x !== id)
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return toast.warning("Chưa chọn giảng viên nào!");
+    try {
+      await Promise.all(selectedIds.map((id) => deleteMutation.mutateAsync(id)));
+      toast.success("Xóa thành công các giảng viên đã chọn!");
+      setSelectedIds([]);
+    } catch {
+      toast.error("Xóa thất bại!");
+    }
+  };
 
   const { items: lecturers = [], total = 0 } = data ?? {};
   const totalPages = Math.ceil(total / pageSize);
@@ -275,17 +266,11 @@ const {
                   header: "Thao tác",
                   className: "text-center",
                   render: (l: Lecturer) => (
-                    <div className="flex justify-center space-x-2 gap-2">
-                      <button
-                        className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
-                        onClick={() => handleView(l.lecturer_id)}
-                      >
+                    <div className="flex justify-center space-x-2">
+                      <button onClick={() => handleView(l.lecturer_id)} className="text-blue-400 hover:text-blue-800">
                         <Eye className="size-4" />
                       </button>
-                      <button
-                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
-                        onClick={() => handleEdit(l)}
-                      >
+                      <button onClick={() => handleEdit(l)} className="text-gray-500 hover:text-yellow-600">
                         <Pencil className="size-4" />
                       </button>
                       <ConfirmDialog
@@ -293,9 +278,7 @@ const {
                         title="Bạn đã chắc chắn?"
                         description="Giảng viên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                         trigger={
-                          <button
-                            className="text-red-500 hover:text-red-700 cursor-pointer"
-                          >
+                          <button className="text-red-500 hover:text-red-700">
                             <Trash2 size={16} />
                           </button>
                         }
@@ -304,10 +287,9 @@ const {
                   ),
                 },
               ]}
-              data={isError || isLoading ? [] : data?.items || []}
+              data={isError || isLoading ? [] : lecturers || []}
               emptyMessage={isError ? "Lỗi tải danh sách Giảng viên" : "Không có Giảng viên nào"}
             />
-
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </>
         )}
@@ -317,13 +299,10 @@ const {
       <FormModal
         open={addOpen}
         onOpenChange={(open) => {
-          // Nếu đóng modal (open = false) → reset form
           if (!open) {
             resetAdd();
             setAddOpen(false);
-          } else {
-            setAddOpen(true);
-          }
+          } else setAddOpen(true);
         }}
         title="Thêm Giảng viên"
         onSubmit={handleSubmitAdd(onSubmitAdd)}
@@ -333,7 +312,13 @@ const {
         }}
         submitText="Lưu"
       >
-        <LecturerForm register={registerAdd} errors={errorsAdd} departments={departments} />
+        <LecturerForm
+          register={registerAdd}
+          errors={errorsAdd}
+          departments={departments}
+          setValue={setValueAdd} // ✅ thêm
+          watch={watchAdd}
+        />
       </FormModal>
 
       {/* Edit Lecturer Modal */}
@@ -348,7 +333,13 @@ const {
         submitText="Cập nhật"
       >
         {editingLecturer && (
-          <LecturerForm register={registerEdit} errors={errorsEdit} departments={departments} />
+          <LecturerForm
+            register={registerEdit}
+            errors={errorsEdit}
+            departments={departments}
+            setValue={setValueEdit} // ✅ thêm
+            watch={watchEdit}
+          />
         )}
       </FormModal>
 

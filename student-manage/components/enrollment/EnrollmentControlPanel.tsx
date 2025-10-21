@@ -98,10 +98,19 @@ export default function ControlPanelEnrollment({ total, students, classSections,
 
         {/* Search */}
         <div className="flex-1 max-w-sm ml-auto">
-          <SearchBar search={search} onChange={(v) => { setSearch(v); setPage(1); }} onClear={() => setSearch("")} />
-          <span className="mt-1 text-xs text-gray-600 text-right">
-            Tổng: <span className="font-semibold">{total}</span>
-          </span>
+          <div className="flex justify-end">
+          <SearchBar
+            search={search}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            onClear={() => setSearch("")}
+          />
+          </div>
+          <div className="mt-1 text-xs text-gray-600 flex justify-end">
+            Tổng: <span className="font-semibold ml-1">{total}</span>
+          </div>
         </div>
       </div>
 

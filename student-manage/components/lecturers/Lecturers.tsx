@@ -1,19 +1,29 @@
-// components/lecturers/LecturerForm.tsx
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Department } from "@/store/useLecturerStore";
 import { TeacherFormInputs } from "@/lib/zodSchemas";
 import { useForm } from "react-hook-form";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 export default function LecturerForm({
   register,
   errors,
   departments,
+  setValue,
+  watch,
 }: {
   register: ReturnType<typeof useForm<TeacherFormInputs>>["register"];
   errors: any;
   departments: Department[];
+  setValue: ReturnType<typeof useForm<TeacherFormInputs>>["setValue"];
+  watch: ReturnType<typeof useForm<TeacherFormInputs>>["watch"];
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -37,16 +47,20 @@ export default function LecturerForm({
 
       <div>
         <Label className="mb-2">Giới tính</Label>
-        <select {...register("gender")} 
-          defaultValue=""
-          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-          required
+        <Select 
+          onValueChange={(value) => setValue("gender", value)}
+          value={watch("gender")}
         >
-          <option value="" disabled>Chọn giới tính</option>
-          <option value="Nam">Nam</option>
-          <option value="Nữ">Nữ</option>
-          <option value="Khác">Khác</option>
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn giới tính" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Nam">Nam</SelectItem>
+            <SelectItem value="Nữ">Nữ</SelectItem>
+            <SelectItem value="Khác">Khác</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.gender && <p className="text-xs text-red-500">{errors.gender.message}</p>}
       </div>
 
       <div>
@@ -71,23 +85,42 @@ export default function LecturerForm({
 
       <div>
         <Label className="mb-2">Khoa phụ trách</Label>
-        <select {...register("department_id")} 
-          defaultValue=""
-          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-          required
+        <Select 
+          onValueChange={(value) => setValue("department_id", Number(value))}
+          value={watch("department_id") ? watch("department_id").toString() : ""}
         >
-          <option value="" disabled>Chọn khoa</option>
-          {departments.map((d) => (
-            <option key={d.department_id} value={d.department_id}>
-              {d.department_name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn khoa" />
+          </SelectTrigger>
+          <SelectContent className="max-h-60 overflow-y-auto">
+            {departments.map((d) => (
+              <SelectItem key={d.department_id} value={d.department_id.toString()}>
+                {d.department_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors?.department_id && <p className="text-xs text-red-500">{errors.department_id.message}</p>}
       </div>
 
       <div>
         <Label className="mb-2">Chức vụ</Label>
-        <Input {...register("position")} />
+        <Select 
+          onValueChange={(value) => setValue("position", value)}
+          value={watch("position")}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn chức vụ" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Trưởng khoa">Trưởng khoa</SelectItem>
+            <SelectItem value="Phó khoa">Phó khoa</SelectItem>
+            <SelectItem value="Giảng viên">Giảng viên</SelectItem>
+            <SelectItem value="Trợ giảng">Trợ giảng</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.position && <p className="text-xs text-red-500">{errors.position.message}</p>}
+
       </div>
 
       <div className="col-span-2">

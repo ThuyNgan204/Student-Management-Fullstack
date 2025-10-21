@@ -1,4 +1,3 @@
-// page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +7,6 @@ import { useStudentStore, Student, Major, AcademicClass } from "@/store/useStude
 import Link from "next/link";
 import axios from "axios";
 
-// Components
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ControlPanel from "@/components/shared/ControlPanel";
@@ -18,13 +16,13 @@ import Pagination from "@/components/shared/Pagination";
 import DetailDialog from "@/components/shared/DetailModal";
 import FormModal from "@/components/shared/FormModal";
 
-// Hooks and Schemas
 import { formatDate } from "@/utils/date";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
 import { StudentFormInputs, studentSchema } from "@/lib/zodSchemas";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Home() {
   const {
@@ -53,36 +51,21 @@ export default function Home() {
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    // Luôn reset trang về 1 khi thay đổi filter hoặc tìm kiếm
     setPage(1);
   }, [debouncedSearch, genderFilters, classFilters, majorFilters]);
 
-  // ✅ Khi đổi field sort → gọi API ngay (dựa trên order hiện có)
   useEffect(() => {
-    if (sortBy) {
-      setPage(1);
-    }
-  }, [sortBy]);
+    if (sortBy) setPage(1);
+  }, [sortBy, sortOrder]);
 
-  // ✅ Khi đổi asc/desc → chỉ gọi nếu đã có field
-  useEffect(() => {
-    if (sortBy) {
-      setPage(1);
-    }
-  }, [sortOrder]);
-
-  // Fetch majors & classes for dropdowns
   useEffect(() => {
     const fetchData = async () => {
-      
       try {
         const [majorsRes, classesRes] = await Promise.all([
-          axios.get("/api/majors"),
-          axios.get("/api/academic_class"),
+          axios.get("/api/majors", { params: { page: 1, page_size: 1000 } }),
+          axios.get("/api/academic_class", { params: { page: 1, page_size: 1000 } }),
         ]);
-        console.log("Majors API:", majorsRes.data);
-        console.log("Classes API:", classesRes.data);
-        
+
         setMajors(Array.isArray(majorsRes.data) ? majorsRes.data : majorsRes.data.items || []);
         setClasses(Array.isArray(classesRes.data) ? classesRes.data : classesRes.data.items || []);
       } catch (err) {
@@ -92,12 +75,13 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Form Add
   const {
     register: registerAdd,
     handleSubmit: handleSubmitAdd,
     reset: resetAdd,
     formState: { errors: errorsAdd },
+    setValue: setValueAdd,
+    watch: watchAdd,
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -117,52 +101,50 @@ export default function Home() {
     },
   });
 
-  // Form Edit
   const {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
     reset: resetEdit,
     formState: { errors: errorsEdit },
+    setValue: setValueEdit,
+    watch: watchEdit,
   } = useForm<StudentFormInputs>({
     resolver: zodResolver(studentSchema),
   });
 
-  // Queries
- const {
-  data,
-  isLoading,
-  isError,
-  addMutation,
-  updateMutation,
-  deleteMutation,
-  refetch,
-} = useCRUD<Student, StudentFormInputs>({
-  resource: "students",
-  idField: "student_id",             // ✅ BẮT BUỘC THÊM
-  page,
-  pageSize,
-  search: debouncedSearch,
-  sortBy: sortBy || "student_id",
-  sortOrder,
-  filters: {
-    gender: genderFilters,
-    class_code: classFilters,
-    major_code: majorFilters,
-  },
-});
+  const {
+    data,
+    isLoading,
+    isError,
+    addMutation,
+    updateMutation,
+    deleteMutation,
+    refetch,
+  } = useCRUD<Student, StudentFormInputs>({
+    resource: "students",
+    idField: "student_id",
+    page,
+    pageSize,
+    search: debouncedSearch,
+    sortBy: sortBy || "student_id",
+    sortOrder,
+    filters: {
+      gender: genderFilters,
+      class_code: classFilters,
+      major_code: majorFilters,
+    },
+  });
 
-
-  // Handlers
   const onSubmitAdd = (data: StudentFormInputs) => {
     addMutation.mutate(data, {
-       onSuccess: () => {
-      toast.success("Thêm sinh viên thành công");
-      resetAdd();
-      setAddOpen(false);
-    },
-    onError: () => {
-      toast.error("Thêm sinh viên thất bại");
-    },
+      onSuccess: () => {
+        toast.success("Thêm sinh viên thành công");
+        resetAdd();
+        setAddOpen(false);
+      },
+      onError: () => {
+        toast.error("Thêm sinh viên thất bại");
+      },
     });
   };
 
@@ -173,7 +155,7 @@ export default function Home() {
       first_name: student.first_name,
       student_code: student.student_code,
       gender: student.gender,
-      dob: student.dob? new Date(student.dob).toISOString().split("T")[0] : "",
+      dob: student.dob ? new Date(student.dob).toISOString().split("T")[0] : "",
       address: student.address ?? "",
       phone: student.phone ?? "",
       email: student.email ?? "",
@@ -181,24 +163,25 @@ export default function Home() {
       academic_class_id: student.academic_class_id ?? undefined,
       cohort: student.cohort ?? "",
       status: student.status as "Đang học" | "Bảo lưu" | "Tốt nghiệp",
+      avatar: student.avatar ?? "",
     });
   };
 
   const handleUpdate = (data: StudentFormInputs) => {
     if (editingStudent) {
       updateMutation.mutate(
-      { ...editingStudent, ...data },
-      {
-        onSuccess: () => {
-          toast.success("Cập nhật thành công");
-          resetEdit();
-          setEditingStudent(null);
-        },
-        onError: () => {
-          toast.error("Cập nhật thất bại");
-        },
-      }
-    );
+        { ...editingStudent, ...data },
+        {
+          onSuccess: () => {
+            toast.success("Cập nhật thành công");
+            resetEdit();
+            setEditingStudent(null);
+          },
+          onError: () => {
+            toast.error("Cập nhật thất bại");
+          },
+        }
+      );
     }
   };
 
@@ -211,31 +194,21 @@ export default function Home() {
     }
   };
 
-  // ✅ Hàm chọn / bỏ chọn tất cả
   const handleSelectAll = (checked: boolean, data: Student[]) => {
-    if (checked) {
-      setSelectedIds(data.map((s) => s.student_id));
-    } else {
-      setSelectedIds([]);
-    }
+    setSelectedIds(checked ? data.map((s) => s.student_id) : []);
   };
 
-  // ✅ Hàm chọn / bỏ chọn từng sinh viên
   const handleSelectOne = (id: number, checked: boolean) => {
-    setSelectedIds((prev) =>
-      checked ? [...prev, id] : prev.filter((x) => x !== id)
-    );
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
   };
 
-  // ✅ Hàm xóa hàng loạt
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return toast.warning("Chưa chọn sinh viên nào!");
-
     try {
       await Promise.all(selectedIds.map((id) => deleteMutation.mutateAsync(id)));
       toast.success("Xóa thành công các sinh viên đã chọn!");
       setSelectedIds([]);
-    } catch (err) {
+    } catch {
       toast.error("Xóa thất bại!");
     }
   };
@@ -245,7 +218,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
-      {/* Control Panel */}
       <ControlPanel
         total={total}
         addLabel="Thêm Sinh viên"
@@ -255,7 +227,6 @@ export default function Home() {
         onReload={refetch}
       />
 
-      {/* Table */}
       <main className="flex-1 overflow-x-auto px-6 py-4">
         {isLoading && <p>Đang tải...</p>}
         {isError && <p>Tải danh sách Sinh viên thất bại.</p>}
@@ -326,15 +297,15 @@ export default function Home() {
                   header: "Thao tác",
                   className: "text-center",
                   render: (s: Student) => (
-                    <div className="flex justify-center space-x-2 gap-2">
+                    <div className="flex justify-center gap-2">
                       <button
-                        className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
+                        className="text-blue-400 hover:text-blue-800"
                         onClick={() => handleView(s.student_id)}
                       >
                         <Eye className="size-4" />
                       </button>
                       <button
-                        className="text-gray-500 hover:text-yellow-600 cursor-pointer transition-colors"
+                        className="text-gray-500 hover:text-yellow-600"
                         onClick={() => handleEdit(s)}
                       >
                         <Pencil className="size-4" />
@@ -344,9 +315,7 @@ export default function Home() {
                         title="Bạn đã chắc chắn?"
                         description="Sinh viên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                         trigger={
-                          <button
-                            className="text-red-500 hover:text-red-700 cursor-pointer"
-                          >
+                          <button className="text-red-500 hover:text-red-700">
                             <Trash2 size={16} />
                           </button>
                         }
@@ -355,8 +324,8 @@ export default function Home() {
                   ),
                 },
               ]}
-              data={isError || isLoading ? [] : students}
-              emptyMessage={isError ? "Lỗi tải Sinh viên" : "Không có Sinh viên nào"}
+              data={students}
+              emptyMessage="Không có Sinh viên nào"
             />
 
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -364,17 +333,13 @@ export default function Home() {
         )}
       </main>
 
-      {/* Add Student Modal */}
       <FormModal
         open={addOpen}
         onOpenChange={(open) => {
-          // Nếu đóng modal (open = false) → reset form
           if (!open) {
             resetAdd();
             setAddOpen(false);
-          } else {
-            setAddOpen(true);
-          }
+          } else setAddOpen(true);
         }}
         title="Thêm Sinh viên"
         onSubmit={handleSubmitAdd(onSubmitAdd)}
@@ -384,10 +349,16 @@ export default function Home() {
         }}
         submitText="Lưu"
       >
-        <StudentForm register={registerAdd} errors={errorsAdd} majors={majors} classes={classes} />
+        <StudentForm
+          register={registerAdd}
+          errors={errorsAdd}
+          majors={majors}
+          classes={classes}
+          setValue={setValueAdd}
+          watch={watchAdd}
+        />
       </FormModal>
 
-      {/* Edit Student Modal */}
       <FormModal
         open={!!editingStudent}
         onOpenChange={(open) => {
@@ -399,78 +370,78 @@ export default function Home() {
         submitText="Cập nhật"
       >
         {editingStudent && (
-          <StudentForm register={registerEdit} errors={errorsEdit} majors={majors} classes={classes} />
+          <StudentForm
+            register={registerEdit}
+            errors={errorsEdit}
+            majors={majors}
+            classes={classes}
+            setValue={setValueEdit}
+            watch={watchEdit}
+          />
         )}
       </FormModal>
 
-      {/* View Modal */}
-      <DetailDialog open={!!selectedStudent} title="Thông tin Sinh viên" onClose={() => setSelectedStudent(null)}>
-      {selectedStudent && (
-        <div className="grid grid-cols-12 gap-y-3 gap-x-6">
-          <div className="col-span-4 text-gray-500 font-medium">ID:</div>
-          <div className="col-span-8">{selectedStudent.student_id}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Họ Tên:</div>
-          <div className="col-span-8">
-            {selectedStudent.last_name} {selectedStudent.first_name}
+      <DetailDialog
+        open={!!selectedStudent}
+        title="Thông tin Sinh viên"
+        onClose={() => setSelectedStudent(null)}
+      >
+        {selectedStudent && (
+          <div className="grid grid-cols-12 gap-y-3 gap-x-6">
+            <div className="col-span-4 text-gray-500 font-medium">ID:</div>
+            <div className="col-span-8">{selectedStudent.student_id}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Họ Tên:</div>
+            <div className="col-span-8">
+              {selectedStudent.last_name} {selectedStudent.first_name}
+            </div>
+            <div className="col-span-4 text-gray-500 font-medium">Giới tính:</div>
+            <div className="col-span-8">{selectedStudent.gender}</div>
+            <div className="col-span-4 text-gray-500 font-medium">MSSV:</div>
+            <div className="col-span-8">{selectedStudent.student_code}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Ngày sinh:</div>
+            <div className="col-span-8">{formatDate(selectedStudent.dob)}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Địa chỉ:</div>
+            <div className="col-span-8">{selectedStudent.address}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Số điện thoại:</div>
+            <div className="col-span-8">{selectedStudent.phone}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Email:</div>
+            <div className="col-span-8">{selectedStudent.email}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Lớp:</div>
+            <div className="col-span-8">{selectedStudent.academic_class?.class_name}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Cố vấn học tập:</div>
+            <div className="col-span-8">
+              {selectedStudent.academic_class?.lecturers?.last_name}{" "}
+              {selectedStudent.academic_class?.lecturers?.first_name}
+            </div>
+            <div className="col-span-4 text-gray-500 font-medium">Chuyên ngành:</div>
+            <div className="col-span-8">{selectedStudent.majors?.major_name}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Khoa:</div>
+            <div className="col-span-8">{selectedStudent.majors?.departments?.department_name}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Khóa:</div>
+            <div className="col-span-8">{selectedStudent.cohort}</div>
+            <div className="col-span-4 text-gray-500 font-medium">Tình trạng:</div>
+            <div className="col-span-8">{selectedStudent.status}</div>
           </div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Giới tính:</div>
-          <div className="col-span-8">{selectedStudent.gender}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">MSSV:</div>
-          <div className="col-span-8">{selectedStudent.student_code}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Ngày sinh:</div>
-          <div className="col-span-8">{formatDate(selectedStudent.dob)}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Địa chỉ:</div>
-          <div className="col-span-8">{selectedStudent.address}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Số điện thoại:</div>
-          <div className="col-span-8">{selectedStudent.phone}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Email:</div>
-          <div className="col-span-8">{selectedStudent.email}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Lớp:</div>
-          <div className="col-span-8">{selectedStudent.academic_class?.class_name}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Cố vấn học tập:</div>
-          <div className="col-span-8">
-            {selectedStudent.academic_class?.lecturers?.last_name}{" "}
-            {selectedStudent.academic_class?.lecturers?.first_name}
-          </div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Chuyên ngành:</div>
-          <div className="col-span-8">{selectedStudent.majors?.major_name}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Khoa:</div>
-          <div className="col-span-8">{selectedStudent.majors?.departments?.department_name}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Khóa:</div>
-          <div className="col-span-8">{selectedStudent.cohort}</div>
-
-          <div className="col-span-4 text-gray-500 font-medium">Tình trạng:</div>
-          <div className="col-span-8">{selectedStudent.status}</div>
-        </div>
-      )}
-    </DetailDialog>
+        )}
+      </DetailDialog>
     </div>
   );
 }
 
-// Reusable Form Component
 function StudentForm({
   register,
   errors,
   majors,
   classes,
+  setValue,
+  watch,
 }: {
   register: ReturnType<typeof useForm<StudentFormInputs>>["register"];
   errors: any;
   majors: Major[];
   classes: AcademicClass[];
+  setValue: (field: keyof StudentFormInputs, value: any) => void;
+  watch: ReturnType<typeof useForm<StudentFormInputs>>["watch"];
 }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -493,18 +464,20 @@ function StudentForm({
       </div>
 
       <div>
-        <Label className="mb-2">Giới Tính</Label>
-        <select {...register("gender")} 
-          defaultValue=""
-          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-          required
+        <Label className="mb-2">Giới tính</Label>
+        <Select 
+          onValueChange={(value) => setValue("gender", value)}
+          value={watch("gender")}
         >
-          
-          <option value="" disabled>Chọn giới tính</option>
-          <option value="Nam">Nam</option>
-          <option value="Nữ">Nữ</option>
-          <option value="Nữ">Khác</option>
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn giới tính" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Nam">Nam</SelectItem>
+            <SelectItem value="Nữ">Nữ</SelectItem>
+            <SelectItem value="Khác">Khác</SelectItem>
+          </SelectContent>
+        </Select>
         {errors.gender && <p className="text-xs text-red-500">{errors.gender.message}</p>}
       </div>
 
@@ -533,36 +506,44 @@ function StudentForm({
 
       <div>
         <Label className="mb-2">Chuyên ngành</Label>
-        <select {...register("major_id")} 
-          defaultValue=""
-          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-          required
+        <Select 
+          onValueChange={(value) => setValue("major_id", Number(value))}
+          value={watch("major_id") ? watch("major_id").toString() : ""}
         >
-          
-          <option value="" disabled>Chọn chuyên ngành</option>
-          {(majors || []).map((m) => (
-            <option key={m.major_id} value={m.major_id}>
-              {m.major_name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn chuyên ngành" />
+          </SelectTrigger>
+          <SelectContent className="max-h-60 overflow-y-auto">
+            {majors.map((m) => (
+              <SelectItem key={m.major_id} value={m.major_id.toString()}>
+                {m.major_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.major_id && <p className="text-xs text-red-500">{errors.major_id.message}</p>}
       </div>
 
       <div>
         <Label className="mb-2">Lớp sinh hoạt</Label>
-        <select {...register("academic_class_id")} 
-          defaultValue=""
-          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-          required
+        <Select 
+          onValueChange={(value) => setValue("academic_class_id", Number(value))}
+            value={watch("academic_class_id") ? watch("academic_class_id").toString() : ""}
         >
-          
-          <option value="" disabled>Chọn lớp sinh hoạt</option>
-          {(classes || []).map((c) => (
-            <option key={c.academic_class_id} value={c.academic_class_id}>
-              {c.class_name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn lớp sinh hoạt" />
+          </SelectTrigger>
+          <SelectContent className="max-h-60 overflow-y-auto">
+            {classes.map((c) => (
+              <SelectItem key={c.academic_class_id} value={c.academic_class_id.toString()}>
+                {c.class_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.academic_class_id && (
+          <p className="text-xs text-red-500">{errors.academic_class_id.message}</p>
+        )}
       </div>
 
       <div>
@@ -571,18 +552,20 @@ function StudentForm({
       </div>
 
       <div>
-        <Label className="mb-2">Tình trạng</Label>
-        <select {...register("status")} 
-          defaultValue=""
-          className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-          required
+        <Label className="mb-2">Trạng thái</Label>
+        <Select 
+          onValueChange={(value) => setValue("status", value)}
+          value={watch("status")}
         >
-          
-          <option value="" disabled>Chọn tình trạng</option>
-          <option value="Đang học">Đang học</option>
-          <option value="Bảo lưu">Bảo lưu</option>
-          <option value="Tốt nghiệp">Tốt nghiệp</option>
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Trạng thái sinh viên" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Đang học">Đang học</SelectItem>
+            <SelectItem value="Bảo lưu">Bảo lưu</SelectItem>
+            <SelectItem value="Tốt nghiệp">Tốt nghiệp</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="col-span-2">

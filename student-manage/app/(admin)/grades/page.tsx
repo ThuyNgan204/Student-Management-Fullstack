@@ -154,13 +154,14 @@ export default function GradePage() {
     );
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  const { items: grades = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* ✅ FILTER HOÀN CHỈNH */}
       <ControlPanelGrade
-        total={data?.total ?? 0}
+        total={total}
         students={students}
         classSections={classSections} // ✅ Dùng danh sách đầy đủ
         onAdd={() => setAddOpen(true)}
@@ -233,7 +234,7 @@ export default function GradePage() {
                   ),
                 },
               ]}
-              data={data?.items || []}
+              data={grades}
               emptyMessage="Không có dữ liệu điểm"
             />
 

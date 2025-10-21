@@ -27,6 +27,7 @@ import { MajorFormInputs, majorSchema } from "@/lib/zodSchemas";
 import { Major, useMajorStore } from "@/store/useMajorStore";
 import { Department } from "@/store/useDepartmentStore";
 import ControlPanelMajor from "@/components/majors/Majors-ControlPanel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function MajorsPage() {
   const {
@@ -127,12 +128,13 @@ export default function MajorsPage() {
     }
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  const { items: majors = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelMajor
-        total={data?.total ?? 0}
+        total={total}
         addLabel="Thêm chuyên ngành"
         addTotal="Tổng chuyên ngành"
         onAdd={() => setAddOpen(true)}
@@ -182,7 +184,7 @@ export default function MajorsPage() {
                   ),
                 },
               ]}
-              data={data?.items || []}
+              data={majors}
               emptyMessage="Không có chuyên ngành nào được tìm thấy"
             />
 
@@ -230,20 +232,18 @@ export default function MajorsPage() {
 
             <div>
               <Label className="mb-2">Khoa quản lý</Label>
-              <select
-                {...formAdd.register("department_id", { valueAsNumber: true })}
-                className="border rounded-md px-3 py-2 w-full bg-white shadow-sm"
-              >
-                <option value="" disabled>Chọn khoa</option>
-                {departments.map((dep) => (
-                  <option
-                    key={dep.department_id}
-                    value={dep.department_id}
-                  >
-                    {dep.department_name}
-                  </option>
-                ))}
-              </select>
+              <Select onValueChange={(value) => formAdd.setValue("department_id", Number(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn khoa quản lý" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {departments.map((d) => (
+                    <SelectItem key={d.department_id} value={d.department_id.toString()}>
+                      {d.department_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formAdd.formState.errors.department_id && (
                 <p className="text-xs text-red-500">
                   {formAdd.formState.errors.department_id.message}
@@ -306,21 +306,31 @@ export default function MajorsPage() {
 
             <div>
               <Label className="mb-2">Khoa quản lý</Label>
-              <select
-                {...formEdit.register("department_id", { valueAsNumber: true })}
-                className="border rounded-md px-3 py-2 w-full bg-white shadow-sm"
-                defaultValue={editingMajor?.department_id || ""}
+              <Select
+                defaultValue={
+                  editingMajor?.department_id
+                    ? String(editingMajor.department_id)
+                    : undefined
+                }
+                onValueChange={(value) =>
+                  formEdit.setValue("department_id", Number(value))
+                }
               >
-                <option value="" disabled>Chọn khoa</option>
-                {departments.map((dep) => (
-                  <option
-                    key={dep.department_id}
-                    value={dep.department_id}
-                  >
-                    {dep.department_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="border rounded-md px-3 py-2 w-full bg-white shadow-sm">
+                  <SelectValue placeholder="Chọn khoa" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {departments.map((dep) => (
+                    <SelectItem
+                      key={dep.department_id}
+                      value={String(dep.department_id)}
+                    >
+                      {dep.department_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formEdit.formState.errors.department_id && (
                 <p className="text-xs text-red-500">
                   {formEdit.formState.errors.department_id.message}

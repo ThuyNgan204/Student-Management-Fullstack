@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
@@ -28,31 +29,36 @@ import { ClassFormInputs, classSchema } from "@/lib/zodSchemas";
 import { AcademicClass, useClassStore } from "@/store/useClassStore";
 import ControlPanelClass from "@/components/classes/ClassControlPanel";
 import ClassDetail from "@/components/classes/ClassDetailModal";
-import { Label } from "@/components/ui/label";
+
+// ✅ import Select UI
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ClassesPage() {
   const {
-  page,
-  pageSize,
-  search,
-  sortBy,
-  sortOrder,
-  setPage,
-  setSearch,
-  addOpen,
-  setAddOpen,
-  editingClass,
-  setEditingClass,
-  selectedClass,
-  setSelectedClass,
-
-  // ✅ Thêm các dòng này
-  departmentFilters,
-  majorFilters,
-  lecturerFilters,
-  cohortFilters,
-} = useClassStore();
-
+    page,
+    pageSize,
+    search,
+    sortBy,
+    sortOrder,
+    setPage,
+    setSearch,
+    addOpen,
+    setAddOpen,
+    editingClass,
+    setEditingClass,
+    selectedClass,
+    setSelectedClass,
+    departmentFilters,
+    majorFilters,
+    lecturerFilters,
+    cohortFilters,
+  } = useClassStore();
 
   const [majors, setMajors] = useState<any[]>([]);
   const [lecturers, setLecturers] = useState<any[]>([]);
@@ -79,24 +85,30 @@ export default function ClassesPage() {
   }, []);
 
   const { data, isLoading, isError, addMutation, updateMutation, deleteMutation } =
-  useCRUD<AcademicClass, ClassFormInputs>({
-    resource: "academic_class",
-    idField: "academic_class_id",
-    page,
-    pageSize,
-    search: debouncedSearch,
-    sortBy: sortBy || "academic_class_id",
-    sortOrder,
-    filters: {
-      department: departmentFilters,
-      major: majorFilters,
-      lecturer: lecturerFilters,
-      cohort: cohortFilters,
-    },
-  });
+    useCRUD<AcademicClass, ClassFormInputs>({
+      resource: "academic_class",
+      idField: "academic_class_id",
+      page,
+      pageSize,
+      search: debouncedSearch,
+      sortBy: sortBy || "academic_class_id",
+      sortOrder,
+      filters: {
+        department: departmentFilters,
+        major: majorFilters,
+        lecturer: lecturerFilters,
+        cohort: cohortFilters,
+      },
+    });
 
   // ===== Form Add =====
-  const formAdd = useForm<ClassFormInputs>({
+  const {
+    register: registerAdd,
+    handleSubmit: handleSubmitAdd,
+    reset: resetAdd,
+    formState: { errors: errorsAdd },
+    setValue: setValueAdd, // ✅ thêm dòng này
+  } = useForm<ClassFormInputs>({
     resolver: zodResolver(classSchema),
     defaultValues: {
       class_name: "",
@@ -108,7 +120,13 @@ export default function ClassesPage() {
   });
 
   // ===== Form Edit =====
-  const formEdit = useForm<ClassFormInputs>({
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    formState: { errors: errorsEdit },
+    setValue: setValueEdit, // ✅ thêm dòng này
+  } = useForm<ClassFormInputs>({
     resolver: zodResolver(classSchema),
   });
 
@@ -116,7 +134,7 @@ export default function ClassesPage() {
     addMutation.mutate(dataForm, {
       onSuccess: () => {
         toast.success("Thêm lớp học thành công");
-        formAdd.reset();
+        resetAdd();
         setAddOpen(false);
       },
       onError: () => toast.error("Thêm lớp học thất bại"),
@@ -125,7 +143,7 @@ export default function ClassesPage() {
 
   const handleEdit = (c: AcademicClass) => {
     setEditingClass(c);
-    formEdit.reset({
+    resetEdit({
       class_name: c.class_name,
       class_code: c.class_code,
       cohort: c.cohort ?? "",
@@ -141,7 +159,7 @@ export default function ClassesPage() {
         {
           onSuccess: () => {
             toast.success("Cập nhật lớp học thành công");
-            formEdit.reset();
+            resetEdit();
             setEditingClass(null);
           },
           onError: () => toast.error("Cập nhật thất bại"),
@@ -159,12 +177,13 @@ export default function ClassesPage() {
     }
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  const { items: classes = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelClass
-        total={data?.total ?? 0}
+        total={total}
         addLabel="Thêm lớp sinh hoạt"
         addTotal="Tổng lớp sinh hoạt"
         onAdd={() => setAddOpen(true)}
@@ -172,7 +191,7 @@ export default function ClassesPage() {
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
         {isLoading && <p>Đang tải...</p>}
-        {isError && <p>Tải danh dách lớp sinh hoạt thất bại.</p>}
+        {isError && <p>Tải danh sách lớp sinh hoạt thất bại.</p>}
 
         {!isLoading && !isError && (
           <>
@@ -181,7 +200,7 @@ export default function ClassesPage() {
                 { key: "academic_class_id", header: "ID" },
                 { key: "class_name", header: "Tên lớp" },
                 { key: "class_code", header: "Mã lớp" },
-                { key: "cohort", header:"Niên khóa"},
+                { key: "cohort", header: "Niên khóa" },
                 {
                   key: "lecturers",
                   header: "Giảng viên cố vấn",
@@ -191,17 +210,16 @@ export default function ClassesPage() {
                       : "Chưa phân công",
                 },
                 {
-                    key: "majors",
-                    header: "Ngành",
-                    render: (c: AcademicClass) => c.majors?.major_name ?? "N/A",
-                    },
-                    {
-                    key: "department",
-                    header: "Khoa",
-                    render: (c: AcademicClass) =>
-                        c.majors?.departments?.department_name ?? "N/A", // ✅ hiển thị tên khoa
-                    },
-
+                  key: "majors",
+                  header: "Ngành",
+                  render: (c: AcademicClass) => c.majors?.major_name ?? "N/A",
+                },
+                {
+                  key: "department",
+                  header: "Khoa",
+                  render: (c: AcademicClass) =>
+                    c.majors?.departments?.department_name ?? "N/A",
+                },
                 {
                   key: "actions",
                   header: "Thao tác",
@@ -221,13 +239,13 @@ export default function ClassesPage() {
                         <Pencil className="size-4" />
                       </button>
                       <ConfirmDialog
-                        onConfirm={() => deleteMutation.mutate(c.academic_class_id)}
+                        onConfirm={() =>
+                          deleteMutation.mutate(c.academic_class_id)
+                        }
                         title="Bạn đã chắc chắn?"
                         description="Lớp sinh hoạt này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                         trigger={
-                          <button
-                            className="text-red-600 hover:text-red-900"
-                          >
+                          <button className="text-red-600 hover:text-red-900">
                             <Trash2 size={16} />
                           </button>
                         }
@@ -236,7 +254,7 @@ export default function ClassesPage() {
                   ),
                 },
               ]}
-              data={data?.items || []}
+              data={classes}
               emptyMessage="Không có lớp sinh hoạt nào"
             />
 
@@ -246,179 +264,183 @@ export default function ClassesPage() {
       </main>
 
       {/* ========== ADD MODAL ========== */}
-    <Dialog
-    open={addOpen}
-    onOpenChange={(open) => {
-        if (!open) formAdd.reset();
-        setAddOpen(open);
-    }}
-    >
-    <DialogContent className="max-w-lg">
-        <DialogHeader>
-        <DialogTitle>Thêm lớp sinh hoạt</DialogTitle>
-        </DialogHeader>
+      <Dialog
+        open={addOpen}
+        onOpenChange={(open) => {
+          if (!open) resetAdd();
+          setAddOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Thêm lớp sinh hoạt</DialogTitle>
+          </DialogHeader>
 
-        <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
-        <div>
-            <Label className="mb-2">Tên lớp sinh hoạt</Label>
-            <Input {...formAdd.register("class_name")} />
-            {formAdd.formState.errors.class_name && (
-            <p className="text-xs text-red-500">{formAdd.formState.errors.class_name.message}</p>
-            )}
-        </div>
+          <form onSubmit={handleSubmitAdd(onSubmitAdd)} className="space-y-4">
+            <div>
+              <Label className="mb-2">Tên lớp sinh hoạt</Label>
+              <Input {...registerAdd("class_name")} />
+              {errorsAdd.class_name && (
+                <p className="text-xs text-red-500">{errorsAdd.class_name.message}</p>
+              )}
+            </div>
 
-        <div>
-            <Label className="mb-2">Mã lớp sinh hoạt</Label>
-            <Input {...formAdd.register("class_code")}/>
-            {formAdd.formState.errors.class_code && (
-            <p className="text-xs text-red-500">{formAdd.formState.errors.class_code.message}</p>
-            )}
-        </div>
+            <div>
+              <Label className="mb-2">Mã lớp sinh hoạt</Label>
+              <Input {...registerAdd("class_code")} />
+              {errorsAdd.class_code && (
+                <p className="text-xs text-red-500">{errorsAdd.class_code.message}</p>
+              )}
+            </div>
 
-        <div>
-            <Label className="mb-2">Khóa</Label>
-            <Input {...formAdd.register("cohort")} />
-            {formAdd.formState.errors.cohort && (
-            <p className="text-xs text-red-500">{formAdd.formState.errors.cohort.message}</p>
-            )}
-        </div>
+            <div>
+              <Label className="mb-2">Khóa</Label>
+              <Input {...registerAdd("cohort")} />
+            </div>
 
-        <div>
-            <Label className="mb-2">Chuyên ngành</Label>
-            <select
-              {...formAdd.register("major_id", { valueAsNumber: true })}
-              defaultValue=""
-              className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-              required
-            >
-              <option value="" disabled>
-                Chọn chuyên ngành
-              </option>
-              {majors.map((m) => (
-                <option key={m.major_id} value={m.major_id}>
-                  {m.major_name}
-                </option>
-              ))}
-            </select>
-        </div>
+            <div>
+              <Label className="mb-2">Chuyên ngành</Label>
+              <Select onValueChange={(value) => setValueAdd("major_id", Number(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn chuyên ngành" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {majors.map((m) => (
+                    <SelectItem key={m.major_id} value={m.major_id.toString()}>
+                      {m.major_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div>
-            <Label className="mb-2">Giảng viên cố vấn</Label>
-            <select
-            {...formAdd.register("lecturer_id", { valueAsNumber: true })}
-            defaultValue=""
-            className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-            required
-            >
-            
-            <option value="" disabled>Chọn giảng viên</option>
-            {lecturers.map((l) => (
-                <option key={l.lecturer_id} value={l.lecturer_id}>
-                {l.last_name} {l.first_name}
-                </option>
-            ))}
-            </select>
-        </div>
+            <div>
+              <Label className="mb-2">Giảng viên cố vấn</Label>
+              <Select onValueChange={(value) => setValueAdd("lecturer_id", Number(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn giảng viên" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {lecturers.map((l) => (
+                    <SelectItem key={l.lecturer_id} value={l.lecturer_id.toString()}>
+                      {l.last_name} {l.first_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <DialogFooter className="flex justify-end space-x-2">
-            <Button
-            variant="outline"
-            type="button"
-            onClick={() => {
-                formAdd.reset();
-                setAddOpen(false);
-            }}
-            >
-            Đóng
-            </Button>
-            <Button type="submit">Lưu</Button>
-        </DialogFooter>
-        </form>
-    </DialogContent>
-    </Dialog>
+            <DialogFooter className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  resetAdd();
+                  setAddOpen(false);
+                }}
+              >
+                Đóng
+              </Button>
+              <Button type="submit">Lưu</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-    {/* ========== EDIT MODAL ========== */}
-    <Dialog
-    open={!!editingClass}
-    onOpenChange={(open) => {
-        if (!open) setEditingClass(null);
-    }}
-    >
-    <DialogContent className="max-w-lg">
-        <DialogHeader>
-        <DialogTitle>Chỉnh sửa thông tin lớp sinh hoạt</DialogTitle>
-        </DialogHeader>
+      {/* ========== EDIT MODAL ========== */}
+      <Dialog
+        open={!!editingClass}
+        onOpenChange={(open) => {
+          if (!open) setEditingClass(null);
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa thông tin lớp sinh hoạt</DialogTitle>
+          </DialogHeader>
 
-        <form onSubmit={formEdit.handleSubmit(handleUpdate)} className="space-y-4">
-        <div>
-            <Label className="mb-2">Tên lớp sinh hoạt</Label>
-            <Input {...formEdit.register("class_name")} />
-            {formEdit.formState.errors.class_name && (
-            <p className="text-xs text-red-500">{formEdit.formState.errors.class_name.message}</p>
-            )}
-        </div>
+          <form onSubmit={handleSubmitEdit(handleUpdate)} className="space-y-4">
+            <div>
+              <Label className="mb-2">Tên lớp sinh hoạt</Label>
+              <Input {...registerEdit("class_name")} />
+              {errorsEdit.class_name && (
+                <p className="text-xs text-red-500">{errorsEdit.class_name.message}</p>
+              )}
+            </div>
 
-        <div>
-            <Label className="mb-2">Mã lớp sinh hoạt</Label>
-            <Input {...formEdit.register("class_code")} />
-            {formEdit.formState.errors.class_code && (
-            <p className="text-xs text-red-500">{formEdit.formState.errors.class_code.message}</p>
-            )}
-        </div>
+            <div>
+              <Label className="mb-2">Mã lớp sinh hoạt</Label>
+              <Input {...registerEdit("class_code")} />
+              {errorsEdit.class_code && (
+                <p className="text-xs text-red-500">{errorsEdit.class_code.message}</p>
+              )}
+            </div>
 
-        <div>
-            <Label className="mb-2">Khóa</Label>
-            <Input {...formEdit.register("cohort")} />
-        </div>
+            <div>
+              <Label className="mb-2">Khóa</Label>
+              <Input {...registerEdit("cohort")} />
+            </div>
 
-        <div>
-            <Label className="mb-2">Chuyên ngành</Label>
-            <select
-            {...formEdit.register("major_id", { valueAsNumber: true })}
-            defaultValue=""
-            className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-            required
-            >
-            
-<option value="" disabled>Chọn chuyên ngành</option>
-            {majors.map((m) => (
-                <option key={m.major_id} value={m.major_id}>
-                {m.major_name}
-                </option>
-            ))}
-            </select>
-        </div>
+            <div>
+              <Label className="mb-2">Chuyên ngành</Label>
+              <Select
+                defaultValue={editingClass?.major_id ? String(editingClass.major_id) : undefined}
+                onValueChange={(value) => setValueEdit("major_id", Number(value))}
+              >
+                <SelectTrigger
+                  className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+                >
+                  <SelectValue placeholder="Chọn chuyên ngành" />
+                </SelectTrigger>
 
-        <div>
-            <Label className="mb-2">Giảng viên cố vấn</Label>
-            <select
-            {...formEdit.register("lecturer_id", { valueAsNumber: true })}
-            defaultValue=""
-            className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-            required
-            >
-            
-<option value="" disabled>Chọn giảng viên</option>
-            {lecturers.map((l) => (
-                <option key={l.lecturer_id} value={l.lecturer_id}>
-                {l.last_name} {l.first_name}
-                </option>
-            ))}
-            </select>
-        </div>
+                <SelectContent>
+                  {majors.map((m) => (
+                    <SelectItem key={m.major_id} value={String(m.major_id)}>
+                      {m.major_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <DialogFooter className="flex justify-end space-x-2">
-            <Button variant="outline" type="button" onClick={() => setEditingClass(null)}>
-            Đóng
-            </Button>
-            <Button type="submit">Cập nhật</Button>
-        </DialogFooter>
-        </form>
-    </DialogContent>
-    </Dialog>
+            <div>
+              <Label className="mb-2">Giảng viên cố vấn</Label>
+              <Select
+                defaultValue={editingClass?.lecturer_id ? String(editingClass.lecturer_id) : undefined}
+                onValueChange={(value) => setValueEdit("lecturer_id", Number(value))}
+              >
+                <SelectTrigger
+                  className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
+                >
+                  <SelectValue placeholder="Chọn giảng viên" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {lecturers.map((l) => (
+                    <SelectItem key={l.lecturer_id} value={String(l.lecturer_id)}>
+                      {l.last_name} {l.first_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter className="flex justify-end space-x-2">
+              <Button variant="outline" type="button" onClick={() => setEditingClass(null)}>
+                Đóng
+              </Button>
+              <Button type="submit">Cập nhật</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Detail Modal */}
-      <DetailDialog open={!!selectedClass} title="Chi tiết lớp sinh hoạt" onClose={() => setSelectedClass(null)}>
+      <DetailDialog
+        open={!!selectedClass}
+        title="Chi tiết lớp sinh hoạt"
+        onClose={() => setSelectedClass(null)}
+      >
         {selectedClass && <ClassDetail academicClass={selectedClass} />}
       </DetailDialog>
     </div>

@@ -27,7 +27,7 @@ export const teacherSchema = z.object({
   gender: z.string().min(1, { message: "Giới tính không được để trống." }),
   dob: z.string().min(1, { message: "Ngày sinh không được để trống." }),
   address: z.string().optional(),
-  department_id: z.coerce.number(),
+  department_id: z.coerce.number({ message: "Khoa phụ trách không được để trống." }),
   position: z.string().min(1, { message: "Chức vụ không được để trống." }),
   avatar: z.string().optional(),
 });

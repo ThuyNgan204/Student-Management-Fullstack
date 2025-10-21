@@ -27,6 +27,7 @@ import { useCourseStore, Course } from "@/store/useCourseStore";
 import { Department } from "@/store/useDepartmentStore";
 import { CourseFormInputs, courseSchema } from "@/lib/zodSchemas";
 import ControlPanelCourse from "@/components/courses/Courses-ControlPanel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CoursesPage() {
   const {
@@ -128,12 +129,13 @@ export default function CoursesPage() {
     }
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  const { items: courses = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelCourse
-        total={data?.total ?? 0}
+        total={total}
         addLabel="Thêm học phần"
         addTotal="Tổng số học phần"
         onAdd={() => setAddOpen(true)}
@@ -184,7 +186,7 @@ export default function CoursesPage() {
                   ),
                 },
               ]}
-              data={data?.items || []}
+              data={courses}
               emptyMessage="Không có học phần nào được tìm thấy"
             />
 
@@ -243,17 +245,18 @@ export default function CoursesPage() {
 
             <div>
               <Label className="mb-2">Khoa quản lý</Label>
-              <select
-                {...formAdd.register("department_id", { valueAsNumber: true })}
-                className="border rounded-md px-3 py-2 w-full bg-white shadow-sm"
-              >
-                <option value="" disabled>Chọn khoa</option>
-                {departments.map((dep) => (
-                  <option key={dep.department_id} value={dep.department_id}>
-                    {dep.department_name}
-                  </option>
-                ))}
-              </select>
+              <Select onValueChange={(value) => formAdd.setValue("department_id", Number(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn khoa quản lý" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {departments.map((d) => (
+                    <SelectItem key={d.department_id} value={d.department_id.toString()}>
+                      {d.department_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formAdd.formState.errors.department_id && (
                 <p className="text-xs text-red-500">
                   {formAdd.formState.errors.department_id.message}
@@ -319,17 +322,31 @@ export default function CoursesPage() {
 
             <div>
               <Label className="mb-2">Khoa quản lý</Label>
-              <select
-                {...formEdit.register("department_id", { valueAsNumber: true })}
-                className="border rounded-md px-3 py-2 w-full bg-white shadow-sm"
+              <Select
+                defaultValue={
+                  editingCourse?.department_id
+                    ? String(editingCourse.department_id)
+                    : undefined
+                }
+                onValueChange={(value) =>
+                  formEdit.setValue("department_id", Number(value))
+                }
               >
-                <option value="" disabled>Chọn khoa</option>
-                {departments.map((dep) => (
-                  <option key={dep.department_id} value={dep.department_id}>
-                    {dep.department_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="border rounded-md px-3 py-2 w-full bg-white shadow-sm">
+                  <SelectValue placeholder="Chọn khoa" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {departments.map((dep) => (
+                    <SelectItem
+                      key={dep.department_id}
+                      value={String(dep.department_id)}
+                    >
+                      {dep.department_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formAdd.formState.errors.department_id && (
                 <p className="text-xs text-red-500">
                   {formAdd.formState.errors.department_id.message}

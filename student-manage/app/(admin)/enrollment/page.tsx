@@ -21,6 +21,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useCRUD } from "@/hooks/useCRUD";
 import ControlPanelEnrollment from "@/components/enrollment/EnrollmentControlPanel";
 import { EnrollmentFormInputs, enrollmentSchema } from "@/lib/zodSchemas";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function EnrollmentsPage() {
   const {
@@ -153,12 +154,13 @@ export default function EnrollmentsPage() {
     }
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  const { items: enrollment = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelEnrollment
-        total={data?.total ?? 0}
+        total={total}
         students={students}
         classSections={classSections}
         onAdd={() => setAddOpen(true)}
@@ -224,7 +226,7 @@ export default function EnrollmentsPage() {
                   ),
                 },
               ]}
-              data={data?.items || []}
+              data={enrollment}
               emptyMessage="Không có học phần nào đã được đăng kí"
             />
 
@@ -246,21 +248,24 @@ export default function EnrollmentsPage() {
             <DialogTitle>Đăng kí học phần</DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
+          <form 
+            onSubmit={formAdd.handleSubmit(onSubmitAdd)} 
+            className="space-y-4"
+          >
             <div>
               <Label className="mb-2">Sinh viên</Label>
-              <select
-                {...formAdd.register("student_id", { valueAsNumber: true })}
-                defaultValue={0}
-                className={`border rounded px-2 py-1 w-full ${formAdd.formState.errors.student_id ? "border-red-500" : ""}`}
-              >
-                <option value={0} disabled>Chọn sinh viên</option>
-                {students.map((s: any) => (
-                  <option key={s.student_id} value={s.student_id}>
-                    {s.student_code} — {s.last_name} {s.first_name}
-                  </option>
-                ))}
-              </select>
+              <Select onValueChange={(value) => formAdd.setValue("student_id", Number(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn sinh viên" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {students.map((s) => (
+                    <SelectItem key={s.student_id} value={s.student_id.toString()}>
+                      {s.student_code} — {s.last_name} {s.first_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formAdd.formState.errors.student_id?.message && (
                 <p className="text-red-500 text-sm mt-1">
                   {String(formAdd.formState.errors.student_id.message)}
@@ -270,18 +275,18 @@ export default function EnrollmentsPage() {
 
             <div>
               <Label className="mb-2">Lớp học phần</Label>
-              <select
-                {...formAdd.register("class_section_id", { valueAsNumber: true })}
-                defaultValue={0}
-                className={`border rounded px-2 py-1 w-full ${formAdd.formState.errors.class_section_id ? "border-red-500" : ""}`}
-              >
-                <option value={0} disabled>Chọn lớp học phần</option>
-                {classSections.map((c: any) => (
-                  <option key={c.class_section_id} value={c.class_section_id}>
-                    {c.section_code} — {c.courses?.course_code} {c.courses?.course_name}
-                  </option>
-                ))}
-              </select>
+              <Select onValueChange={(value) => formAdd.setValue("class_section_id", Number(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn lớp học phần" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {classSections.map((c) => (
+                    <SelectItem key={c.class_section_id} value={c.class_section_id.toString()}>
+                      {c.section_code} — {c.courses?.course_code} {c.courses?.course_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formAdd.formState.errors.class_section_id?.message && (
                 <p className="text-red-500 text-sm mt-1">
                   {String(formAdd.formState.errors.class_section_id.message)}
@@ -291,11 +296,16 @@ export default function EnrollmentsPage() {
 
             <div>
               <Label className="mb-2">Trạng thái</Label>
-              <select {...formAdd.register("status")} defaultValue="Đang học" className="border rounded px-2 py-1 w-full">
-                <option>Đang học</option>
-                <option>Hoàn thành</option>
-                <option>Hủy</option>
-              </select>
+              <Select onValueChange={(value) => formAdd.setValue("status", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Trạng thái sinh viên" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Đang học">Đang học</SelectItem>
+                  <SelectItem value="Bảo lưu">Bảo lưu</SelectItem>
+                  <SelectItem value="Tốt nghiệp">Tốt nghiệp</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <DialogFooter className="flex justify-end space-x-2">
@@ -316,18 +326,34 @@ export default function EnrollmentsPage() {
           <form onSubmit={formEdit.handleSubmit(handleUpdate)} className="space-y-4">
             <div>
               <Label className="mb-2">Sinh viên</Label>
-              <select
-                {...formEdit.register("student_id", { valueAsNumber: true })}
-                defaultValue={editingEnrollment?.student_id ?? 0}
-                className={`border rounded px-2 py-1 w-full ${formEdit.formState.errors.student_id ? "border-red-500" : ""}`}
+              <Select
+                defaultValue={
+                  editingEnrollment?.student_id
+                    ? String(editingEnrollment.student_id)
+                    : undefined
+                }
+                onValueChange={(value) =>
+                  formEdit.setValue("student_id", Number(value))
+                }
               >
-                <option value={0} disabled>Chọn sinh viên</option>
-                {students.map((s: any) => (
-                  <option key={s.student_id} value={s.student_id}>
-                    {s.student_code} — {s.last_name} {s.first_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  className={`w-full border rounded px-2 py-1 ${
+                    formEdit.formState.errors.student_id ? "border-red-500" : ""
+                  }`}
+                >
+                  <SelectValue placeholder="Chọn sinh viên" />
+                </SelectTrigger>
+                <SelectContent>
+                  {students.map((s: any) => (
+                    <SelectItem
+                      key={s.student_id}
+                      value={String(s.student_id)}
+                    >
+                      {s.student_code} — {s.last_name} {s.first_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formEdit.formState.errors.student_id?.message && (
                 <p className="text-red-500 text-sm mt-1">
                   {String(formEdit.formState.errors.student_id.message)}
@@ -337,18 +363,35 @@ export default function EnrollmentsPage() {
 
             <div>
               <Label className="mb-2">Lớp học phần</Label>
-              <select
-                {...formEdit.register("class_section_id", { valueAsNumber: true })}
-                defaultValue={editingEnrollment?.class_section_id ?? 0}
-                className={`border rounded px-2 py-1 w-full ${formEdit.formState.errors.class_section_id ? "border-red-500" : ""}`}
+              <Select
+                defaultValue={
+                  editingEnrollment?.class_section_id
+                    ? String(editingEnrollment.class_section_id)
+                    : undefined
+                }
+                onValueChange={(value) =>
+                  formEdit.setValue("class_section_id", Number(value))
+                }
               >
-                <option value={0} disabled>Chọn lớp học phần</option>
-                {classSections.map((c: any) => (
-                  <option key={c.class_section_id} value={c.class_section_id}>
-                    {c.section_code} — {c.courses?.course_code} {c.courses?.course_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  className={`w-full border rounded px-2 py-1 ${
+                    formEdit.formState.errors.class_section_id ? "border-red-500" : ""
+                  }`}
+                >
+                  <SelectValue placeholder="Chọn lớp học phần" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {classSections.map((c: any) => (
+                    <SelectItem
+                      key={c.class_section_id}
+                      value={String(c.class_section_id)}
+                    >
+                      {c.section_code} — {c.courses?.course_code} {c.courses?.course_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formEdit.formState.errors.class_section_id?.message && (
                 <p className="text-red-500 text-sm mt-1">
                   {String(formEdit.formState.errors.class_section_id.message)}
@@ -358,11 +401,20 @@ export default function EnrollmentsPage() {
 
             <div>
               <Label className="mb-2">Trạng thái</Label>
-              <select {...formEdit.register("status")} className="border rounded px-2 py-1 w-full" defaultValue={editingEnrollment?.status ?? "Đang học"}>
-                <option>Đang học</option>
-                <option>Hoàn thành</option>
-                <option>Hủy</option>
-              </select>
+              <Select
+                defaultValue={editingEnrollment?.status ?? "Đang học"}
+                onValueChange={(value) => formEdit.setValue("status", value)}
+              >
+                <SelectTrigger className="border rounded px-2 py-1 w-full">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="Đang học">Đang học</SelectItem>
+                  <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
+                  <SelectItem value="Hủy">Hủy</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <DialogFooter className="flex justify-end space-x-2">

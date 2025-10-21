@@ -33,6 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import ControlPanelClassSection from "@/components/class_section/Class_Section-ControlPanel";
 import ClassSectionDetail from "@/components/class_section/ClassSectionDetail";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ClassSectionsPage() {
   const {
@@ -167,12 +168,13 @@ export default function ClassSectionsPage() {
     }
   };
 
-  const totalPages = data ? Math.ceil(data.total / pageSize) : 1;
+  const { items: class_section = [], total = 0 } = data ?? {};
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
       <ControlPanelClassSection
-        total={data?.total ?? 0}
+        total={total}
         addLabel="Thêm lớp học phần"
         addTotal="Tổng lớp học phần"
         onAdd={() => setAddOpen(true)}
@@ -243,7 +245,7 @@ export default function ClassSectionsPage() {
                   ),
                 },
               ]}
-              data={data?.items || []}
+              data={class_section}
               emptyMessage="Không có lớp học phần nào"
             />
 
@@ -292,40 +294,42 @@ export default function ClassSectionsPage() {
 
             <div>
               <Label className="mb-2">Học phần</Label>
-              <select
-                {...formAdd.register("course_id", { valueAsNumber: true })}
-                defaultValue=""
-                className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-                required
+              <Select
+                onValueChange={(value) =>
+                  formAdd.setValue("course_id", Number(value))
+                }
               >
-                <option value="" disabled>
-                  Chọn học phần
-                </option>
-                {courses.map((c) => (
-                  <option key={c.course_id} value={c.course_id}>
-                    {c.course_code} - {c.course_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600">
+                  <SelectValue placeholder="Chọn học phần" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.course_id} value={String(c.course_id)}>
+                      {c.course_code} - {c.course_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <Label className="mb-2">Giảng viên</Label>
-              <select
-                {...formAdd.register("lecturer_id", { valueAsNumber: true })}
-                defaultValue=""
-                className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-                required
+              <Select
+                onValueChange={(value) =>
+                  formAdd.setValue("lecturer_id", Number(value))
+                }
               >
-                <option value="" disabled>
-                  Chọn giảng viên
-                </option>
-                {lecturers.map((l) => (
-                  <option key={l.lecturer_id} value={l.lecturer_id}>
-                    {l.last_name} {l.first_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600">
+                  <SelectValue placeholder="Chọn giảng viên" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lecturers.map((l) => (
+                    <SelectItem key={l.lecturer_id} value={String(l.lecturer_id)}>
+                      {l.last_name} {l.first_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -398,40 +402,52 @@ export default function ClassSectionsPage() {
 
             <div>
               <Label className="mb-2">Học phần</Label>
-              <select
-                {...formEdit.register("course_id", { valueAsNumber: true })}
-                defaultValue=""
-                className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-                required
+              <Select
+                defaultValue={
+                  editingSection?.course_id
+                    ? String(editingSection.course_id)
+                    : undefined
+                }
+                onValueChange={(value) =>
+                  formEdit.setValue("course_id", Number(value))
+                }
               >
-                <option value="" disabled>
-                  Chọn học phần
-                </option>
-                {courses.map((c) => (
-                  <option key={c.course_id} value={c.course_id}>
-                    {c.course_code} - {c.course_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600">
+                  <SelectValue placeholder="Chọn học phần" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.course_id} value={String(c.course_id)}>
+                      {c.course_code} - {c.course_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <Label className="mb-2">Giảng viên</Label>
-              <select
-                {...formEdit.register("lecturer_id", { valueAsNumber: true })}
-                defaultValue=""
-                className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600"
-                required
+              <Select
+                defaultValue={
+                  editingSection?.lecturer_id
+                    ? String(editingSection.lecturer_id)
+                    : undefined
+                }
+                onValueChange={(value) =>
+                  formEdit.setValue("lecturer_id", Number(value))
+                }
               >
-                <option value="" disabled>
-                  Chọn giảng viên
-                </option>
-                {lecturers.map((l) => (
-                  <option key={l.lecturer_id} value={l.lecturer_id}>
-                    {l.last_name} {l.first_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="border rounded px-2 py-1 w-full text-gray-800 [&:invalid]:text-gray-600">
+                  <SelectValue placeholder="Chọn giảng viên" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lecturers.map((l) => (
+                    <SelectItem key={l.lecturer_id} value={String(l.lecturer_id)}>
+                      {l.last_name} {l.first_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
