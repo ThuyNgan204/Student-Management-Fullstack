@@ -2,24 +2,61 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import ExcelJS from "exceljs";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // 🟩 1. Lấy danh sách sinh viên từ DB, sắp xếp theo ID tăng dần
+    const { searchParams } = new URL(req.url);
+
+    // 🟩 Nhận query params kiểu snake_case
+    const search = searchParams.get("search") || "";
+    const sortBy = searchParams.get("sort_by") || "student_id";
+    const sortOrder = (searchParams.get("sort_order") as "asc" | "desc") || "asc";
+    const genderFilters = searchParams.get("gender")?.split(",") || [];
+    const classFilters = searchParams.get("class_code")?.split(",") || [];
+    const majorFilters = searchParams.get("major_code")?.split(",") || [];
+
+    // 🟩 Điều kiện lọc
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { first_name: { contains: search, mode: "insensitive" } },
+        { last_name: { contains: search, mode: "insensitive" } },
+        { student_code: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    // Lọc theo giới tính
+    if (genderFilters.length) {
+      where.gender = { in: genderFilters };
+    }
+
+    // Lọc theo lớp (qua bảng academic_class)
+    if (classFilters.length) {
+      where.academic_class = { class_code: { in: classFilters } };
+    }
+
+    // Lọc theo ngành (qua bảng majors)
+    if (majorFilters.length) {
+      where.majors = { major_code: { in: majorFilters } };
+    }
+
+    // 🟩 Lấy danh sách sinh viên theo điều kiện
     const students = await prisma.students.findMany({
+      where,
       include: {
         academic_class: true,
         majors: true,
       },
       orderBy: {
-        student_id: "asc",
+        [sortBy]: sortOrder,
       },
     });
 
-    // 🟩 2. Tạo workbook & worksheet
+    // 🟩 Tạo Excel
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Danh sách Sinh viên");
 
-    // 🟩 3. Định nghĩa header cột
     sheet.columns = [
       { header: "ID", key: "student_id", width: 10 },
       { header: "Họ", key: "last_name", width: 20 },
@@ -36,7 +73,6 @@ export async function GET() {
       { header: "Ngành", key: "major_name", width: 30 },
     ];
 
-    // 🟩 4. Thêm dữ liệu sinh viên
     students.forEach((student) => {
       sheet.addRow({
         ...student,
@@ -45,36 +81,33 @@ export async function GET() {
       });
     });
 
-    // 🟩 5. Format header: in đậm, canh giữa, nền xám nhạt
     const headerRow = sheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: "FF000000" } };
-    headerRow.alignment = { horizontal: "center", vertical: "middle" };
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: "center" };
     headerRow.fill = {
       type: "pattern",
       pattern: "solid",
       fgColor: { argb: "FFD9D9D9" },
     };
 
-    // 🟩 6. Thêm border mảnh cho toàn bộ bảng
     sheet.eachRow((row) => {
       row.eachCell((cell) => {
         cell.border = {
-          top: { style: "thin", color: { argb: "FFCCCCCC" } },
-          left: { style: "thin", color: { argb: "FFCCCCCC" } },
-          bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
-          right: { style: "thin", color: { argb: "FFCCCCCC" } },
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
         };
       });
     });
 
-    // 🟩 7. Ghi workbook ra buffer để trả về
     const buffer = await workbook.xlsx.writeBuffer();
 
     return new NextResponse(buffer, {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": 'attachment; filename="students.xlsx"',
+        "Content-Disposition": 'attachment; filename="students_filtered.xlsx"',
       },
     });
   } catch (error) {

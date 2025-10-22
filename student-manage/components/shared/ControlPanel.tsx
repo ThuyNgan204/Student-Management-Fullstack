@@ -9,6 +9,8 @@ import SearchBar from "./SearchBar";
 import { useStudentStore } from "@/store/useStudentStore";
 import { Trash2 } from "lucide-react";
 import ConfirmDialog from "./ConfirmDialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
 
 interface ControlPanelProps {
   total: number;
@@ -51,6 +53,9 @@ export default function ControlPanel({
   const [classes, setClasses] = useState<any[]>([]);
   const filterRef = useRef<HTMLDivElement | null>(null);
 
+  const [openPrintModal, setOpenPrintModal] = useState(false);
+  const [printTitle, setPrintTitle] = useState("DANH SÁCH SINH VIÊN");
+
   // Fetch majors & classes
   useEffect(() => {
     const fetchData = async () => {
@@ -82,14 +87,36 @@ export default function ControlPanel({
 
   // Handlers
   const handleExport = async () => {
-    const res = await fetch("/api/students/export");
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "students.xlsx";
-    a.click();
-    a.remove();
+    try {
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (sortBy) params.append("sort_by", sortBy);
+      if (sortOrder) params.append("sort_order", sortOrder);
+      if (genderFilters.length) params.append("gender", genderFilters.join(","));
+      if (classFilters.length) params.append("class_code", classFilters.join(","));
+      if (majorFilters.length) params.append("major_code", majorFilters.join(","));
+
+      const res = await fetch(`/api/students/export?${params.toString()}`);
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+
+      // ✅ Tạo tên file động theo filter
+      const time = new Date().toISOString().slice(0, 10);
+      let fileName = `sinhvien_${time}.xlsx`;
+      if (majorFilters.length === 1) fileName = `sinhvien_${majorFilters[0]}_${time}.xlsx`;
+      else if (classFilters.length === 1) fileName = `sinhvien_${classFilters[0]}_${time}.xlsx`;
+
+      a.download = fileName;
+      a.click();
+      a.remove();
+    } catch (error) {
+      console.error(error);
+      toast.error("Xuất Excel thất bại!");
+    }
   };
 
   const handleImport = async (file: File) => {
@@ -143,6 +170,37 @@ export default function ControlPanel({
             />
           </label>
           <Button variant="ghost" className="bg-gray-200 hover:bg-gray-300 transition" onClick={handleBackup}>Sao lưu</Button>
+
+          <Button
+            variant="ghost"
+            className="bg-gray-200 hover:bg-gray-300 transition"
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (search) params.append("search", search);
+              if (sortBy) params.append("sort_by", sortBy);
+              if (sortOrder) params.append("sort_order", sortOrder);
+              if (genderFilters.length) params.append("gender", genderFilters.join(","));
+              if (classFilters.length) params.append("class_code", classFilters.join(","));
+              if (majorFilters.length) params.append("major_code", majorFilters.join(","));
+
+              // 🧾 tiêu đề động theo filter
+              let title = "DANH SÁCH SINH VIÊN";
+              if (majorFilters.length === 1) title += ` - Ngành ${majorFilters[0]}`;
+              else if (classFilters.length === 1) title += ` - Lớp ${classFilters[0]}`;
+
+              // encode tiêu đề vào URL để backend render
+              params.append("title", title);
+
+              // trong ControlPanel: nút In danh sách (đoạn bạn đã có)
+              const url = `/api/students/print-report?${params.toString()}`;
+              const newTab = window.open(url, "_blank");
+              if (newTab) newTab.focus();
+
+            }}
+          >
+            🖨 In danh sách
+          </Button>
+
         </div>
 
         <div className="ml-auto">
