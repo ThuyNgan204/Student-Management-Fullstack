@@ -69,6 +69,7 @@ interface StudentStore {
   genderFilters: string[];
   classFilters: string[];
   majorFilters: string[];
+  departmentFilters: string[],
   selectedFilters: string[];
 
   sortBy: keyof Student | "";
@@ -86,6 +87,7 @@ interface StudentStore {
   setGenderFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
   setClassFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
   setMajorFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
+  setDepartmentFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
   setSelectedFilters: (updater: ((prev: string[]) => string[]) | string[]) => void;
 
   setSortBy: (field: keyof Student | "") => void;
@@ -105,6 +107,7 @@ export const useStudentStore = create<StudentStore>((set) => ({
   genderFilters: [],
   classFilters: [],
   majorFilters: [],
+  departmentFilters: [],
   selectedFilters: [],
 
   sortBy: "student_id",
@@ -133,6 +136,11 @@ export const useStudentStore = create<StudentStore>((set) => ({
     set((state) => ({
       majorFilters:
         typeof updater === "function" ? updater(state.majorFilters) : updater,
+    })),
+  setDepartmentFilters: (updater) =>
+    set((state) => ({
+      departmentFilters:
+        typeof updater === "function" ? updater(state.departmentFilters) : updater,
     })),
   setSelectedFilters: (updater) =>
     set((state) => ({

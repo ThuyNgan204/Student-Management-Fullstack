@@ -37,6 +37,7 @@ export default function ControlPanel({
     genderFilters,
     classFilters,
     majorFilters,
+    departmentFilters,
     openFilter,
     setSearch,
     setPage,
@@ -46,11 +47,13 @@ export default function ControlPanel({
     setGenderFilters,
     setClassFilters,
     setMajorFilters,
+    setDepartmentFilters,
     setOpenFilter,
   } = useStudentStore();
 
   const [majors, setMajors] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const filterRef = useRef<HTMLDivElement | null>(null);
 
   const [openPrintModal, setOpenPrintModal] = useState(false);
@@ -60,15 +63,18 @@ export default function ControlPanel({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [majorsRes, classesRes] = await Promise.all([
+        const [majorsRes, classesRes, departmentsRes] = await Promise.all([
           axios.get("/api/majors"),
           axios.get("/api/academic_class"),
+          axios.get("/api/departments"), 
         ]);
         setMajors(majorsRes.data.items);
         setClasses(classesRes.data.items);
+        setDepartments(departmentsRes.data.items);
       } catch {
         setMajors([]);
         setClasses([]);
+        setDepartments([]);
       }
     };
     fetchData();
@@ -145,6 +151,7 @@ export default function ControlPanel({
     setGenderFilters([]);
     setClassFilters([]);
     setMajorFilters([]);
+    setDepartmentFilters([]);
     setOpenFilter(false);
   };
 
@@ -214,6 +221,7 @@ export default function ControlPanel({
                     if (genderFilters.length) params.append("gender", genderFilters.join(","));
                     if (classFilters.length) params.append("class_code", classFilters.join(","));
                     if (majorFilters.length) params.append("major_code", majorFilters.join(","));
+                    if (departmentFilters.length) params.append("department_code", departmentFilters.join(","));
 
                     // 🧾 Thêm tiêu đề người dùng nhập
                     params.append("title", encodeURIComponent(printTitle));
@@ -399,6 +407,30 @@ export default function ControlPanel({
                     </label>
                   ))}
               </div>
+              </div>
+
+              {/* Khoa */}
+              <div>
+                <p className="font-medium text-base mb-3">Khoa</p>
+                <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                  {departments.map((dept) => (
+                    <label key={dept.department_code} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        value={dept.department_code}
+                        checked={departmentFilters.includes(dept.department_code)}
+                        onChange={(e) =>
+                          setDepartmentFilters((prev) =>
+                            e.target.checked
+                              ? [...prev, dept.department_code]
+                              : prev.filter((x) => x !== dept.department_code)
+                          )
+                        }
+                      />
+                      {dept.department_code}
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <Button

@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     const genderFilters = searchParams.get("gender")?.split(",") || [];
     const classFilters = searchParams.get("class_code")?.split(",") || [];
     const majorFilters = searchParams.get("major_code")?.split(",") || [];
+    const departmentFilters = searchParams.get("department_code")?.split(",") || [];
 
     // 🟩 Điều kiện lọc
     const where: any = {};
@@ -41,12 +42,21 @@ export async function GET(req: Request) {
       where.majors = { major_code: { in: majorFilters } };
     }
 
+    if (departmentFilters.length) {
+      where.majors = {
+        ...(where.majors || {}),
+        departments: { department_code: { in: departmentFilters } },
+      };
+    }
+
     // 🟩 Lấy danh sách sinh viên theo điều kiện
     const students = await prisma.students.findMany({
       where,
       include: {
         academic_class: true,
-        majors: true,
+        majors: {
+          include: { departments: true },
+        },
       },
       orderBy: {
         [sortBy]: sortOrder,
@@ -67,10 +77,11 @@ export async function GET(req: Request) {
       { header: "Số điện thoại", key: "phone", width: 15 },
       { header: "Email", key: "email", width: 40 },
       { header: "Địa chỉ", key: "address", width: 45 },
+      { header: "Khoa", key: "department_name", width: 30 },
+      { header: "Ngành", key: "major_name", width: 30 },
+      { header: "Lớp sinh hoạt", key: "class_name", width: 25 },
       { header: "Khóa", key: "cohort", width: 10 },
       { header: "Tình trạng", key: "status", width: 15 },
-      { header: "Lớp sinh hoạt", key: "class_name", width: 25 },
-      { header: "Ngành", key: "major_name", width: 30 },
     ];
 
     students.forEach((student) => {
@@ -78,6 +89,7 @@ export async function GET(req: Request) {
         ...student,
         class_name: student.academic_class?.class_name ?? "",
         major_name: student.majors?.major_name ?? "",
+        department_name: student.majors?.departments?.department_name ?? "",
       });
     });
 

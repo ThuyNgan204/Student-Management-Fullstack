@@ -35,6 +35,7 @@ export default function Home() {
     genderFilters,
     classFilters,
     majorFilters,
+    departmentFilters,
     sortBy,
     sortOrder,
     setPage,
@@ -52,7 +53,7 @@ export default function Home() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, genderFilters, classFilters, majorFilters]);
+  }, [debouncedSearch, genderFilters, classFilters, majorFilters, departmentFilters]);
 
   useEffect(() => {
     if (sortBy) setPage(1);
@@ -132,6 +133,7 @@ export default function Home() {
       gender: genderFilters,
       class_code: classFilters,
       major_code: majorFilters,
+      department_code: departmentFilters,
     },
   });
 
@@ -283,9 +285,15 @@ export default function Home() {
                 { key: "student_code", header: "MSSV" },
                 { key: "cohort", header: "Khóa" },
                 {
+                  key: "departments",
+                  header: "Khoa",
+                  render: (student) =>
+                    student.majors?.departments?.department_name ?? "N/A",
+                },
+                {
                   key: "majors",
                   header: "Ngành",
-                  render: (student) => student.majors?.major_code ?? "N/A",
+                  render: (student) => student.majors?.major_name ?? "N/A",
                 },
                 {
                   key: "academic_class",

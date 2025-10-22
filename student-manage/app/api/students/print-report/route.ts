@@ -13,6 +13,10 @@ export async function GET(req: Request) {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+  const departmentFilters = (searchParams.get("department_code") || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   const genderFilters = (searchParams.get("gender") || "")
     .split(",")
     .map((s) => s.trim())
@@ -25,12 +29,28 @@ export async function GET(req: Request) {
   if (classFilters.length) {
     where.academic_class = { class_code: { in: classFilters } };
   }
+
+  // Lọc theo majors và/hoặc departments (nếu có)
   if (majorFilters.length) {
-    where.majors = { major_code: { in: majorFilters } };
+    where.majors = {
+      ...where.majors,
+      major_code: { in: majorFilters },
+    };
   }
+
+  if (departmentFilters.length) {
+    where.majors = {
+      ...where.majors,
+      departments: {
+        department_code: { in: departmentFilters },
+      },
+    };
+  }
+
   if (genderFilters.length) {
     where.gender = { in: genderFilters };
   }
+
   if (search) {
     where.OR = [
       { student_code: { contains: search, mode: "insensitive" } },
@@ -55,7 +75,11 @@ export async function GET(req: Request) {
   });
 
   const uniqueDepartments = [
-    ...new Set(students.map((s) => s.majors?.departments?.department_name).filter(Boolean)),
+    ...new Set(
+      students
+        .map((s) => s.majors?.departments?.department_name)
+        .filter(Boolean)
+    ),
   ];
   const uniqueMajors = [
     ...new Set(students.map((s) => s.majors?.major_name).filter(Boolean)),
@@ -64,13 +88,13 @@ export async function GET(req: Request) {
   const showDepartmentCol = uniqueDepartments.length > 1;
   const showMajorCol = uniqueMajors.length > 1;
 
-  const showFilterInfo = classFilters.length || majorFilters.length;
+  const showFilterInfo = classFilters.length || majorFilters.length || departmentFilters.length;
 
-  // === Lấy tên chuyên ngành & lớp để hiển thị ===
+  // === Lấy tên chuyên ngành, lớp, khoa để hiển thị ===
   const selectedMajorNames = [
     ...new Set(
       students
-        .filter((s) => majorFilters.includes(s.majors?.major_code ?? ""))
+        .filter((s) => majorFilters.length ? majorFilters.includes(s.majors?.major_code ?? "") : false)
         .map((s) => s.majors?.major_name)
         .filter(Boolean)
     ),
@@ -78,8 +102,16 @@ export async function GET(req: Request) {
   const selectedClassNames = [
     ...new Set(
       students
-        .filter((s) => classFilters.includes(s.academic_class?.class_code ?? ""))
+        .filter((s) => classFilters.length ? classFilters.includes(s.academic_class?.class_code ?? "") : false)
         .map((s) => s.academic_class?.class_code ?? s.academic_class?.class_name)
+        .filter(Boolean)
+    ),
+  ];
+  const selectedDepartmentNames = [
+    ...new Set(
+      students
+        .filter((s) => departmentFilters.length ? departmentFilters.includes(s.majors?.departments?.department_code ?? "") : false)
+        .map((s) => s.majors?.departments?.department_name)
         .filter(Boolean)
     ),
   ];
@@ -183,6 +215,7 @@ export async function GET(req: Request) {
       showFilterInfo
         ? `
           <div style="text-align: center; font-size: 13px; margin: 6px 0;">
+            ${selectedDepartmentNames.length ? `<div>Khoa: ${selectedDepartmentNames.join(", ")}</div>` : ""}
             ${selectedMajorNames.length ? `<div>Ngành: ${selectedMajorNames.join(", ")}</div>` : ""}
             ${selectedClassNames.length ? `<div>Lớp: ${selectedClassNames.join(", ")}</div>` : ""}
           </div>

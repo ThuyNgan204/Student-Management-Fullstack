@@ -10,6 +10,7 @@ export async function GET(req: Request) {
   const genderFilters = searchParams.getAll("gender");
   const classFilters = searchParams.getAll("class_code");
   const majorFilters = searchParams.getAll("major_code");
+  const departmentFilters = searchParams.getAll("department_code");
   const sortBy = searchParams.get("sort_by") || "student_id";
   const sortOrder = searchParams.get("sort_order") || "desc";
 
@@ -68,6 +69,19 @@ export async function GET(req: Request) {
       majors: {
         is: {
           major_code: { in: majorFilters },
+        },
+      },
+    });
+  }
+
+  // Department filter (Khoa)
+  if (departmentFilters.length > 0) {
+    andConditions.push({
+      majors: {
+        is: {
+          departments: {
+            department_code: { in: departmentFilters },
+          },
         },
       },
     });
