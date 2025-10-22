@@ -46,11 +46,11 @@ export async function GET(req: Request) {
       majors: { include: { departments: true } },
     },
     orderBy: [
-      { cohort: "asc" },
       { majors: { major_name: "asc" } },
       { academic_class: { class_code: "asc" } },
-      { last_name: "asc" },
+      { cohort: "asc" },
       { first_name: "asc" },
+      { last_name: "asc" },
     ],
   });
 
@@ -66,48 +66,70 @@ export async function GET(req: Request) {
 
   const showFilterInfo = classFilters.length || majorFilters.length;
 
-  // === Nhóm để merge cell ===
-  const groupedByDeptMajor: Record<string, any[]> = {};
+  // === Lấy tên chuyên ngành & lớp để hiển thị ===
+  const selectedMajorNames = [
+    ...new Set(
+      students
+        .filter((s) => majorFilters.includes(s.majors?.major_code ?? ""))
+        .map((s) => s.majors?.major_name)
+        .filter(Boolean)
+    ),
+  ];
+  const selectedClassNames = [
+    ...new Set(
+      students
+        .filter((s) => classFilters.includes(s.academic_class?.class_code ?? ""))
+        .map((s) => s.academic_class?.class_code ?? s.academic_class?.class_name)
+        .filter(Boolean)
+    ),
+  ];
+
+  // === Nhóm theo Khoa trước, sau đó nhóm theo Chuyên ngành ===
+  const groupedByDept: Record<string, Record<string, any[]>> = {};
+
   students.forEach((s) => {
-    const key = `${s.majors?.departments?.department_name ?? ""}||${s.majors?.major_name ?? ""}`;
-    if (!groupedByDeptMajor[key]) groupedByDeptMajor[key] = [];
-    groupedByDeptMajor[key].push(s);
+    const deptName = s.majors?.departments?.department_name ?? "Khác";
+    const majorName = s.majors?.major_name ?? "Không rõ";
+
+    if (!groupedByDept[deptName]) groupedByDept[deptName] = {};
+    if (!groupedByDept[deptName][majorName]) groupedByDept[deptName][majorName] = [];
+
+    groupedByDept[deptName][majorName].push(s);
   });
 
-  // === Render table rows ===
+  // === Render bảng ===
   let tableRows = "";
   let index = 1;
-  for (const [key, group] of Object.entries(groupedByDeptMajor)) {
-    const [deptName, majorName] = key.split("||");
 
-    group.forEach((s, i) => {
-      tableRows += `<tr>`;
+  for (const [deptName, majors] of Object.entries(groupedByDept)) {
+    const totalDeptStudents = Object.values(majors).reduce((sum, arr) => sum + arr.length, 0);
+    let deptRendered = false;
 
-      // Cột STT
-      tableRows += `<td>${index++}</td>`;
+    for (const [majorName, studentsInMajor] of Object.entries(majors)) {
+      studentsInMajor.forEach((s, i) => {
+        tableRows += `<tr>`;
+        tableRows += `<td>${index++}</td>`;
 
-      // Merge cell khoa
-      if (showDepartmentCol) {
-        if (i === 0) {
-          tableRows += `<td rowspan="${group.length}">${deptName}</td>`;
+        // === Gộp cột Khoa ===
+        if (showDepartmentCol && !deptRendered) {
+          tableRows += `<td rowspan="${totalDeptStudents}">${deptName}</td>`;
+          deptRendered = true;
         }
-      }
 
-      // Merge cell chuyên ngành
-      if (showMajorCol) {
-        if (i === 0) {
-          tableRows += `<td rowspan="${group.length}">${majorName}</td>`;
+        // === Gộp cột Chuyên ngành ===
+        if (showMajorCol && i === 0) {
+          tableRows += `<td rowspan="${studentsInMajor.length}">${majorName}</td>`;
         }
-      }
 
-      tableRows += `
-        <td>${[s.last_name, s.first_name].filter(Boolean).join(" ")}</td>
-        <td>${s.student_code ?? ""}</td>
-        <td>${s.gender ?? ""}</td>
-        <td>${s.academic_class?.class_code ?? ""}</td>
-        <td>${s.cohort ?? ""}</td>
-      </tr>`;
-    });
+        tableRows += `
+          <td>${[s.last_name, s.first_name].filter(Boolean).join(" ")}</td>
+          <td>${s.student_code ?? ""}</td>
+          <td>${s.gender ?? ""}</td>
+          <td>${s.academic_class?.class_code ?? ""}</td>
+          <td>${s.cohort ?? ""}</td>
+        </tr>`;
+      });
+    }
   }
 
   const html = `
@@ -151,18 +173,20 @@ export async function GET(req: Request) {
         </div>
         <hr />
       </div>
-
     </div>
 
     <h1 style="text-transform: uppercase; font-size: 16px; text-align: center; margin: 6px 0;">
       ${title}
     </h1>
+
     ${
       showFilterInfo
-        ? `<h3 style="text-align: center; font-size: 13px; margin: 6px 0;">
-            Ngành: ${majorFilters.length ? majorFilters.join(", ") : "Tất cả"} — 
-            Lớp: ${classFilters.length ? classFilters.join(", ") : "Tất cả"}
-          </h3>`
+        ? `
+          <div style="text-align: center; font-size: 13px; margin: 6px 0;">
+            ${selectedMajorNames.length ? `<div>Ngành: ${selectedMajorNames.join(", ")}</div>` : ""}
+            ${selectedClassNames.length ? `<div>Lớp: ${selectedClassNames.join(", ")}</div>` : ""}
+          </div>
+        `
         : ""
     }
 

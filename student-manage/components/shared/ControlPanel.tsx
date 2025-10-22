@@ -171,35 +171,66 @@ export default function ControlPanel({
           </label>
           <Button variant="ghost" className="bg-gray-200 hover:bg-gray-300 transition" onClick={handleBackup}>Sao lưu</Button>
 
+          {/* Nút mở dialog in danh sách */}
           <Button
             variant="ghost"
             className="bg-gray-200 hover:bg-gray-300 transition"
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (search) params.append("search", search);
-              if (sortBy) params.append("sort_by", sortBy);
-              if (sortOrder) params.append("sort_order", sortOrder);
-              if (genderFilters.length) params.append("gender", genderFilters.join(","));
-              if (classFilters.length) params.append("class_code", classFilters.join(","));
-              if (majorFilters.length) params.append("major_code", majorFilters.join(","));
-
-              // 🧾 tiêu đề động theo filter
-              let title = "DANH SÁCH SINH VIÊN";
-              if (majorFilters.length === 1) title += ` - Ngành ${majorFilters[0]}`;
-              else if (classFilters.length === 1) title += ` - Lớp ${classFilters[0]}`;
-
-              // encode tiêu đề vào URL để backend render
-              params.append("title", title);
-
-              // trong ControlPanel: nút In danh sách (đoạn bạn đã có)
-              const url = `/api/students/print-report?${params.toString()}`;
-              const newTab = window.open(url, "_blank");
-              if (newTab) newTab.focus();
-
-            }}
+            onClick={() => setOpenPrintModal(true)}
           >
             🖨 In danh sách
           </Button>
+
+          {/* Dialog nhập tiêu đề in */}
+          <Dialog open={openPrintModal} onOpenChange={setOpenPrintModal}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Nhập tiêu đề danh sách</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-3 mt-3">
+                <Label htmlFor="printTitle">Tiêu đề</Label>
+                <Input
+                  id="printTitle"
+                  value={printTitle}
+                  onChange={(e) => setPrintTitle(e.target.value)}
+                  placeholder="Nhập tiêu đề (ví dụ: DANH SÁCH SINH VIÊN LỚP K22...)"
+                />
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="secondary"
+                  onClick={() => setOpenPrintModal(false)}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Tạo URL với title và filter
+                    const params = new URLSearchParams();
+                    if (search) params.append("search", search);
+                    if (sortBy) params.append("sort_by", sortBy);
+                    if (sortOrder) params.append("sort_order", sortOrder);
+                    if (genderFilters.length) params.append("gender", genderFilters.join(","));
+                    if (classFilters.length) params.append("class_code", classFilters.join(","));
+                    if (majorFilters.length) params.append("major_code", majorFilters.join(","));
+
+                    // 🧾 Thêm tiêu đề người dùng nhập
+                    params.append("title", encodeURIComponent(printTitle));
+
+                    // Mở tab in danh sách
+                    const url = `/api/students/print-report?${params.toString()}`;
+                    const newTab = window.open(url, "_blank");
+                    if (newTab) newTab.focus();
+
+                    setOpenPrintModal(false);
+                  }}
+                >
+                  In danh sách
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
         </div>
 

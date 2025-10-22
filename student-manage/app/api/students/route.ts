@@ -78,17 +78,11 @@ export async function GET(req: Request) {
     where.AND = andConditions;
   }
 
-  // Order
-  const orderBy =
-    sortBy && ['student_id', 'student_code', 'first_name', 'last_name', 'dob'].includes(sortBy)
-      ? { [sortBy]: sortOrder === 'asc' ? 'asc' : 'desc' }
-      : { student_id: 'asc' };
-
   try {
     const [items, total] = await Promise.all([
       prisma.students.findMany({
         where,
-        orderBy,
+        orderBy: { [sortBy]: sortOrder },
         skip,
         take: pageSize,
         include: {
