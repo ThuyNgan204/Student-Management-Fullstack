@@ -68,6 +68,8 @@ export default function ControlPanelGrade({ total, students, classSections, onAd
             >
               <option value="grade_id">ID</option>
               <option value="total_score">Tổng điểm</option>
+              <option value="student_name">Tên sinh viên</option>
+              <option value="student_code">MSSV</option>
             </select>
             <select
               value={sortOrder}

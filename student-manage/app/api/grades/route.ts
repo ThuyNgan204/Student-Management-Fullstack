@@ -77,8 +77,25 @@ export async function GET(req: Request) {
     });
   }
 
-  // ✅ Lọc độc lập
+  let orderBy: any = {};
+  if (sortBy === "student_name") {
+    orderBy = [
+      { enrollment: { students: { first_name: sortOrder } } },
+      { enrollment: { students: { last_name: sortOrder } } },
+    ];
+  } else if (sortBy === "student_code") {
+    orderBy = {
+      enrollment: {
+        students: {
+          student_code: sortOrder,
+        },
+      },
+    };
+  } else {
+    orderBy = { [sortBy]: sortOrder };
+  }
 
+  // ✅ Lọc độc lập
   if (studentId && classSectionId) {
   and.push({
     AND: [
@@ -98,7 +115,7 @@ export async function GET(req: Request) {
     const [items, total] = await Promise.all([
       prisma.grades.findMany({
         where,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy,
         skip,
         take: pageSize,
         include: {

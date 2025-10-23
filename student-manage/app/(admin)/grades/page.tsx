@@ -178,26 +178,41 @@ export default function GradePage() {
                 {
                   key: "student",
                   header: "Sinh viên",
-                  render: (r: any) =>
-                    r.enrollment?.students
-                      ? `${r.enrollment.students.student_code} - ${r.enrollment.students.last_name} ${r.enrollment.students.first_name}`
-                      : "N/A",
+                  render: (r: Grade) => {
+                    const s = r.enrollment?.students;
+                    if (!s) return "N/A";
+                    return (
+                      <div className="flex flex-col leading-tight">
+                        <span>{`${s.last_name} ${s.first_name}`}</span>
+                        <span className="text-gray-500 text-xs">{s.student_code}</span>
+                      </div>
+                    );
+                  },
                 },
                 {
                   key: "class_section",
                   header: "Lớp học phần",
-                  render: (r: any) =>
-                    r.enrollment?.class_section
-                      ? `${r.enrollment.class_section.section_code}`
-                      : "N/A",
+                  render: (r: Grade) => {
+                    const section = r.enrollment?.class_section;
+                    const course = section?.courses;
+
+                    if (!section || !course) return "N/A";
+
+                    return (
+                      <div className="flex flex-col leading-tight">
+                        <span>{section.section_code}</span>
+                        <span className="text-gray-600 text-xs">{course.course_name}</span>
+                      </div>
+                    );
+                  },
                 },
                 {
-                  key: "course",
-                  header: "Học phần",
-                  render: (r: any) =>
-                    r.enrollment?.class_section?.courses
-                      ? `${r.enrollment.class_section.courses.course_name}`
-                      : "N/A",
+                  key: "credits",
+                  header: "Số TC",
+                  render: (r: Grade) => {
+                    const credits = r.enrollment?.class_section?.courses?.credits;
+                    return credits ?? "N/A";
+                  },
                 },
                 { key: "attendance_score", header: "Chuyên cần" },
                 { key: "midterm_score", header: "Giữa kỳ" },

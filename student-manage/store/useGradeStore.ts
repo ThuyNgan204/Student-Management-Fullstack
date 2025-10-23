@@ -26,6 +26,7 @@ export interface Grade {
       courses?: {
         course_name: string;
         course_code: string;
+        credits: number;
       };
     };
   };
