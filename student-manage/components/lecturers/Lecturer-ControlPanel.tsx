@@ -9,6 +9,8 @@ import SearchBar from "@/components/shared/SearchBar";
 import { Trash2 } from "lucide-react";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useLecturerStore } from "@/store/useLecturerStore";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
 
 interface ControlPanelLecturerProps {
   total: number;
@@ -49,6 +51,9 @@ export default function ControlPanelLecturer({
 
   const [departments, setDepartments] = useState<any[]>([]);
   const filterRef = useRef<HTMLDivElement | null>(null);
+
+  const [openPrintModal, setOpenPrintModal] = useState(false);
+  const [printTitle, setPrintTitle] = useState("DANH SÁCH GIẢNG VIÊN");
 
   // 🔹 Fetch departments
   useEffect(() => {
@@ -148,6 +153,69 @@ export default function ControlPanelLecturer({
           >
             Sao lưu
           </Button>
+
+          <Button
+          variant="ghost"
+          className="bg-gray-200 hover:bg-gray-300 transition"
+          onClick={() => setOpenPrintModal(true)}
+        >
+          🖨 In danh sách
+        </Button>
+
+        {/* Dialog nhập tiêu đề in */}
+        <Dialog open={openPrintModal} onOpenChange={setOpenPrintModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nhập tiêu đề danh sách</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-3 mt-3">
+              <Label htmlFor="printTitle">Tiêu đề</Label>
+              <Input
+                id="printTitle"
+                value={printTitle}
+                onChange={(e) => setPrintTitle(e.target.value)}
+                placeholder="Nhập tiêu đề (ví dụ: DANH SÁCH GIẢNG VIÊN KHOA CNTT)"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setOpenPrintModal(false)}>
+                Hủy
+              </Button>
+              <Button
+                onClick={() => {
+                  const params = new URLSearchParams();
+
+                  params.append("title", encodeURIComponent(printTitle));
+                  if (search) params.append("search", search);
+                  if (genderFilters.length) params.append("gender", genderFilters.join(","));
+                  if (departmentFilters.length) params.append("department_code", departmentFilters.join(","));
+                  if (positionFilters.length) params.append("position", positionFilters.join(","));
+
+                  // 🔹 Thêm phần gửi tên khoa để in ra bên dưới tiêu đề
+                  const selectedDepartmentNames = departments
+                    .filter((d) => departmentFilters.includes(d.department_code))
+                    .map((d) => d.department_name);
+
+                  if (selectedDepartmentNames.length)
+                    params.append(
+                      "selectedDepartmentNames",
+                      selectedDepartmentNames.map(encodeURIComponent).join(",")
+                    );
+
+                  const url = `/api/lecturers/print-report?${params.toString()}`;
+                  const newTab = window.open(url, "_blank");
+                  if (newTab) newTab.focus();
+                  setOpenPrintModal(false);
+                }}
+              >
+                In danh sách
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         </div>
 
         <div className="ml-auto">

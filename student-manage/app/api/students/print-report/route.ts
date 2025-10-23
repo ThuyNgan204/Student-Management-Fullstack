@@ -179,7 +179,7 @@ export async function GET(req: Request) {
       th, td { border: 1px solid #333; padding: 6px 8px; font-size: 12px; }
       th { background: #f0f0f0; text-align: left; font-weight: 700; }
       td { vertical-align: top; }
-      hr { border: none; border-top: 1px solid #000; margin: 2px auto; width: 160px; }
+      hr { border: none; border-top: 1px solid #2e2e2e80; margin: 2px auto; width: 160px; }
       @media print {
         @page { size: A4; margin: 10mm; }
         body { margin: 0; }
