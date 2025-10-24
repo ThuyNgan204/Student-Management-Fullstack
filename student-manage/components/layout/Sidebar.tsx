@@ -27,7 +27,7 @@ const menuItems = [
   { name: "Quản lý đăng ký", href: "/enrollment", icon: UserPlus },
   { name: "Quản lý lớp học phần", href: "/class_section", icon: Layers },
   { name: "Quản lý điểm", href: "/grades", icon: FileText },
-  { name: "Báo cáo - Thống kê", href: "/reports", icon: FileText },
+  { name: "Chương trình đào tạo", href: "/major_courses", icon: FileText },
   { name: "Quản lý tài khoản", href: "/accounts", icon: Users },
 ];
 
