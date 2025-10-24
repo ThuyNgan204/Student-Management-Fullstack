@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
-import { Menu, ChevronLeft, UnfoldHorizontal, FoldHorizontal } from "lucide-react";
+import { UnfoldHorizontal, FoldHorizontal } from "lucide-react";
 
 export default function Header({
   collapsed,
@@ -14,22 +14,27 @@ export default function Header({
 }) {
   const pathname = usePathname();
 
-  const titles: Record<string, string> = {
-    "/": "TRANG CHỦ",
-    "/students": "QUẢN LÝ SINH VIÊN",
-    "/teachers": "QUẢN LÝ GIẢNG VIÊN",
-    "/departments": "QUẢN LÝ KHOA",
-    "/majors": "QUẢN LÝ CHUYÊN NGÀNH",
-    "/classes": "QUẢN LÝ LỚP SINH HOẠT",
-    "/courses": "QUẢN LÝ HỌC PHẦN",
-    "/enrollment": "QUẢN LÝ ĐĂNG KÝ",
-    "/class_section": "QUẢN LÝ LỚP HỌC PHẦN",
-    "/grades": "QUẢN LÝ ĐIỂM",
-    "/reports": "BÁO CÁO - THỐNG KÊ",
-    "/accounts": "QUẢN LÝ TÀI KHOẢN",
-  };
+  // Phân tích segment từ pathname, ví dụ: /lecturers/1 -> ["", "lecturers", "1"]
+  const segments = pathname.split("/");
+  const lecturerId = segments[2];
+  const studentId = segments[2];
 
-  const title = titles[pathname] || "Dashboard";
+  let title = "Dashboard";
+
+  if (pathname.startsWith("/students"))
+   title = studentId ? "THÔNG TIN SINH VIÊN" : "QUẢN LÝ SINH VIÊN";
+  else if (pathname.startsWith("/lecturers"))
+    title = lecturerId ? "THÔNG TIN GIẢNG VIÊN" : "QUẢN LÝ GIẢNG VIÊN";
+  else if (pathname.startsWith("/departments")) title = "QUẢN LÝ KHOA";
+  else if (pathname.startsWith("/majors")) title = "QUẢN LÝ CHUYÊN NGÀNH";
+  else if (pathname.startsWith("/academic_class")) title = "QUẢN LÝ LỚP SINH HOẠT";
+  else if (pathname.startsWith("/courses")) title = "QUẢN LÝ HỌC PHẦN";
+  else if (pathname.startsWith("/enrollment")) title = "QUẢN LÝ ĐĂNG KÝ";
+  else if (pathname.startsWith("/class_section")) title = "QUẢN LÝ LỚP HỌC PHẦN";
+  else if (pathname.startsWith("/grades")) title = "QUẢN LÝ ĐIỂM";
+  else if (pathname.startsWith("/reports")) title = "BÁO CÁO - THỐNG KÊ";
+  else if (pathname.startsWith("/accounts")) title = "QUẢN LÝ TÀI KHOẢN";
+  else if (pathname === "/") title = "TRANG CHỦ";
 
   return (
     <div className="flex justify-between items-center h-16 px-6 border-b bg-white shadow-sm">
@@ -45,10 +50,11 @@ export default function Header({
             <FoldHorizontal className="size-4" />
           )}
         </button>
-        <h1 className="text-gray-300">| </h1>
+        <h1 className="text-gray-300">|</h1>
         <h1 className="text-xl font-semibold">{title}</h1>
       </div>
 
+      {/* Avatar + Settings */}
       <div className="flex items-center gap-4">
         <Button variant="outline">Settings</Button>
         <Avatar>

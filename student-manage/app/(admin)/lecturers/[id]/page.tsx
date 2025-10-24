@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
-import Image from "next/image";
 import { formatDate } from "@/utils/date";
 import {
   Card,
@@ -25,71 +24,53 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-interface Student {
-  student_id: number;
-  student_code: string;
+interface Lecturer {
+  lecturer_id: number;
+  lecturer_code: string;
   first_name: string;
   last_name: string;
-  gender: string;
-  dob: string;
-  address: string;
-  phone: string;
-  email: string;
-  avatar: string | null;
-  cohort: string;
-  status: string;
-  academic_class: {
-    class_name: string;
-    class_code: string;
-    lecturers: {
-      first_name: string;
-      last_name: string;
-      email: string;
-      phone: string;
-    };
-    majors: {
-      major_name: string;
-    };
-  };
-  majors: {
-    major_name: string;
-    major_code: string;
-    departments: {
-      department_name: string;
-    };
-  };
+  gender?: string;
+  dob?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  position?: string;
+  avatar?: string;
+  departments?: { department_id: number, department_name: string, department_code: string };
+  academic_class?: { class_name: string; class_code: string }[];
+  class_section?: { section_name: string; section_code: string }[];
 }
 
-export default function StudentDetailPage() {
+export default function LecturerDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const studentId = params.id;
+  const lecturerId = params.id;
 
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [studentData, setStudentData] = useState<Student | null>(null);
+  const [lecturerData, setLecturerData] = useState<Lecturer | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
   const {
-    data: student,
+    data: lecturer,
     isLoading,
     isError,
     refetch,
-  } = useQuery<Student>({
-    queryKey: ["student", studentId],
+  } = useQuery<Lecturer>({
+    queryKey: ["lecturer", lecturerId],
     queryFn: async () => {
-      const res = await axios.get(`/api/students/${studentId}`);
+      const res = await axios.get(`/api/lecturers/${lecturerId}`);
       return res.data;
     },
-    enabled: !!studentId,
+    enabled: !!lecturerId,
   });
 
   useEffect(() => {
-    if (student) {
-      setStudentData(student);
-      setFormData(student);
+    if (lecturer) {
+      setLecturerData(lecturer);
+      setFormData(lecturer);
     }
-  }, [student]);
+  }, [lecturer]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -98,9 +79,9 @@ export default function StudentDetailPage() {
   const handleSave = async () => {
     try {
       setLoading(true);
-      const res = await axios.put(`/api/students/${studentId}`, formData);
-      toast.success("Cập nhật thông tin thành công!");
-      setStudentData(res.data);
+      const res = await axios.put(`/api/lecturers/${lecturerId}`, formData);
+      toast.success("Cập nhật thông tin giảng viên thành công!");
+      setLecturerData(res.data);
       setIsEditOpen(false);
       refetch();
     } catch (error) {
@@ -119,17 +100,17 @@ export default function StudentDetailPage() {
       </div>
     );
 
-  if (isError || !studentData)
+  if (isError || !lecturerData)
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
         <p className="text-red-500 text-lg mb-4">
-          Không thể tải thông tin sinh viên.
+          Không thể tải thông tin giảng viên.
         </p>
-        <Button onClick={() => router.push("/students")}>Quay lại</Button>
+        <Button onClick={() => router.push("/lecturers")}>Quay lại</Button>
       </div>
     );
 
-  const fullName = `${studentData.last_name} ${studentData.first_name}`;
+  const fullName = `${lecturerData.last_name} ${lecturerData.first_name}`;
 
   return (
     <>
@@ -151,7 +132,7 @@ export default function StudentDetailPage() {
           <div className="relative w-40 h-40 rounded-full overflow-hidden border shadow">
             <img
               src={
-                studentData.avatar ||
+                lecturerData.avatar ||
                 "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
               }
               alt={fullName}
@@ -160,7 +141,7 @@ export default function StudentDetailPage() {
           </div>
 
           <h2 className="mt-4 text-xl font-semibold">{fullName}</h2>
-          <p className="text-gray-500 text-sm">{studentData.student_code}</p>
+          <p className="text-gray-500 text-sm">{lecturerData.lecturer_code}</p>
 
           {/* ACTION BUTTONS */}
           <div className="mt-6 flex flex-col w-full gap-3">
@@ -175,71 +156,78 @@ export default function StudentDetailPage() {
             <Button
               variant="secondary"
               className="w-full flex items-center justify-center gap-2"
-              onClick={() => router.push(`/reports/grade?student=${studentId}`)}
+              onClick={() => router.push(`/class_section?lecturer=${lecturerId}`)}
+              
             >
-              <School size={16} /> Xem điểm
+              <BookOpen size={16} /> Các lớp học phần
             </Button>
 
             <Button
               className="w-full flex items-center justify-center gap-2"
-              onClick={() => router.push(`/majors/${studentData.majors.major_code}`)}
+              onClick={() => router.push(`/academic_class?lecturer=${lecturerId}`)}
             >
-              <BookOpen size={16} /> Chương trình đào tạo
+              <School size={16} /> Các lớp cố vấn
             </Button>
           </div>
         </Card>
 
         {/* ==== RIGHT SIDE ==== */}
         <div className="col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* --- Thông tin sinh viên --- */}
+          {/* --- Thông tin giảng viên --- */}
           <Card>
             <CardHeader>
-              <CardTitle>Thông tin sinh viên</CardTitle>
+              <CardTitle>Thông tin giảng viên</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <InfoRow label="Họ và tên" value={fullName} />
-              <InfoRow label="Mã sinh viên" value={studentData.student_code} />
-              <InfoRow label="Giới tính" value={studentData.gender} />
-              <InfoRow label="Ngày sinh" value={formatDate(studentData.dob)} />
-              <InfoRow label="Email" value={studentData.email} />
-              <InfoRow label="Số điện thoại" value={studentData.phone} />
-              <InfoRow label="Địa chỉ" value={studentData.address} />
-              <InfoRow label="Năm nhập học" value={studentData.cohort} />
-              <InfoRow label="Trạng thái" value={studentData.status} />
+              <InfoRow label="Mã giảng viên" value={lecturerData.lecturer_code} />
+              <InfoRow label="Giới tính" value={lecturerData.gender || "—"} />
+              <InfoRow label="Ngày sinh" value={formatDate(lecturerData.dob || "")} />
+              <InfoRow label="Email" value={lecturerData.email || "—"} />
+              <InfoRow label="Số điện thoại" value={lecturerData.phone || "—"} />
+              <InfoRow label="Địa chỉ" value={lecturerData.address || "—"} />
+              <InfoRow label="Chức vụ" value={lecturerData.position || "—"} />
             </CardContent>
           </Card>
 
-          {/* --- Thông tin khóa học --- */}
+          {/* --- Thông tin khoa, lớp, học phần --- */}
           <Card>
             <CardHeader>
-              <CardTitle>Thông tin khóa học</CardTitle>
+              <CardTitle>Thông tin giảng dạy</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <InfoRow label="Chuyên ngành" value={studentData.majors?.major_name || "—"} />
               <InfoRow
-                label="Khoa quản lý"
-                value={studentData.majors?.departments?.department_name || "—"}
+                label="Khoa"
+                value={lecturerData.departments?.department_name || "—"}
               />
               <InfoRow
-                label="Lớp sinh hoạt"
-                value={studentData.academic_class?.class_name || "—"}
+                label="Mã Khoa"
+                value={lecturerData.departments?.department_code || "—"}
               />
               <InfoRow
-                label="Cố vấn học tập"
+                label="Lớp cố vấn"
                 value={
-                  studentData.academic_class?.lecturers
-                    ? `${studentData.academic_class.lecturers.last_name} ${studentData.academic_class.lecturers.first_name}`
+                  lecturerData.academic_class?.length
+                    ? lecturerData.academic_class.map(cls => cls.class_code).join(", ")
                     : "—"
                 }
               />
-              <InfoRow
-                label="Email giảng viên"
-                value={studentData.academic_class?.lecturers?.email || "—"}
-              />
-              <InfoRow
-                label="Số điện thoại giảng viên"
-                value={studentData.academic_class?.lecturers?.phone || "—"}
-              />
+              <div className="pt-2">
+                <p className="font-medium text-gray-700 mb-1">
+                  Các lớp học phần đang giảng dạy:
+                </p>
+                {lecturerData.class_section?.length ? (
+                  <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
+                    {lecturerData.class_section.map((sec, index) => (
+                      <li key={index}>
+                        {sec.section_code}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-sm">Không có lớp học phần</p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -249,7 +237,7 @@ export default function StudentDetailPage() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa thông tin sinh viên</DialogTitle>
+            <DialogTitle>Chỉnh sửa thông tin giảng viên</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
@@ -267,7 +255,7 @@ export default function StudentDetailPage() {
             </div>
 
             <div>
-              <Label className="mb-2">Ảnh đại điện (URL)</Label>
+              <Label className="mb-2">Ảnh đại diện (URL)</Label>
               <Input
                 name="avatar"
                 value={formData.avatar || ""}

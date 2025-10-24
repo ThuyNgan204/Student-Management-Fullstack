@@ -19,10 +19,10 @@ import { cn } from "@/lib/utils";
 const menuItems = [
   { name: "Trang chủ", href: "/", icon: LayoutDashboard },
   { name: "Quản lý sinh viên", href: "/students", icon: Users },
-  { name: "Quản lý giảng viên", href: "/teachers", icon: UserCog },
+  { name: "Quản lý giảng viên", href: "/lecturers", icon: UserCog },
   { name: "Quản lý khoa", href: "/departments", icon: Building2 },
   { name: "Quản lý chuyên ngành", href: "/majors", icon: GraduationCap },
-  { name: "Quản lý lớp sinh hoạt", href: "/classes", icon: ClipboardList },
+  { name: "Quản lý lớp sinh hoạt", href: "/academic_class", icon: ClipboardList },
   { name: "Quản lý học phần", href: "/courses", icon: BookOpen },
   { name: "Quản lý đăng ký", href: "/enrollment", icon: UserPlus },
   { name: "Quản lý lớp học phần", href: "/class_section", icon: Layers },

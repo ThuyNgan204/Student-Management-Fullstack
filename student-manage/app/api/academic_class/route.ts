@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     const cohortFilters = searchParams.getAll("cohort");
     const departmentFilters = searchParams.getAll("department");
     const majorFilters = searchParams.getAll("major");
+    const lecturerFilters = searchParams.get("lecturer");
 
     // --- Build where clause ---
     const where: any = {};
@@ -48,6 +49,10 @@ export async function GET(req: Request) {
     // 🏫 Lọc theo major (dựa trên ID ngành)
     if (majorFilters.length > 0) {
       where.major_id = { in: majorFilters.map(Number) };
+    }
+
+    if (lecturerFilters) {
+      where.lecturer_id = Number(lecturerFilters);
     }
 
     // --- Query dữ liệu ---

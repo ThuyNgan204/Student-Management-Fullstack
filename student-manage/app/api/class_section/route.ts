@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // =================== GET LIST ===================
-// GET /api/class_section?page=1&page_size=10&search=abc&semester=Hè
+// GET /api/class_section?page=1&page_size=10&search=abc&semester=Hè&lecturer=10
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
@@ -10,6 +10,7 @@ export async function GET(req: Request) {
   const pageSize = parseInt(searchParams.get("page_size") || "10");
   const search = searchParams.get("search") || undefined;
   const semesterFilters = searchParams.getAll("semester");
+  const lecturerId = searchParams.get("lecturer");
   const sortBy = searchParams.get("sort_by") || "class_section_id";
   const sortOrder = searchParams.get("sort_order") === "asc" ? "asc" : "desc";
 
@@ -50,6 +51,13 @@ export async function GET(req: Request) {
   if (semesterFilters.length > 0) {
     andConditions.push({
       semester: { in: semesterFilters },
+    });
+  }
+
+  // ===== Filter theo giảng viên =====
+  if (lecturerId) {
+    andConditions.push({
+      lecturer_id: Number(lecturerId),
     });
   }
 

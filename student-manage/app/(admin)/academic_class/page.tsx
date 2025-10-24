@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { useDebounce } from "@/hooks/useDebounce";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCRUD } from "@/hooks/useCRUD";
 import { ClassFormInputs, classSchema } from "@/lib/zodSchemas";
 import { AcademicClass, useClassStore } from "@/store/useClassStore";
@@ -64,6 +65,12 @@ export default function ClassesPage() {
   const [lecturers, setLecturers] = useState<any[]>([]);
   const debouncedSearch = useDebounce(search, 500);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const lecturerParam = searchParams.get("lecturer");
+  const isLecturerView = Boolean(lecturerFilters);
+
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, sortBy, sortOrder, setPage]);
@@ -96,8 +103,8 @@ export default function ClassesPage() {
       filters: {
         department: departmentFilters,
         major: majorFilters,
-        lecturer: lecturerFilters,
         cohort: cohortFilters,
+        lecturer: lecturerParam ? [lecturerParam] : lecturerFilters,
       },
     });
 
@@ -182,12 +189,26 @@ export default function ClassesPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">
+      {isLecturerView ? (
+        <div className="px-6 py-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="flex items-center gap-2"
+          >
+            ← Quay lại
+          </Button>
+          <h2 className="text-lg font-semibold">Các lớp sinh hoạt đang cố vấn</h2>
+          <div className="w-24" />
+        </div>
+      ) : (
       <ControlPanelClass
         total={total}
         addLabel="Thêm lớp sinh hoạt"
         addTotal="Tổng lớp sinh hoạt"
         onAdd={() => setAddOpen(true)}
       />
+      )}
 
       <main className="flex-1 overflow-x-auto px-6 py-4">
         {isLoading && <p>Đang tải...</p>}
@@ -224,7 +245,8 @@ export default function ClassesPage() {
                   key: "actions",
                   header: "Thao tác",
                   className: "text-center",
-                  render: (c: AcademicClass) => (
+                  render: (c: AcademicClass) =>
+                    !isLecturerView ? (
                     <div className="flex justify-center space-x-2 gap-2">
                       <button
                         className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
@@ -251,7 +273,16 @@ export default function ClassesPage() {
                         }
                       />
                     </div>
-                  ),
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <button
+                          className="text-blue-400 hover:text-blue-800 cursor-pointer transition-colors"
+                          onClick={() => handleView(c.academic_class_id)}
+                        >
+                          <Eye className="size-4" />
+                        </button>
+                      </div>
+                    ),
                 },
               ]}
               data={classes}

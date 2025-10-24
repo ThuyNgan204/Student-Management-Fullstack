@@ -19,6 +19,7 @@ import { TeacherFormInputs, teacherSchema } from "@/lib/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ControlPanelLecturer from "@/components/lecturers/Lecturer-ControlPanel";
 import LecturerForm from "@/components/lecturers/Lecturers";
+import { formatDate } from "@/utils/date";
 
 export default function LecturersPage() {
   const {
@@ -254,9 +255,15 @@ export default function LecturersPage() {
                     </a>
                   ),
                 },
-                { key: "first_name", header: "Tên", render: (l: Lecturer) => l.first_name },
+                { key: "first_name", header: "Tên", render: (l: Lecturer) => (
+                    <a href={`/lecturers/${l.lecturer_id}`} className="text-primary hover:underline">
+                      {l.first_name}
+                    </a>
+                ),
+               },
                 { key: "lecturer_code", header: "Mã GV" },
                 { key: "gender", header: "Giới tính" },
+                { key: "dob", header: "Ngày sinh", render: (l: Lecturer) => formatDate(l.dob || "") },
                 { key: "phone", header: "Số điện thoại" },
                 { key: "email", header: "Email" },
                 { key: "departments", header: "Khoa", render: (l: Lecturer) => l.departments?.department_name ?? "N/A" },

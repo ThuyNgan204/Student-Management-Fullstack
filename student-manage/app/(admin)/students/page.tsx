@@ -280,9 +280,9 @@ export default function Home() {
                     </Link>
                   ),
                 },
+                { key: "student_code", header: "MSSV" },
                 { key: "gender", header: "Giới tính" },
                 { key: "dob", header: "Ngày sinh", render: (s) => formatDate(s.dob) },
-                { key: "student_code", header: "MSSV" },
                 { key: "cohort", header: "Khóa" },
                 {
                   key: "departments",
