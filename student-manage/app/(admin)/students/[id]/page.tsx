@@ -165,7 +165,6 @@ export default function StudentDetailPage() {
           {/* ACTION BUTTONS */}
           <div className="mt-6 flex flex-col w-full gap-3">
             <Button
-              variant="outline"
               className="w-full flex items-center justify-center gap-2"
               onClick={() => setIsEditOpen(true)}
             >
@@ -173,7 +172,7 @@ export default function StudentDetailPage() {
             </Button>
 
             <Button
-              variant="secondary"
+              variant="outline"
               className="w-full flex items-center justify-center gap-2"
               onClick={() => router.push(`/reports/grade?student=${studentId}`)}
             >
@@ -181,8 +180,11 @@ export default function StudentDetailPage() {
             </Button>
 
             <Button
+              variant="secondary"
               className="w-full flex items-center justify-center gap-2"
-              onClick={() => router.push(`/majors/${studentData.majors.major_code}`)}
+              onClick={() =>
+                router.push(`/major_courses?student=${studentId}&role=student&major=${studentData.majors?.major_code}`)
+              }
             >
               <BookOpen size={16} /> Chương trình đào tạo
             </Button>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,9 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 interface Major {
   major_id: number;
+  major_code: string;
   major_name: string;
 }
 
@@ -40,6 +43,14 @@ interface MajorCourse {
   courses: Course;
 }
 
+interface Student {
+  student_id: number;
+  first_name: string;
+  last_name: string;
+  student_code: string;
+  majors?: Major;
+}
+
 export default function MajorCourses() {
   const [majors, setMajors] = useState<Major[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -49,12 +60,55 @@ export default function MajorCourses() {
   const [isRequired, setIsRequired] = useState(true);
   const [isAdmin, setIsAdmin] = useState(true);
   const [open, setOpen] = useState(false);
+  const [studentInfo, setStudentInfo] = useState<Student | null>(null);
 
+  const searchParams = useSearchParams();
+  const studentId = searchParams.get("student");
+  const majorCode = searchParams.get("major");
+  const router = useRouter();
+
+  // Gọi dữ liệu khi trang load
   useEffect(() => {
-    fetchMajors();
-    fetchCourses();
-  }, []);
+    const init = async () => {
+      try {
+        const majorsData = await fetchMajors();
+        await fetchCourses();
 
+        if (studentId) {
+          setIsAdmin(false);
+          const res = await axios.get(`/api/students/${studentId}`);
+          const studentData = res.data;
+          setStudentInfo(studentData);
+
+          const majorId = studentData.majors?.major_id;
+          if (majorId) {
+            setSelectedMajor(majorId);
+            await fetchMajorCourses(majorId);
+          }
+        } else if (majorCode) {
+          const foundMajor = majorsData.find((m) => m.major_code === majorCode);
+          if (foundMajor) {
+            setIsAdmin(false);
+            setSelectedMajor(foundMajor.major_id);
+            await fetchMajorCourses(foundMajor.major_id);
+          } else {
+            toast.error("Không tìm thấy chuyên ngành trong hệ thống.");
+          }
+        } else {
+          // 🟢 Trường hợp không có studentId và majorCode → chế độ ADMIN
+          setIsAdmin(true);
+          setStudentInfo(null);
+          setSelectedMajor(null);
+        }
+      } catch {
+        toast.error("Lỗi khi tải dữ liệu ban đầu.");
+      }
+    };
+
+    init();
+  }, [studentId, majorCode]);
+
+  // Khi chọn lại ngành thì tải lại học phần
   useEffect(() => {
     if (selectedMajor) fetchMajorCourses(selectedMajor);
   }, [selectedMajor]);
@@ -62,9 +116,12 @@ export default function MajorCourses() {
   const fetchMajors = async () => {
     try {
       const res = await axios.get("/api/majors");
-      setMajors(res.data.items || res.data);
+      const data = res.data.items || res.data;
+      setMajors(data);
+      return data;
     } catch {
       toast.error("Không thể tải danh sách ngành.");
+      return [];
     }
   };
 
@@ -112,9 +169,7 @@ export default function MajorCourses() {
       await axios.delete(
         `/api/major_courses?major_id=${selectedMajor}&course_id=${courseId}`
       );
-      setMajorCourses((prev) =>
-        prev.filter((mc) => mc.course_id !== courseId)
-      );
+      setMajorCourses((prev) => prev.filter((mc) => mc.course_id !== courseId));
       toast.success("Đã xóa học phần thành công.");
     } catch {
       toast.error("Lỗi khi xóa học phần.");
@@ -122,34 +177,82 @@ export default function MajorCourses() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-white rounded-2xl shadow-md">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">📘 Danh sách học phần trong chương trình đào tạo</h2>
-        {isAdmin && selectedMajor && (
-          <Button onClick={() => setOpen(true)}>
-            <Plus className="w-4 h-4 mr-1" /> Thêm học phần
-          </Button>
-        )}
-      </div>
+    <div className="min-h-screen flex flex-col bg-white text-gray-900">
+      <div className="p-4 mb-6 bg-gray-50 border rounded-lg shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          {/* Nút quay lại chỉ hiện với student */}
+          {!isAdmin && (
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 text-gray-700 hover:text-primary transition"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Quay lại
+            </Button>
+          )}
 
-      {/* Chọn ngành */}
-      <div>
-        <Label className="mb-2 block">Chọn chuyên ngành</Label>
-        <Select
-          onValueChange={(v) => setSelectedMajor(Number(v))}
-          value={selectedMajor?.toString() || ""}
-        >
-          <SelectTrigger className="w-full max-w-md">
-            <SelectValue placeholder="Chọn ngành" />
-          </SelectTrigger>
-          <SelectContent className="max-h-60">
-            {majors.map((m) => (
-              <SelectItem key={m.major_id} value={m.major_id.toString()}>
-                {m.major_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {/* Tiêu đề */}
+          <h2 className="text-xl font-semibold text-center flex-1">
+            KẾ HOẠCH ĐÀO TẠO TỔNG THỂ
+          </h2>
+
+          {/* Nút thêm học phần chỉ hiện với admin */}
+          {isAdmin && selectedMajor ? (
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" /> Thêm học phần
+            </Button>
+          ) : (
+            // Giữ chỗ để tiêu đề luôn căn giữa
+            <div className="w-[120px]" />
+          )}
+        </div>
+
+        {/* Thông tin sinh viên hoặc chọn ngành */}
+        {isAdmin ? (
+          <div className="flex items-center gap-2">
+            <Label className="block">Chọn chuyên ngành</Label>
+            <Select
+              onValueChange={(v) => setSelectedMajor(Number(v))}
+              value={selectedMajor?.toString() || ""}
+            >
+              <SelectTrigger className="w-full max-w-md">
+                <SelectValue placeholder="Chọn ngành" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {majors.map((m) => (
+                  <SelectItem key={m.major_id} value={m.major_id.toString()}>
+                    {m.major_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            {/* Họ tên + MSSV */}
+            <div className="flex items-center gap-2">
+              <p className="text-blue-500">
+                {studentInfo
+                  ? `${studentInfo.last_name} ${studentInfo.first_name}`
+                  : "Đang tải..."}
+              </p>
+              <p className="text-blue-500">
+                [Mã số: {studentInfo?.student_code || "Đang tải..."}]
+              </p>
+            </div>
+
+            {/* Chuyên ngành */}
+            <div className="flex items-center gap-2">
+              <Label className="whitespace-nowrap">Chuyên ngành:</Label>
+              <p >
+                {selectedMajor
+                  ? majors.find((m) => m.major_id === selectedMajor)?.major_name
+                  : "Đang tải..."}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Danh sách học phần */}
@@ -160,7 +263,7 @@ export default function MajorCourses() {
               Chưa có học phần nào trong ngành này.
             </p>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="flex-1 overflow-x-auto px-6 py-4">
               <table className="w-full text-sm">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
@@ -169,16 +272,23 @@ export default function MajorCourses() {
                     <th className="py-2 px-3 text-left">Tên học phần</th>
                     <th className="py-2 px-3 text-center">Tín chỉ</th>
                     <th className="py-2 px-3 text-center">Loại học phần</th>
-                    {isAdmin && <th className="py-2 px-3 text-center">Thao tác</th>}
+                    {isAdmin && (
+                      <th className="py-2 px-3 text-center">Thao tác</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {majorCourses.map((mc, index) => (
-                    <tr key={mc.course_id} className="border-t hover:bg-gray-50">
+                    <tr
+                      key={mc.course_id}
+                      className="border-t hover:bg-gray-50"
+                    >
                       <td className="py-2 px-3">{index + 1}</td>
                       <td className="py-2 px-3">{mc.courses.course_code}</td>
                       <td className="py-2 px-3">{mc.courses.course_name}</td>
-                      <td className="py-2 px-3 text-center">{mc.courses.credits}</td>
+                      <td className="py-2 px-3 text-center">
+                        {mc.courses.credits}
+                      </td>
                       <td className="py-2 px-3 text-center">
                         {mc.is_required ? "Bắt buộc" : "Tự chọn"}
                       </td>
@@ -221,7 +331,10 @@ export default function MajorCourses() {
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
                   {courses.map((c) => (
-                    <SelectItem key={c.course_id} value={c.course_id.toString()}>
+                    <SelectItem
+                      key={c.course_id}
+                      value={c.course_id.toString()}
+                    >
                       {c.course_code} — {c.course_name}
                     </SelectItem>
                   ))}
@@ -250,9 +363,7 @@ export default function MajorCourses() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Hủy
             </Button>
-            <Button onClick={handleAddCourse}>
-                Thêm
-            </Button>
+            <Button onClick={handleAddCourse}>Thêm</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

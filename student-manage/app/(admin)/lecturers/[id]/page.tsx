@@ -146,7 +146,6 @@ export default function LecturerDetailPage() {
           {/* ACTION BUTTONS */}
           <div className="mt-6 flex flex-col w-full gap-3">
             <Button
-              variant="outline"
               className="w-full flex items-center justify-center gap-2"
               onClick={() => setIsEditOpen(true)}
             >
@@ -154,7 +153,7 @@ export default function LecturerDetailPage() {
             </Button>
 
             <Button
-              variant="secondary"
+              variant="outline"
               className="w-full flex items-center justify-center gap-2"
               onClick={() => router.push(`/class_section?lecturer=${lecturerId}`)}
               
@@ -163,6 +162,7 @@ export default function LecturerDetailPage() {
             </Button>
 
             <Button
+              variant="secondary"
               className="w-full flex items-center justify-center gap-2"
               onClick={() => router.push(`/academic_class?lecturer=${lecturerId}`)}
             >

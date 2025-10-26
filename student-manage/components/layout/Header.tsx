@@ -32,7 +32,7 @@ export default function Header({
   else if (pathname.startsWith("/enrollment")) title = "QUẢN LÝ ĐĂNG KÝ";
   else if (pathname.startsWith("/class_section")) title = "QUẢN LÝ LỚP HỌC PHẦN";
   else if (pathname.startsWith("/grades")) title = "QUẢN LÝ ĐIỂM";
-  else if (pathname.startsWith("/reports")) title = "BÁO CÁO - THỐNG KÊ";
+  else if (pathname.startsWith("/major_courses")) title = "QUẢN LÝ CHƯƠNG TRÌNH ĐÀO TẠO";
   else if (pathname.startsWith("/accounts")) title = "QUẢN LÝ TÀI KHOẢN";
   else if (pathname === "/") title = "TRANG CHỦ";
 

@@ -35,7 +35,11 @@ export async function GET(req: Request) {
           },
         },
       },
-      orderBy: { semester: "asc" },
+      orderBy: {
+        courses: {
+          course_name: "asc",
+        },
+      },
     });
 
     return NextResponse.json(courses);
