@@ -14,31 +14,39 @@ export default function Header({
 }) {
   const pathname = usePathname();
 
-  // Phân tích segment từ pathname, ví dụ: /lecturers/1 -> ["", "lecturers", "1"]
-  const segments = pathname.split("/");
-  const lecturerId = segments[2];
-  const studentId = segments[2];
+  // Ví dụ:
+  // /students → ["", "students"]
+  // /students/1 → ["", "students", "1"]
+  // /students/1/grades → ["", "students", "1", "grades"]
+  const segments = pathname.split("/").filter(Boolean);
+  const main = segments[0]; // students, lecturers, grades, ...
+  const sub = segments[1];  // id hoặc path con
+  const extra = segments[2]; // có thể là "grades" hoặc "edit", v.v.
 
   let title = "Dashboard";
 
-  if (pathname.startsWith("/students"))
-   title = studentId ? "THÔNG TIN SINH VIÊN" : "QUẢN LÝ SINH VIÊN";
-  else if (pathname.startsWith("/lecturers"))
-    title = lecturerId ? "THÔNG TIN GIẢNG VIÊN" : "QUẢN LÝ GIẢNG VIÊN";
-  else if (pathname.startsWith("/departments")) title = "QUẢN LÝ KHOA";
-  else if (pathname.startsWith("/majors")) title = "QUẢN LÝ CHUYÊN NGÀNH";
-  else if (pathname.startsWith("/academic_class")) title = "QUẢN LÝ LỚP SINH HOẠT";
-  else if (pathname.startsWith("/courses")) title = "QUẢN LÝ HỌC PHẦN";
-  else if (pathname.startsWith("/enrollment")) title = "QUẢN LÝ ĐĂNG KÝ";
-  else if (pathname.startsWith("/class_section")) title = "QUẢN LÝ LỚP HỌC PHẦN";
-  else if (pathname.startsWith("/grades")) title = "QUẢN LÝ ĐIỂM";
-  else if (pathname.startsWith("/major_courses")) title = "QUẢN LÝ CHƯƠNG TRÌNH ĐÀO TẠO";
-  else if (pathname.startsWith("/accounts")) title = "QUẢN LÝ TÀI KHOẢN";
+  if (main === "students") {
+    if (extra === "grades") title = "XEM ĐIỂM";
+    else if (sub) title = "THÔNG TIN SINH VIÊN";
+    else title = "QUẢN LÝ SINH VIÊN";
+  } 
+  else if (main === "lecturers") {
+    title = sub ? "THÔNG TIN GIẢNG VIÊN" : "QUẢN LÝ GIẢNG VIÊN";
+  } 
+  else if (main === "departments") title = "QUẢN LÝ KHOA";
+  else if (main === "majors") title = "QUẢN LÝ CHUYÊN NGÀNH";
+  else if (main === "academic_class") title = "QUẢN LÝ LỚP SINH HOẠT";
+  else if (main === "courses") title = "QUẢN LÝ HỌC PHẦN";
+  else if (main === "enrollment") title = "QUẢN LÝ ĐĂNG KÝ";
+  else if (main === "class_section") title = "QUẢN LÝ LỚP HỌC PHẦN";
+  else if (main === "grades")
+    title = sub ? "XEM ĐIỂM CHI TIẾT" : "QUẢN LÝ ĐIỂM";
+  else if (main === "major_courses") title = "CHƯƠNG TRÌNH ĐÀO TẠO";
+  else if (main === "accounts") title = "QUẢN LÝ TÀI KHOẢN";
   else if (pathname === "/") title = "TRANG CHỦ";
 
   return (
     <div className="flex justify-between items-center h-16 px-6 border-b bg-white shadow-sm">
-      {/* Nút toggle sidebar + title */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -54,7 +62,6 @@ export default function Header({
         <h1 className="text-xl font-semibold">{title}</h1>
       </div>
 
-      {/* Avatar + Settings */}
       <div className="flex items-center gap-4">
         <Button variant="outline">Settings</Button>
         <Avatar>

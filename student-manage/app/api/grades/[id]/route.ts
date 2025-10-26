@@ -55,7 +55,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       include: {
         enrollment: {
           include: {
-            students: true,
+            students: { include: { majors: true } },
             class_section: { include: { courses: true, lecturers: true } },
           },
         },

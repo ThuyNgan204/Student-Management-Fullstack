@@ -121,7 +121,7 @@ export async function GET(req: Request) {
         include: {
           enrollment: {
             include: {
-              students: true,
+              students: { include: { majors: true } },
               class_section: { include: { courses: true } },
             },
           },

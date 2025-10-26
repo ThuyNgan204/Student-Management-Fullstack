@@ -174,7 +174,7 @@ export default function StudentDetailPage() {
             <Button
               variant="outline"
               className="w-full flex items-center justify-center gap-2"
-              onClick={() => router.push(`/reports/grade?student=${studentId}`)}
+              onClick={() => router.push(`/students/${studentId}/grades`)}
             >
               <School size={16} /> Xem điểm
             </Button>
