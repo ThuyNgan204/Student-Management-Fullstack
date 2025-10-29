@@ -25,6 +25,7 @@ import { GradeFormInputs, gradeSchema } from "@/lib/zodSchemas";
 import { useCRUD } from "@/hooks/useCRUD";
 import { useDebounce } from "@/hooks/useDebounce";
 import ControlPanelGrade from "@/components/grades/ControlPanelGrade";
+import Link from "next/link";
 
 export default function GradePage() {
   const {
@@ -182,10 +183,13 @@ export default function GradePage() {
                     const s = r.enrollment?.students;
                     if (!s) return "N/A";
                     return (
-                      <div className="flex flex-col leading-tight">
+                      <Link
+                        href={`/students/${s.student_id}/grades`}
+                        className="flex flex-col leading-tight hover:underline"
+                      >
                         <span>{`${s.last_name} ${s.first_name}`}</span>
                         <span className="text-gray-500 text-xs">{s.student_code}</span>
-                      </div>
+                      </Link>
                     );
                   },
                 },

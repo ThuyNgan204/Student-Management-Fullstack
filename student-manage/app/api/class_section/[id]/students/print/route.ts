@@ -91,7 +91,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       </div>
     </div>
 
-    <h1>DANH SÁCH SINH VIÊN LỚP HỌC PHẦN</h1>
+    <h1>DANH SÁCH SINH VIÊN</h1>
     <p><strong>Lớp học phần:</strong> ${classSection?.section_code ?? ""}</p>
     <p><strong>Môn học:</strong> ${classSection?.courses?.course_name ?? ""}</p>
 
