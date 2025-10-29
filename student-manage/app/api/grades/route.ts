@@ -45,10 +45,13 @@ export async function GET(req: Request) {
 
   const page = parseInt(searchParams.get("page") || "1");
   const pageSize = parseInt(searchParams.get("page_size") || "10");
+
   const search = searchParams.get("search") || undefined;
   const enrollmentId = searchParams.get("enrollment_id");
   const studentId = searchParams.get("student_id");
   const classSectionId = searchParams.get("class_section_id");
+
+  const academicYear = searchParams.get("academic_year"); // ✅ NEW
 
   const sortBy = searchParams.get("sort_by") || "grade_id";
   const sortOrder = searchParams.get("sort_order") === "asc" ? "asc" : "desc";
@@ -57,6 +60,7 @@ export async function GET(req: Request) {
   const where: any = {};
   const and: any[] = [];
 
+  // ✅ Search
   if (search) {
     and.push({
       OR: [
@@ -77,6 +81,39 @@ export async function GET(req: Request) {
     });
   }
 
+  // ✅ Filters
+  if (studentId && classSectionId) {
+    and.push({
+      AND: [
+        { enrollment: { student_id: Number(studentId) } },
+        { enrollment: { class_section_id: Number(classSectionId) } },
+      ],
+    });
+  } else if (studentId) {
+    and.push({ enrollment: { student_id: Number(studentId) } });
+  } else if (classSectionId) {
+    and.push({ enrollment: { class_section_id: Number(classSectionId) } });
+  }
+
+  // ✅ NEW: Filter by Academic Year
+  if (academicYear) {
+    and.push({
+      enrollment: {
+        class_section: {
+          academic_year: {
+            contains: academicYear,
+            mode: "insensitive",
+          },
+        },
+      },
+    });
+  }
+
+  if (and.length > 0) {
+    where.AND = and;
+  }
+
+  // ✅ Sorting
   let orderBy: any = {};
   if (sortBy === "student_name") {
     orderBy = [
@@ -94,22 +131,6 @@ export async function GET(req: Request) {
   } else {
     orderBy = { [sortBy]: sortOrder };
   }
-
-  // ✅ Lọc độc lập
-  if (studentId && classSectionId) {
-  and.push({
-    AND: [
-      { enrollment: { student_id: Number(studentId) } },
-      { enrollment: { class_section_id: Number(classSectionId) } },
-    ],
-  });
-} else if (studentId) {
-  and.push({ enrollment: { student_id: Number(studentId) } });
-} else if (classSectionId) {
-  and.push({ enrollment: { class_section_id: Number(classSectionId) } });
-}
-
-  if (and.length) where.AND = and;
 
   try {
     const [items, total] = await Promise.all([
@@ -129,6 +150,7 @@ export async function GET(req: Request) {
       }),
       prisma.grades.count({ where }),
     ]);
+
     return NextResponse.json({ items, total });
   } catch (err) {
     console.error("GET /api/grades error:", err);

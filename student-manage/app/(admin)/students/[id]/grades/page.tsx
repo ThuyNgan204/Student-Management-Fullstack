@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ interface Grade {
       student_code: string;
       first_name: string;
       last_name: string;
+      cohort?: number; // ✅ thêm cohort (niên khóa)
       majors?: { major_name: string };
     };
     class_section: {
@@ -42,6 +43,7 @@ export default function StudentGradesPage() {
   const [grouped, setGrouped] = useState<Record<string, Grade[]>>({});
   const [avgScore, setAvgScore] = useState<number>(0);
   const [totalCredits, setTotalCredits] = useState<number>(0);
+  const [selectedYear, setSelectedYear] = useState<string>("Tất cả"); // ✅ năm học được chọn để filter
 
   const router = useRouter();
 
@@ -60,7 +62,6 @@ export default function StudentGradesPage() {
       .then((res) => {
         const data = res.data.items || [];
 
-        // ✅ Gộp học kỳ Hè vào học kỳ 2
         const merged = data.map((g: any) => {
           let semester = g.enrollment.class_section.semester;
           if (semester.toLowerCase().includes("h")) semester = "2";
@@ -76,7 +77,6 @@ export default function StudentGradesPage() {
           };
         });
 
-        // ✅ Sắp xếp theo năm học và học kỳ
         const sorted = [...merged].sort((a, b) => {
           const yearA = parseInt(a.enrollment.class_section.academic_year);
           const yearB = parseInt(b.enrollment.class_section.academic_year);
@@ -89,7 +89,6 @@ export default function StudentGradesPage() {
         setGrades(sorted);
         if (sorted.length > 0) setStudent(sorted[0].enrollment.students);
 
-        // ✅ Gom nhóm theo học kỳ
         const groupedBySemester = sorted.reduce((acc: any, g: any) => {
           const key = `Học kỳ ${g.enrollment.class_section.semester}/${g.enrollment.class_section.academic_year}`;
           if (!acc[key]) acc[key] = [];
@@ -98,7 +97,6 @@ export default function StudentGradesPage() {
         }, {});
         setGrouped(groupedBySemester);
 
-        // ✅ Tính điểm trung bình toàn khóa
         let totalWeighted = 0;
         let totalCredits = 0;
         sorted.forEach((g: any) => {
@@ -117,7 +115,30 @@ export default function StudentGradesPage() {
       .catch((err) => console.error("Lỗi lấy điểm:", err));
   }, [studentId]);
 
-  // ✅ Tính điểm trung bình 1 kỳ
+  // ✅ Sinh danh sách các năm học dựa trên cohort và năm hiện tại
+  const yearOptions = useMemo(() => {
+    const cohortNum = Number(student?.cohort);
+    if (!cohortNum || isNaN(cohortNum)) return [];
+
+    const now = new Date().getFullYear();
+    const years = [];
+
+    for (let y = cohortNum; y <= now; y++) {
+      years.push(`${y}-${y + 1}`);
+    }
+    return years;
+  }, [student]);
+
+  // ✅ Lọc dữ liệu theo năm học được chọn
+  const filteredGrouped = useMemo(() => {
+    if (selectedYear === "Tất cả") return grouped;
+    const filtered: Record<string, Grade[]> = {};
+    for (const [semester, gradeList] of Object.entries(grouped)) {
+      if (semester.includes(selectedYear)) filtered[semester] = gradeList;
+    }
+    return filtered;
+  }, [grouped, selectedYear]);
+
   const calcSemesterAverage = (grades: Grade[]) => {
     let totalWeighted = 0;
     let totalCredits = 0;
@@ -153,9 +174,8 @@ export default function StudentGradesPage() {
           <div className="w-[120px]" />
         </div>
 
-        {/* Thông tin sinh viên */}
         {student && (
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <p className="text-blue-500">
                 {student.last_name} {student.first_name}
@@ -170,23 +190,54 @@ export default function StudentGradesPage() {
           </div>
         )}
 
-        {/* ✅ Tổng kết toàn khóa nằm ngay trong header */}
         {grades.length > 0 && (
-          <div className=" text-red-600 font-medium">
+          <div className="text-red-600 font-medium">
             Trung bình toàn khóa:{" "}
             <span className="font-bold">{avgScore.toFixed(2)}</span>; STC tích lũy:{" "}
             <span className="font-bold">{totalCredits}tc</span>; Xếp loại học lực:{" "}
             <span className="font-bold">{getRank(avgScore)}</span>
           </div>
         )}
+
+        {/* ✅ Khu vực điều khiển filter + in bảng điểm */}
+        <div className="flex items-center gap-4 pt-2">
+          {/* Filter năm học */}
+          <select
+            className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            <option value="Tất cả">Tất cả các năm</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+
+          {/* Nút in bảng điểm */}
+          <Button
+            variant="outline"
+            className="border-gray-400 hover:bg-gray-100 cursor-pointer"
+            onClick={() => {
+              // Nếu chọn tất cả thì bỏ param academic_year
+              const yearParam = selectedYear === "Tất cả" ? "" : `&academic_year=${selectedYear}`;
+              // Gửi cohort để backend tính năm học (NĂM 1, 2, 3...)
+              const cohortParam = student?.cohort ? `&cohort=${student.cohort}` : "";
+              window.open(`/api/grades/print-report?student_id=${studentId}${yearParam}${cohortParam}`, "_blank");
+            }}
+          >
+            In bảng điểm
+          </Button>
+        </div>
       </div>
 
       {/* Section chứa các học kỳ */}
       <section className="px-6 pb-10 space-y-6">
-        {Object.keys(grouped).length === 0 ? (
+        {Object.keys(filteredGrouped).length === 0 ? (
           <p className="text-gray-500 italic text-center">Không có dữ liệu điểm.</p>
         ) : (
-          Object.entries(grouped).map(([semester, gradeList]) => {
+          Object.entries(filteredGrouped).map(([semester, gradeList]) => {
             const semesterAvg = calcSemesterAverage(gradeList);
             const passedCredits = gradeList.reduce((sum, g) => {
               const c = g.enrollment.class_section.courses.credits;
@@ -242,17 +293,16 @@ export default function StudentGradesPage() {
                           </td>
                           <td className="py-2 px-3 text-center border border-gray-100">
                             <Button
-                                variant="link"
-                                className="text-blue-600 underline hover:cursor-pointer"
-                                onClick={() => router.push(`/grades/${g.grade_id}`)}
+                              variant="link"
+                              className="text-blue-600 underline hover:cursor-pointer"
+                              onClick={() => router.push(`/grades/${g.grade_id}`)}
                             >
-                                Chi tiết
+                              Chi tiết
                             </Button>
                           </td>
                         </tr>
                       ))}
 
-                      {/* ✅ Hàng tổng kết cuối kỳ */}
                       <tr className="font-medium text-gray-700">
                         <td colSpan={3} className="border border-gray-100 p-2 text-right">
                           STC Đậu ({passedCredits}) + STC Rớt ({failedCredits})
