@@ -35,10 +35,18 @@ export default function Header({
   } 
   else if (main === "departments") title = "QUẢN LÝ KHOA";
   else if (main === "majors") title = "QUẢN LÝ CHUYÊN NGÀNH";
-  else if (main === "academic_class") title = "QUẢN LÝ LỚP SINH HOẠT";
+  else if (main === "academic_class") {
+    if (extra === "students") title = "DANH SÁCH SINH VIÊN";
+    else if (sub) title = "";
+    else title = "QUẢN LÝ LỚP SINH HOẠT";
+  } 
   else if (main === "courses") title = "QUẢN LÝ HỌC PHẦN";
   else if (main === "enrollment") title = "QUẢN LÝ ĐĂNG KÝ";
-  else if (main === "class_section") title = "QUẢN LÝ LỚP HỌC PHẦN";
+  else if (main === "class_section") {
+    if (extra === "students") title = "DANH SÁCH SINH VIÊN";
+    else if (sub) title = "";
+    else title = "QUẢN LÝ LỚP HỌC PHẦN";
+  }  
   else if (main === "grades")
     title = sub ? "XEM ĐIỂM CHI TIẾT" : "QUẢN LÝ ĐIỂM";
   else if (main === "major_courses") title = "CHƯƠNG TRÌNH ĐÀO TẠO";

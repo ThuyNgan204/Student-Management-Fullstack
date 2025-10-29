@@ -232,17 +232,29 @@ const {
             <DataTable
               columns={[
                 { key: "class_section_id", header: "ID" },
-                { key: "section_code", header: "Mã lớp học phần" },
-                { key: "academic_year", header: "Năm học" },
-                { key: "semester", header: "Học kỳ" },
-                {
-                  key: "courses",
+                { 
+                  key: "section_code", 
+                  header: "Mã lớp học phần",
+                  render: (s: ClassSection) =>
+                    s.courses ? (
+                      <a
+                        href={`/class_section/${s.class_section_id}/students`}
+                        className="hover:underline"
+                      >
+                        {s.section_code}
+                      </a>
+                    ) : (
+                      "N/A"
+                    ),
+                },
+                { 
+                  key: "course", 
                   header: "Học phần",
                   render: (s: ClassSection) =>
-                    s.courses
-                      ? `${s.courses.course_code} - ${s.courses.course_name}`
-                      : "N/A",
+                    s.courses ? `${s.courses.course_code} - ${s.courses.course_name}` : "N/A",
                 },
+                { key: "academic_year", header: "Năm học" },
+                { key: "semester", header: "Học kỳ" },
                 {
                   key: "lecturers",
                   header: "Giảng viên",
