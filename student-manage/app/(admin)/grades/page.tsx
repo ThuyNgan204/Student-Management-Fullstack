@@ -34,6 +34,7 @@ export default function GradePage() {
     search,
     studentFilters,
     classSectionFilters,
+    academicClassFilters,
     setPage,
     sortBy,
     sortOrder,
@@ -49,6 +50,7 @@ export default function GradePage() {
   const [classSections, setClassSections] = useState<any[]>([]); // ✅ Thêm mới
   const [enrollment, setEnrollment] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
+  const [academicClasses, setAcademicClasses] = useState<any[]>([]);
 
   // ✅ Load danh sách sinh viên
   useEffect(() => {
@@ -64,6 +66,14 @@ export default function GradePage() {
       .get("/api/class_section", { params: { page: 1, page_size: 1000 } })
       .then((res) => setClassSections(res.data.items || res.data))
       .catch(() => toast.error("Không tải được danh sách lớp học phần"));
+  }, []);
+
+  // ✅ Load toàn bộ lớp sinh hoạt
+  useEffect(() => {
+    axios
+      .get("/api/academic_class", { params: { page: 1, page_size: 1000 } })
+      .then((res) => setAcademicClasses(res.data.items || res.data))
+      .catch(() => toast.error("Không tải được danh sách lớp sinh hoạt"));
   }, []);
 
   // ✅ Khi chọn sinh viên → load học phần riêng để dùng cho form Add
@@ -97,6 +107,7 @@ export default function GradePage() {
     filters: {
       student_id: studentFilters,
       class_section_id: classSectionFilters,
+      academic_class_id: academicClassFilters,
     },
   });
 
@@ -165,6 +176,7 @@ export default function GradePage() {
         total={total}
         students={students}
         classSections={classSections} // ✅ Dùng danh sách đầy đủ
+        academicClasses={academicClasses} 
         onAdd={() => setAddOpen(true)}
       />
 

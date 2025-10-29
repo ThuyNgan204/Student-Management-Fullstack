@@ -50,6 +50,7 @@ export async function GET(req: Request) {
   const enrollmentId = searchParams.get("enrollment_id");
   const studentId = searchParams.get("student_id");
   const classSectionId = searchParams.get("class_section_id");
+  const academicClassId = searchParams.get("academic_class_id");
 
   const academicYear = searchParams.get("academic_year"); // ✅ NEW
 
@@ -104,6 +105,16 @@ export async function GET(req: Request) {
             contains: academicYear,
             mode: "insensitive",
           },
+        },
+      },
+    });
+  }
+
+  if (academicClassId) {
+    and.push({
+      enrollment: {
+        students: {
+          academic_class_id: Number(academicClassId),
         },
       },
     });

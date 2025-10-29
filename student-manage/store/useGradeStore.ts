@@ -41,6 +41,7 @@ interface GradeStore {
 
   studentFilters: number[];
   classSectionFilters: number[];
+  academicClassFilters: number[];
 
   addOpen: boolean;
   editingGrade: Grade | null;
@@ -58,6 +59,7 @@ interface GradeStore {
 
   setStudentFilters: (ids: number[]) => void;
   setClassSectionFilters: (ids: number[]) => void;
+  setAcademicClassFilters: (ids: number[]) => void;
 
   setAddOpen: (open: boolean) => void;
   setEditingGrade: (g: Grade | null) => void;
@@ -76,6 +78,7 @@ export const useGradeStore = create<GradeStore>((set, get) => ({
 
   studentFilters: [],
   classSectionFilters: [],
+  academicClassFilters: [],
 
   addOpen: false,
   editingGrade: null,
@@ -92,12 +95,13 @@ export const useGradeStore = create<GradeStore>((set, get) => ({
 
   setStudentFilters: (ids) => set({ studentFilters: ids, page: 1 }),
   setClassSectionFilters: (ids) => set({ classSectionFilters: ids, page: 1 }),
+  setAcademicClassFilters: (ids) => set({ academicClassFilters: ids, page: 1 }),
 
   setAddOpen: (open) => set({ addOpen: open }),
   setEditingGrade: (g) => set({ editingGrade: g }),
   setSelectedGrade: (g) => set({ selectedGrade: g }),
 
-  resetFilters: () => set({ studentFilters: [], classSectionFilters: [], page: 1 }),
+  resetFilters: () => set({ studentFilters: [], classSectionFilters: [], academicClassFilters: [], page: 1 }),
 
   fetchGrades: async () => {
     const {
@@ -108,6 +112,7 @@ export const useGradeStore = create<GradeStore>((set, get) => ({
       sortOrder,
       studentFilters,
       classSectionFilters,
+      academicClassFilters,
     } = get();
 
     set({ loading: true });
@@ -119,6 +124,7 @@ export const useGradeStore = create<GradeStore>((set, get) => ({
           search,
           student_id: studentFilters.join(",") || undefined,
           class_section_id: classSectionFilters.join(",") || undefined,
+          academic_class_id: academicClassFilters.join(",") || undefined,
           sort_by: sortBy,
           sort_order: sortOrder,
         },
