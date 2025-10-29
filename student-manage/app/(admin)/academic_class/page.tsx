@@ -68,7 +68,7 @@ export default function ClassesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const lecturerParam = searchParams.get("lecturer");
-  const isLecturerView = Boolean(lecturerFilters);
+  const isLecturerView = Boolean(lecturerParam);
 
 
   useEffect(() => {
@@ -219,7 +219,17 @@ export default function ClassesPage() {
             <DataTable
               columns={[
                 { key: "academic_class_id", header: "ID" },
-                { key: "class_name", header: "Tên lớp" },
+                { 
+                  key: "class_name", 
+                  header: "Tên lớp",
+                  render: (s: AcademicClass) =>
+                    <a
+                      href={`/academic_class/${s.academic_class_id}/students`}
+                      className="hover:underline"
+                    >
+                      {s.class_name}
+                    </a>
+                },
                 { key: "class_code", header: "Mã lớp" },
                 { key: "cohort", header: "Niên khóa" },
                 {
