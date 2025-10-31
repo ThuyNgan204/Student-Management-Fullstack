@@ -153,7 +153,7 @@ export default function DashboardPage() {
       {/* 🧩 Sinh viên theo ngành */}
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>TỶ LỆ SINH VIÊN THEO NGÀNH</CardTitle>
+          <CardTitle>TỶ LỆ SINH VIÊN THEO TỪNG CHUYÊN NGÀNH</CardTitle>
         </CardHeader>
         <CardContent className="h-[400px] flex justify-center items-center">
           <ResponsiveContainer width="100%" height="100%">
