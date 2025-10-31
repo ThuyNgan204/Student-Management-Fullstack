@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 // =================== GET LIST ===================
 // GET /api/class_section?page=1&page_size=10&search=abc&semester=Hè&lecturer=10

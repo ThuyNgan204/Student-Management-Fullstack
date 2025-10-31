@@ -1,23 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
   BookOpen,
+  Building2,
   ClipboardList,
   FileText,
-  UserCog,
-  Building2,
+  GraduationCap,
   Layers,
+  LayoutDashboard,
+  UserCog,
   UserPlus,
+  Users,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const menuItems = [
-  { name: "Trang chủ", href: "/", icon: LayoutDashboard },
+  { name: "Tổng quan", href: "/", icon: LayoutDashboard },
   { name: "Quản lý sinh viên", href: "/students", icon: Users },
   { name: "Quản lý giảng viên", href: "/lecturers", icon: UserCog },
   { name: "Quản lý khoa", href: "/departments", icon: Building2 },

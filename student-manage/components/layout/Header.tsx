@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { FoldHorizontal, UnfoldHorizontal } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { UnfoldHorizontal, FoldHorizontal } from "lucide-react";
 
 export default function Header({
   collapsed,
@@ -51,7 +51,7 @@ export default function Header({
     title = sub ? "XEM ĐIỂM CHI TIẾT" : "QUẢN LÝ ĐIỂM";
   else if (main === "major_courses") title = "CHƯƠNG TRÌNH ĐÀO TẠO";
   else if (main === "accounts") title = "QUẢN LÝ TÀI KHOẢN";
-  else if (pathname === "/") title = "TRANG CHỦ";
+  else if (pathname === "/") title = "TỔNG QUAN";
 
   return (
     <div className="flex justify-between items-center h-16 px-6 border-b bg-white shadow-sm">
