@@ -1,11 +1,11 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/shared/SearchBar";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useGradeStore } from "@/store/useGradeStore";
-import { useEffect } from "react";
 import { Printer } from "lucide-react";
+import { useEffect } from "react";
 
 interface Props {
   total: number;
@@ -41,9 +41,15 @@ export default function ControlPanelGrade({ total, students, classSections, acad
 
   const handlePrint = () => {
     const params = new URLSearchParams();
+
     if (studentFilters[0]) params.append("student_id", String(studentFilters[0]));
     if (classSectionFilters[0]) params.append("class_section_id", String(classSectionFilters[0]));
-    if (academicClassFilters[0]) params.append("academic_class_id", String(academicClassFilters[0]));
+
+    // Cho phép in theo lớp học phần nếu không chọn sinh viên
+    if (!studentFilters[0] && !classSectionFilters[0]) {
+      alert("Vui lòng chọn ít nhất 1 sinh viên hoặc 1 lớp học phần để in.");
+      return;
+    }
 
     window.open(`/api/grades/print-report?${params.toString()}`, "_blank");
   };
@@ -56,7 +62,7 @@ export default function ControlPanelGrade({ total, students, classSections, acad
 
           {/* ✅ Nút In */}
           <Button variant="outline" onClick={handlePrint} className="flex items-center gap-2">
-            <Printer size={16} /> In PDF
+            <Printer size={16} /> In bảng điểm
           </Button>
         </div>
 
