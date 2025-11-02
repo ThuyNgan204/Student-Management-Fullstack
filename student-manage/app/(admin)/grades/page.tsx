@@ -1,30 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import axios from "axios";
+import Cookies from "js-cookie";
 import { Pencil, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
-import { useGradeStore, Grade } from "@/store/useGradeStore";
-import { GradeFormInputs, gradeSchema } from "@/lib/zodSchemas";
+import ControlPanelGrade from "@/components/grades/ControlPanelGrade";
 import { useCRUD } from "@/hooks/useCRUD";
 import { useDebounce } from "@/hooks/useDebounce";
-import ControlPanelGrade from "@/components/grades/ControlPanelGrade";
+import { GradeFormInputs, gradeSchema } from "@/lib/zodSchemas";
+import { Grade, useGradeStore } from "@/store/useGradeStore";
 import Link from "next/link";
 
 export default function GradePage() {
@@ -45,30 +46,50 @@ export default function GradePage() {
   } = useGradeStore();
 
   const debouncedSearch = useDebounce(search, 500);
-
+  const [user, setUser] = useState<{ role: string; lecturer_id?: number } | null>(null);
   const [students, setStudents] = useState<any[]>([]);
-  const [classSections, setClassSections] = useState<any[]>([]); // ✅ Thêm mới
+  const [classSections, setClassSections] = useState<any[]>([]);
   const [enrollment, setEnrollment] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [academicClasses, setAcademicClasses] = useState<any[]>([]);
 
-  // ✅ Load danh sách sinh viên
+  // ✅ Lấy thông tin user từ cookie
+  useEffect(() => {
+    const cookie = Cookies.get("user");
+    if (cookie) {
+      try {
+        const parsed = JSON.parse(cookie);
+        setUser(parsed);
+      } catch {
+        console.error("Invalid user cookie");
+      }
+    }
+  }, []);
+
+  // ✅ Load danh sách sinh viên (chỉ cho admin)
   useEffect(() => {
     axios
       .get("/api/students", { params: { page: 1, page_size: 1000 } })
       .then((res) => setStudents(res.data.items || res.data))
       .catch(() => toast.error("Không tải được danh sách sinh viên"));
-  }, []);
+  }, [user]);
 
-  // ✅ Load toàn bộ class_section để filter riêng
+  // ✅ Load danh sách lớp học phần
   useEffect(() => {
+    if (!user) return;
+
+    const params: any = { page: 1, page_size: 1000 };
+    if (user.role === "lecturer" && user.lecturer_id) {
+      params.lecturer_id = user.lecturer_id;
+    }
+
     axios
-      .get("/api/class_section", { params: { page: 1, page_size: 1000 } })
+      .get("/api/class_section", { params })
       .then((res) => setClassSections(res.data.items || res.data))
       .catch(() => toast.error("Không tải được danh sách lớp học phần"));
-  }, []);
+  }, [user]);
 
-  // ✅ Load toàn bộ lớp sinh hoạt
+  // ✅ Load danh sách lớp sinh hoạt
   useEffect(() => {
     axios
       .get("/api/academic_class", { params: { page: 1, page_size: 1000 } })
@@ -76,7 +97,7 @@ export default function GradePage() {
       .catch(() => toast.error("Không tải được danh sách lớp sinh hoạt"));
   }, []);
 
-  // ✅ Khi chọn sinh viên → load học phần riêng để dùng cho form Add
+  // ✅ Khi chọn sinh viên → load học phần riêng
   useEffect(() => {
     if (!selectedStudent) {
       setEnrollment([]);
@@ -88,7 +109,7 @@ export default function GradePage() {
       .catch(() => toast.error("Không tải được danh sách học phần của sinh viên"));
   }, [selectedStudent]);
 
-  // ✅ CRUD
+  // ✅ CRUD hook
   const {
     data,
     isLoading,
@@ -108,6 +129,9 @@ export default function GradePage() {
       student_id: studentFilters,
       class_section_id: classSectionFilters,
       academic_class_id: academicClassFilters,
+      ...(user?.role === "lecturer" && user.lecturer_id
+        ? { lecturer_id: user.lecturer_id }
+        : {}),
     },
   });
 
@@ -171,12 +195,11 @@ export default function GradePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ✅ FILTER HOÀN CHỈNH */}
       <ControlPanelGrade
         total={total}
         students={students}
-        classSections={classSections} // ✅ Dùng danh sách đầy đủ
-        academicClasses={academicClasses} 
+        classSections={classSections}
+        academicClasses={academicClasses}
         onAdd={() => setAddOpen(true)}
       />
 
@@ -211,13 +234,13 @@ export default function GradePage() {
                   render: (r: Grade) => {
                     const section = r.enrollment?.class_section;
                     const course = section?.courses;
-
                     if (!section || !course) return "N/A";
-
                     return (
                       <div className="flex flex-col leading-tight">
                         <span>{section.section_code}</span>
-                        <span className="text-gray-600 text-xs">{course.course_name}</span>
+                        <span className="text-gray-600 text-xs">
+                          {course.course_name}
+                        </span>
                       </div>
                     );
                   },
@@ -225,10 +248,8 @@ export default function GradePage() {
                 {
                   key: "credits",
                   header: "Số TC",
-                  render: (r: Grade) => {
-                    const credits = r.enrollment?.class_section?.courses?.credits;
-                    return credits ?? "N/A";
-                  },
+                  render: (r: Grade) =>
+                    r.enrollment?.class_section?.courses?.credits ?? "N/A",
                 },
                 { key: "attendance_score", header: "Chuyên cần" },
                 { key: "midterm_score", header: "Giữa kỳ" },
@@ -254,9 +275,7 @@ export default function GradePage() {
                         title="Xóa điểm này?"
                         description="Hành động này không thể hoàn tác."
                         trigger={
-                          <button
-                            className="text-red-500 hover:text-red-700 cursor-pointer"
-                          >
+                          <button className="text-red-500 hover:text-red-700 cursor-pointer">
                             <Trash2 size={16} />
                           </button>
                         }
@@ -268,13 +287,12 @@ export default function GradePage() {
               data={grades}
               emptyMessage="Không có dữ liệu điểm"
             />
-
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </>
         )}
       </main>
 
-      {/* ADD DIALOG */}
+      {/* === Dialog thêm điểm === */}
       <Dialog open={addOpen} onOpenChange={(o) => setAddOpen(o)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -282,9 +300,8 @@ export default function GradePage() {
           </DialogHeader>
 
           <form onSubmit={formAdd.handleSubmit(onSubmitAdd)} className="space-y-4">
-            {/* Chọn sinh viên */}
             <div>
-              <Label>Sinh viên</Label>
+              <Label className="mb-2">Sinh viên</Label>
               <select
                 value={selectedStudent ?? ""}
                 onChange={(e) =>
@@ -303,15 +320,16 @@ export default function GradePage() {
               </select>
             </div>
 
-            {/* Chọn học phần */}
             <div>
-              <Label>Học phần</Label>
+              <Label className="mb-2">Học phần</Label>
               <select
                 {...formAdd.register("enrollment_id", { valueAsNumber: true })}
                 disabled={!selectedStudent}
                 className="border rounded w-full px-2 py-1"
               >
-                <option value="" disabled>Chọn học phần</option>
+                <option value="" disabled>
+                  Chọn học phần
+                </option>
                 {enrollment.map((e) => (
                   <option key={e.enrollment_id} value={e.enrollment_id}>
                     {e.class_section?.section_code ?? "??"} -{" "}
@@ -322,10 +340,9 @@ export default function GradePage() {
               </select>
             </div>
 
-            {/* Nhập điểm */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Chuyên cần</Label>
+                <Label className="mb-2">Chuyên cần</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -334,7 +351,7 @@ export default function GradePage() {
                 />
               </div>
               <div>
-                <Label>Giữa kỳ</Label>
+                <Label className="mb-2">Giữa kỳ</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -343,7 +360,7 @@ export default function GradePage() {
                 />
               </div>
               <div>
-                <Label>Bài tập</Label>
+                <Label className="mb-2">Bài tập</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -352,7 +369,7 @@ export default function GradePage() {
                 />
               </div>
               <div>
-                <Label>Cuối kỳ</Label>
+                <Label className="mb-2">Cuối kỳ</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -363,7 +380,11 @@ export default function GradePage() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setAddOpen(false)}>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setAddOpen(false)}
+              >
                 Hủy
               </Button>
               <Button type="submit">Lưu</Button>
@@ -372,8 +393,11 @@ export default function GradePage() {
         </DialogContent>
       </Dialog>
 
-      {/* EDIT DIALOG */}
-      <Dialog open={!!editingGrade} onOpenChange={(o) => !o && setEditingGrade(null)}>
+      {/* === Dialog chỉnh sửa điểm === */}
+      <Dialog
+        open={!!editingGrade}
+        onOpenChange={(o) => !o && setEditingGrade(null)}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa điểm</DialogTitle>
@@ -382,7 +406,7 @@ export default function GradePage() {
           <form onSubmit={formEdit.handleSubmit(handleUpdate)} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Chuyên cần</Label>
+                <Label className="mb-2">Chuyên cần</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -391,7 +415,7 @@ export default function GradePage() {
                 />
               </div>
               <div>
-                <Label>Giữa kỳ</Label>
+                <Label className="mb-2">Giữa kỳ</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -400,7 +424,7 @@ export default function GradePage() {
                 />
               </div>
               <div>
-                <Label>Bài tập</Label>
+                <Label className="mb-2">Bài tập</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -409,7 +433,7 @@ export default function GradePage() {
                 />
               </div>
               <div>
-                <Label>Cuối kỳ</Label>
+                <Label className="mb-2">Cuối kỳ</Label>
                 <input
                   type="number"
                   step="0.1"
@@ -420,7 +444,11 @@ export default function GradePage() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setEditingGrade(null)}>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setEditingGrade(null)}
+              >
                 Hủy
               </Button>
               <Button type="submit">Cập nhật</Button>

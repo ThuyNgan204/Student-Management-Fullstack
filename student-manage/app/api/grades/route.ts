@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 function calculateGrade(scores: {
   attendance_score?: number;
@@ -51,8 +51,9 @@ export async function GET(req: Request) {
   const studentId = searchParams.get("student_id");
   const classSectionId = searchParams.get("class_section_id");
   const academicClassId = searchParams.get("academic_class_id");
+  const academicYear = searchParams.get("academic_year");
 
-  const academicYear = searchParams.get("academic_year"); // ✅ NEW
+  const lecturerId = searchParams.get("lecturer_id"); // ✅ Thêm filter này
 
   const sortBy = searchParams.get("sort_by") || "grade_id";
   const sortOrder = searchParams.get("sort_order") === "asc" ? "asc" : "desc";
@@ -96,7 +97,6 @@ export async function GET(req: Request) {
     and.push({ enrollment: { class_section_id: Number(classSectionId) } });
   }
 
-  // ✅ NEW: Filter by Academic Year
   if (academicYear) {
     and.push({
       enrollment: {
@@ -115,6 +115,17 @@ export async function GET(req: Request) {
       enrollment: {
         students: {
           academic_class_id: Number(academicClassId),
+        },
+      },
+    });
+  }
+
+  // ✅ Filter theo lecturer_id (nếu có)
+  if (lecturerId) {
+    and.push({
+      enrollment: {
+        class_section: {
+          lecturer_id: Number(lecturerId),
         },
       },
     });

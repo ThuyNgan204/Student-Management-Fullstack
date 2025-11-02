@@ -16,23 +16,62 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const menuItems = [
-  { name: "Tổng quan", href: "/", icon: LayoutDashboard },
-  { name: "Quản lý sinh viên", href: "/students", icon: Users },
-  { name: "Quản lý giảng viên", href: "/lecturers", icon: UserCog },
-  { name: "Quản lý khoa", href: "/departments", icon: Building2 },
-  { name: "Quản lý chuyên ngành", href: "/majors", icon: GraduationCap },
-  { name: "Quản lý lớp sinh hoạt", href: "/academic_class", icon: ClipboardList },
-  { name: "Quản lý học phần", href: "/courses", icon: BookOpen },
-  { name: "Quản lý đăng ký", href: "/enrollment", icon: UserPlus },
-  { name: "Quản lý lớp học phần", href: "/class_section", icon: Layers },
-  { name: "Quản lý điểm", href: "/grades", icon: FileText },
-  { name: "Chương trình đào tạo", href: "/major_courses", icon: FileText },
-  { name: "Quản lý tài khoản", href: "/accounts", icon: Users },
-];
+interface User {
+  student_id?: number | null;
+  lecturer_id?: number | null;
+  major_id?: number | null;
+}
 
-export default function Sidebar({ collapsed }: { collapsed: boolean }) {
+export default function Sidebar({
+  collapsed,
+  role = "admin",
+  user,
+}: {
+  collapsed: boolean;
+  role?: string;
+  user?: User;
+}) {
   const pathname = usePathname();
+
+  const lecturerId = user?.lecturer_id ?? "";
+  const studentId = user?.student_id ?? "";
+  const majorId = user?.major_id ?? "";
+
+  const menuByRole = {
+    admin: [
+      { name: "Tổng quan", href: "/", icon: LayoutDashboard },
+      { name: "Quản lý sinh viên", href: "/students", icon: Users },
+      { name: "Quản lý giảng viên", href: "/lecturers", icon: UserCog },
+      { name: "Quản lý khoa", href: "/departments", icon: Building2 },
+      { name: "Quản lý chuyên ngành", href: "/majors", icon: GraduationCap },
+      { name: "Quản lý lớp sinh hoạt", href: "/academic_class", icon: ClipboardList },
+      { name: "Quản lý học phần", href: "/courses", icon: BookOpen },
+      { name: "Quản lý đăng ký", href: "/enrollment", icon: UserPlus },
+      { name: "Quản lý lớp học phần", href: "/class_section", icon: Layers },
+      { name: "Quản lý điểm", href: "/grades", icon: FileText },
+      { name: "Chương trình đào tạo", href: "/major_courses", icon: FileText },
+      { name: "Quản lý tài khoản", href: "/accounts", icon: Users },
+    ],
+
+    lecturer: [
+      { name: "Thông tin cá nhân", href: `/lecturers/${lecturerId}`, icon: LayoutDashboard },
+      { name: "Lớp cố vấn", href: `/academic_class?lecturer=${lecturerId}`, icon: Layers },
+      { name: "Lớp học phần", href: `/class_section?lecturer=${lecturerId}`, icon: Layers },
+      { name: "Nhập điểm", href: `/grades?lecturer_id=${lecturerId}`, icon: FileText },
+    ],
+
+    student: [
+      { name: "Thông tin cá nhân", href: `/students/${studentId}`, icon: LayoutDashboard },
+      { name: "Xem điểm", href: `/students/${studentId}/grades`, icon: FileText },
+      {
+        name: "Chương trình đào tạo",
+        href: `/major_courses?student=${studentId}`,
+        icon: BookOpen,
+      },
+    ],
+  };
+
+  const menuItems = menuByRole[role as keyof typeof menuByRole] || [];
 
   return (
     <aside
@@ -48,7 +87,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href.split("?")[0]; // bỏ query để vẫn highlight
           return (
             <Link
               key={item.name}

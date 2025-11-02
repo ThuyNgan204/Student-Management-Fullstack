@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 interface UseCRUDProps {
@@ -35,8 +35,12 @@ export const useCRUD = <TData extends Record<string, any>, TForm>({
       });
       if (search) params.append("search", search);
 
-      Object.entries(filters).forEach(([key, values]) => {
-        values.forEach((v) => params.append(key, String(v)));
+      Object.entries(filters).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((v) => params.append(key, String(v)));
+        } else if (value !== undefined && value !== null && value !== "") {
+          params.append(key, String(value));
+        }
       });
 
       if (sortBy) params.append("sort_by", sortBy);

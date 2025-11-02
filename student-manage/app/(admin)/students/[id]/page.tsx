@@ -1,28 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
-import Image from "next/image";
-import { formatDate } from "@/utils/date";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { formatDate } from "@/utils/date";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import Cookies from "js-cookie";
 import {
+  ArrowLeft,
+  BookOpen,
   Loader2,
   Pencil,
   School,
-  BookOpen,
-  ArrowLeft,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Student {
@@ -69,6 +69,7 @@ export default function StudentDetailPage() {
   const [studentData, setStudentData] = useState<Student | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const {
     data: student,
@@ -90,6 +91,18 @@ export default function StudentDetailPage() {
       setFormData(student);
     }
   }, [student]);
+
+  useEffect(() => {
+    const userCookie = Cookies.get("user");
+    if (userCookie) {
+      try {
+        const parsed = JSON.parse(userCookie);
+        setUserRole(parsed.role);
+      } catch (error) {
+        console.error("Lỗi parse cookie user:", error);
+      }
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -125,7 +138,9 @@ export default function StudentDetailPage() {
         <p className="text-red-500 text-lg mb-4">
           Không thể tải thông tin sinh viên.
         </p>
-        <Button onClick={() => router.push("/students")}>Quay lại</Button>
+        {userRole === "admin" && (
+          <Button onClick={() => router.push("/students")}>Quay lại</Button>
+        )}
       </div>
     );
 
@@ -133,17 +148,19 @@ export default function StudentDetailPage() {
 
   return (
     <>
-      {/* === Top Row with Back Button === */}
-      <div className="w-full max-w-md mb-4">
-        <Button
-          variant="ghost"
-          className="flex items-center gap-2 text-gray-700 hover:text-primary transition"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Quay lại
-        </Button>
-      </div>
+      {/* ✅ Chỉ admin mới thấy nút quay lại */}
+      {userRole === "admin" && (
+        <div className="w-full max-w-md mb-4">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2 text-gray-700 hover:text-primary transition"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* ==== LEFT SIDE ==== */}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Cookies from "js-cookie"; // ✅ thêm dòng này
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,17 +14,16 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // ❌ thông báo lỗi
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async () => {
-    setErrorMessage(""); // reset lỗi
+    setErrorMessage("");
     if (!username || !password) {
       setErrorMessage("Vui lòng nhập đầy đủ tài khoản và mật khẩu");
       return;
     }
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -36,7 +36,14 @@ export default function LoginPage() {
       setLoading(false);
 
       if (res.ok) {
-        router.push(data.redirectUrl); // chuyển trang admin
+        // ✅ Lưu cookie để RoleBasedSidebar đọc được
+        Cookies.set("user", JSON.stringify(data.user), { expires: 1 }); // 1 ngày
+        if (data.token) {
+          Cookies.set("token", data.token, { expires: 1 });
+        }
+
+        // ✅ Chuyển hướng
+        router.push(data.redirectUrl || "/");
       } else {
         setErrorMessage(data.message || "Đăng nhập thất bại");
       }

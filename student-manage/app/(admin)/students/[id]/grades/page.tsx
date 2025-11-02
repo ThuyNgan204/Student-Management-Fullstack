@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import axios from "axios";
+import Cookies from "js-cookie";
 import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 interface Grade {
   grade_id: number;
@@ -44,7 +45,7 @@ export default function StudentGradesPage() {
   const [avgScore, setAvgScore] = useState<number>(0);
   const [totalCredits, setTotalCredits] = useState<number>(0);
   const [selectedYear, setSelectedYear] = useState<string>("Tất cả"); // ✅ năm học được chọn để filter
-
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
 
   const getRank = (avg: number) => {
@@ -53,6 +54,18 @@ export default function StudentGradesPage() {
     if (avg >= 5) return "Trung bình";
     return "Yếu";
   };
+
+  useEffect(() => {
+    const userCookie = Cookies.get("user");
+    if (userCookie) {
+      try {
+        const parsed = JSON.parse(userCookie);
+        setUserRole(parsed.role);
+      } catch (error) {
+        console.error("Lỗi parse cookie user:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!studentId) return;
@@ -216,19 +229,19 @@ export default function StudentGradesPage() {
           </select>
 
           {/* Nút in bảng điểm */}
-          <Button
-            variant="outline"
-            className="border-gray-400 hover:bg-gray-100 cursor-pointer"
-            onClick={() => {
-              // Nếu chọn tất cả thì bỏ param academic_year
-              const yearParam = selectedYear === "Tất cả" ? "" : `&academic_year=${selectedYear}`;
-              // Gửi cohort để backend tính năm học (NĂM 1, 2, 3...)
-              const cohortParam = student?.cohort ? `&cohort=${student.cohort}` : "";
-              window.open(`/api/grades/print-report?student_id=${studentId}${yearParam}${cohortParam}`, "_blank");
-            }}
-          >
-            In bảng điểm
-          </Button>
+          {userRole !== "student" && (
+            <Button
+              variant="outline"
+              className="border-gray-400 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                const yearParam = selectedYear === "Tất cả" ? "" : `&academic_year=${selectedYear}`;
+                const cohortParam = student?.cohort ? `&cohort=${student.cohort}` : "";
+                window.open(`/api/grades/print-report?student_id=${studentId}${yearParam}${cohortParam}`, "_blank");
+              }}
+            >
+              In bảng điểm
+            </Button>
+          )}
         </div>
       </div>
 
