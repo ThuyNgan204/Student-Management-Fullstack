@@ -1,9 +1,9 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FoldHorizontal, UnfoldHorizontal } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function Header({
   collapsed,
@@ -13,15 +13,12 @@ export default function Header({
   setCollapsed: (val: boolean) => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Ví dụ:
-  // /students → ["", "students"]
-  // /students/1 → ["", "students", "1"]
-  // /students/1/grades → ["", "students", "1", "grades"]
   const segments = pathname.split("/").filter(Boolean);
-  const main = segments[0]; // students, lecturers, grades, ...
-  const sub = segments[1];  // id hoặc path con
-  const extra = segments[2]; // có thể là "grades" hoặc "edit", v.v.
+  const main = segments[0]; 
+  const sub = segments[1];  
+  const extra = segments[2]; 
 
   let title = "Dashboard";
 
@@ -53,6 +50,17 @@ export default function Header({
   else if (main === "accounts") title = "QUẢN LÝ TÀI KHOẢN";
   else if (pathname === "/") title = "TỔNG QUAN";
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      toast.success("Đăng xuất thành công");
+      router.push("/login");
+    } catch (error) {
+      console.error(error);
+      toast.error("Đăng xuất thất bại");
+    }
+  };
+
   return (
     <div className="flex justify-between items-center h-16 px-6 border-b bg-white shadow-sm">
       <div className="flex items-center gap-2">
@@ -71,11 +79,9 @@ export default function Header({
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="outline">Settings</Button>
-        <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>AD</AvatarFallback>
-        </Avatar>
+        <Button variant="outline" onClick={handleLogout}>
+          Đăng xuất
+        </Button>
       </div>
     </div>
   );

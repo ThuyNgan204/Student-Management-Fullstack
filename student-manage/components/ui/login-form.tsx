@@ -1,90 +1,107 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+"use client";
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"form">) {
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // ❌ thông báo lỗi
+
+  const handleLogin = async () => {
+    setErrorMessage(""); // reset lỗi
+    if (!username || !password) {
+      setErrorMessage("Vui lòng nhập đầy đủ tài khoản và mật khẩu");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (res.ok) {
+        router.push(data.redirectUrl); // chuyển trang admin
+      } else {
+        setErrorMessage(data.message || "Đăng nhập thất bại");
+      }
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage("Lỗi kết nối. Vui lòng thử lại");
+      console.error(error);
+    }
+  };
+
   return (
-    <form className={cn("flex flex-col gap-6 text-gray-100", className)} {...props}>
-      {/* Header */}
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold text-white">Login to your account</h1>
-        <p className="text-gray-300 text-sm text-balance">
-          Enter your credentials below to login
-        </p>
-      </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-blue-50 p-4">
+      <Card className="w-full max-w-md shadow-2xl border-none backdrop-blur-md bg-white/95">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl font-bold text-blue-900">
+            HỆ THỐNG QUẢN LÝ SINH VIÊN
+          </CardTitle>
+          <CardDescription className="text-sm text-gray-600">
+            Trường Đại học Ngân hàng TP. Hồ Chí Minh
+          </CardDescription>
+        </CardHeader>
 
-      {/* Role selection */}
-      <div className="flex justify-center gap-6">
-        <RadioGroup defaultValue="student" className="flex flex-row gap-6">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="admin" id="admin" />
-            <Label htmlFor="admin" className="text-gray-200">Admin</Label>
+        <CardContent>
+          <div className="grid gap-4">
+            <div>
+              <Label htmlFor="username" className="mb-2">Tài khoản</Label>
+              <Input
+                id="username"
+                placeholder="Nhập tài khoản"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="password" className="mb-2">Mật khẩu</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Nhập mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            {errorMessage && (
+              <p className="text-red-600 text-sm">{errorMessage}</p>
+            )}
+
+            <Button
+              onClick={handleLogin}
+              className="w-full bg-blue-900 hover:bg-blue-800"
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="animate-spin" size={18} /> Đang đăng nhập...
+                </div>
+              ) : (
+                "Đăng nhập"
+              )}
+            </Button>
           </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="teacher" id="teacher" />
-            <Label htmlFor="teacher" className="text-gray-200">Teacher</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="student" id="student" />
-            <Label htmlFor="student" className="text-gray-200">Student</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
-      {/* Inputs */}
-      <div className="grid gap-6">
-        <div className="grid gap-3">
-          <Label htmlFor="email" className="text-gray-200">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="m@example.com"
-            required
-            className="bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400"
-          />
-        </div>
-        <div className="grid gap-3">
-          <Label htmlFor="password" className="text-gray-200">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            required
-            className="bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400"
-          />
-        </div>
-
-        {/* Remember me */}
-        <div className="flex items-center space-x-2">
-          <input
-            id="remember"
-            type="checkbox"
-            className="size-4 rounded border-gray-600 text-indigo-500 focus:ring-indigo-500"
-          />
-          <Label htmlFor="remember" className="text-gray-200">
-            Remember me
-          </Label>
-        </div>
-
-        {/* Submit */}
-        <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
-          Login
-        </Button>
-
-        {/* Forgot password */}
-        <div className="flex justify-center">
-          <a
-            href="#"
-            className="text-sm underline-offset-4 hover:underline text-gray-400 hover:text-gray-200"
-          >
-            Forgot your password?
-          </a>
-        </div>
-      </div>
-    </form>
-  )
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
