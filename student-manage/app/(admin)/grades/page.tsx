@@ -271,7 +271,16 @@ export default function GradePage() {
                         <Pencil className="size-4" />
                       </button>
                       <ConfirmDialog
-                        onConfirm={() => deleteMutation.mutate(r.grade_id)}
+                        onConfirm={() =>
+                          deleteMutation.mutate(r.grade_id, {
+                            onSuccess: () => {
+                              toast.success('Xóa điểm thành công!');
+                            },
+                            onError: () => {
+                              toast.error('Xóa điểm thất bại!');
+                            },
+                          })
+                        }
                         title="Xóa điểm này?"
                         description="Hành động này không thể hoàn tác."
                         trigger={

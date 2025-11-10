@@ -1,35 +1,35 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { toast } from "sonner";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-import DataTable from "@/components/shared/DataTable";
-import Pagination from "@/components/shared/Pagination";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import DataTable from "@/components/shared/DataTable";
 import DetailDialog from "@/components/shared/DetailModal";
+import Pagination from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { useDebounce } from "@/hooks/useDebounce";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCRUD } from "@/hooks/useCRUD";
-import { ClassFormInputs, classSchema } from "@/lib/zodSchemas";
-import { AcademicClass, useClassStore } from "@/store/useClassStore";
 import ControlPanelClass from "@/components/classes/ClassControlPanel";
 import ClassDetail from "@/components/classes/ClassDetailModal";
+import { useCRUD } from "@/hooks/useCRUD";
+import { useDebounce } from "@/hooks/useDebounce";
+import { ClassFormInputs, classSchema } from "@/lib/zodSchemas";
+import { AcademicClass, useClassStore } from "@/store/useClassStore";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // ✅ import Select UI
 import {
@@ -272,7 +272,14 @@ export default function ClassesPage() {
                       </button>
                       <ConfirmDialog
                         onConfirm={() =>
-                          deleteMutation.mutate(c.academic_class_id)
+                          deleteMutation.mutate(c.academic_class_id, {
+                            onSuccess: () => {
+                              toast.success('Xóa lớp sinh hoạt thành công!');
+                            },
+                            onError: () => {
+                              toast.error('Xóa lớp sinh hoạt thất bại!');
+                            },
+                          })
                         }
                         title="Bạn đã chắc chắn?"
                         description="Lớp sinh hoạt này sẽ bị xóa vĩnh viễn và không thể hoàn tác."

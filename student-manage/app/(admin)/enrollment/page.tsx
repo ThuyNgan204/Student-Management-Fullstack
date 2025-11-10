@@ -1,27 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import axios from "axios";
 import { Eye, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import DataTable from "@/components/shared/DataTable";
-import Pagination from "@/components/shared/Pagination";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import DataTable from "@/components/shared/DataTable";
 import DetailDialog from "@/components/shared/DetailModal";
+import Pagination from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
-import EnrollmentDetail from "@/components/enrollment/EnrollmentDetail";
-import { useEnrollmentStore, Enrollment } from "@/store/useEnrollmentStore";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useCRUD } from "@/hooks/useCRUD";
 import ControlPanelEnrollment from "@/components/enrollment/EnrollmentControlPanel";
-import { EnrollmentFormInputs, enrollmentSchema } from "@/lib/zodSchemas";
+import EnrollmentDetail from "@/components/enrollment/EnrollmentDetail";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCRUD } from "@/hooks/useCRUD";
+import { useDebounce } from "@/hooks/useDebounce";
+import { EnrollmentFormInputs, enrollmentSchema } from "@/lib/zodSchemas";
+import { Enrollment, useEnrollmentStore } from "@/store/useEnrollmentStore";
 
 export default function EnrollmentsPage() {
   const {
@@ -211,7 +211,16 @@ export default function EnrollmentsPage() {
                         <Pencil className="size-4" />
                       </button>
                       <ConfirmDialog
-                        onConfirm={() => deleteMutation.mutate(r.enrollment_id)}
+                        onConfirm={() =>
+                          deleteMutation.mutate(r.enrollment_id, {
+                            onSuccess: () => {
+                              toast.success('Xóa học phần đã đăng ký thành công!');
+                            },
+                            onError: () => {
+                              toast.error('Xóa học phần đã đăng ký thất bại!');
+                            },
+                          })
+                        }
                         title="Bạn đã chắc chắn?"
                         description="Học phần đã đăng kí sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                         trigger={

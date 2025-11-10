@@ -1,27 +1,37 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { toast } from "sonner";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-import DataTable from "@/components/shared/DataTable";
-import Pagination from "@/components/shared/Pagination";
+import ControlPanelClassSection from "@/components/class_section/Class_Section-ControlPanel";
+import ClassSectionDetail from "@/components/class_section/ClassSectionDetail";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import DataTable from "@/components/shared/DataTable";
 import DetailDialog from "@/components/shared/DetailModal";
+import Pagination from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useDebounce } from "@/hooks/useDebounce";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCRUD } from "@/hooks/useCRUD";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   ClassSectionFormInputs,
   classSectionSchema,
@@ -30,18 +40,7 @@ import {
   ClassSection,
   useClassSectionStore,
 } from "@/store/useClassSectionStore";
-import { Label } from "@/components/ui/label";
-import ControlPanelClassSection from "@/components/class_section/Class_Section-ControlPanel";
-import ClassSectionDetail from "@/components/class_section/ClassSectionDetail";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useSearchParams, useRouter } from "next/navigation";
-import { formatDate } from "@/utils/date";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function ClassSectionsPage() {
   const {
@@ -285,8 +284,15 @@ const {
                         </button>
                         <ConfirmDialog
                           onConfirm={() =>
-                            deleteMutation.mutate(s.class_section_id)
-                          }
+                          deleteMutation.mutate(s.class_section_id, {
+                            onSuccess: () => {
+                              toast.success('Xóa lớp học phần thành công!');
+                            },
+                            onError: () => {
+                              toast.error('Xóa lớp học phần thất bại!');
+                            },
+                          })
+                        }
                           title="Bạn đã chắc chắn?"
                           description="Lớp học phần này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                           trigger={

@@ -1,33 +1,33 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { useDebounce } from "@/hooks/useDebounce";
-import { useCRUD } from "@/hooks/useCRUD";
-import { useCourseStore, Course } from "@/store/useCourseStore";
-import { Department } from "@/store/useDepartmentStore";
-import { CourseFormInputs, courseSchema } from "@/lib/zodSchemas";
 import ControlPanelCourse from "@/components/courses/Courses-ControlPanel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCRUD } from "@/hooks/useCRUD";
+import { useDebounce } from "@/hooks/useDebounce";
+import { CourseFormInputs, courseSchema } from "@/lib/zodSchemas";
+import { Course, useCourseStore } from "@/store/useCourseStore";
+import { Department } from "@/store/useDepartmentStore";
 
 export default function CoursesPage() {
   const {
@@ -171,7 +171,16 @@ export default function CoursesPage() {
                         <Pencil className="size-4" />
                       </button>
                       <ConfirmDialog
-                        onConfirm={() => deleteMutation.mutate(c.course_id)}
+                        onConfirm={() =>
+                          deleteMutation.mutate(c.course_id, {
+                            onSuccess: () => {
+                              toast.success('Xóa học phần thành công!');
+                            },
+                            onError: () => {
+                              toast.error('Xóa học phần thất bại!');
+                            },
+                          })
+                        }
                         title="Bạn đã chắc chắn?"
                         description="Học phần này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                         trigger={

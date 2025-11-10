@@ -1,25 +1,25 @@
 "use client";
 
+import axios from "axios";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { toast } from "sonner";
-import { Eye, Pencil, Trash2 } from "lucide-react";
 
-import DataTable from "@/components/shared/DataTable";
-import Pagination from "@/components/shared/Pagination";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import FormModal from "@/components/shared/FormModal";
-import DetailDialog from "@/components/shared/DetailModal";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useCRUD } from "@/hooks/useCRUD";
-import { Department, Lecturer, useLecturerStore } from "@/store/useLecturerStore";
-import LecturerDetail from "@/components/lecturers/LecturerDetailModal";
-import { TeacherFormInputs, teacherSchema } from "@/lib/zodSchemas";
-import { zodResolver } from "@hookform/resolvers/zod";
 import ControlPanelLecturer from "@/components/lecturers/Lecturer-ControlPanel";
+import LecturerDetail from "@/components/lecturers/LecturerDetailModal";
 import LecturerForm from "@/components/lecturers/Lecturers";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import DataTable from "@/components/shared/DataTable";
+import DetailDialog from "@/components/shared/DetailModal";
+import FormModal from "@/components/shared/FormModal";
+import Pagination from "@/components/shared/Pagination";
+import { useCRUD } from "@/hooks/useCRUD";
+import { useDebounce } from "@/hooks/useDebounce";
+import { TeacherFormInputs, teacherSchema } from "@/lib/zodSchemas";
+import { Department, Lecturer, useLecturerStore } from "@/store/useLecturerStore";
 import { formatDate } from "@/utils/date";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function LecturersPage() {
   const {
@@ -281,7 +281,16 @@ export default function LecturersPage() {
                         <Pencil className="size-4" />
                       </button>
                       <ConfirmDialog
-                        onConfirm={() => deleteMutation.mutate(l.lecturer_id)}
+                        onConfirm={() =>
+                          deleteMutation.mutate(l.lecturer_id, {
+                            onSuccess: () => {
+                              toast.success('Xóa giảng viên thành công!');
+                            },
+                            onError: () => {
+                              toast.error('Xóa giảng viên thất bại!');
+                            },
+                          })
+                        }
                         title="Bạn đã chắc chắn?"
                         description="Giảng viên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
                         trigger={

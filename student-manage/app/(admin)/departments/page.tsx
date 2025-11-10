@@ -1,30 +1,30 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Pencil, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
 
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
-import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { useDebounce } from "@/hooks/useDebounce";
-import { useCRUD } from "@/hooks/useCRUD";
-import { Department, useDepartmentStore } from "@/store/useDepartmentStore";
 import ControlPanelDepartment from "@/components/departments/ControlPanelDepartment";
+import { useCRUD } from "@/hooks/useCRUD";
+import { useDebounce } from "@/hooks/useDebounce";
 import { DepartmentFormInputs, departmentSchema } from "@/lib/zodSchemas";
+import { Department, useDepartmentStore } from "@/store/useDepartmentStore";
 
 export default function DepartmentsPage() {
   const {
@@ -145,7 +145,14 @@ export default function DepartmentsPage() {
                       </button>
                       <ConfirmDialog
                         onConfirm={() =>
-                          deleteMutation.mutate(dep.department_id)
+                          deleteMutation.mutate(dep.department_id, {
+                            onSuccess: () => {
+                              toast.success('Xóa khoa thành công!');
+                            },
+                            onError: () => {
+                              toast.error('Xóa khoa thất bại!');
+                            },
+                          })
                         }
                         title="Bạn đã chắc chắn?"
                         description="Khoa này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
