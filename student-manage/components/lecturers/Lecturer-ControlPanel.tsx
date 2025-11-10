@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import axios from "axios";
-import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import SearchBar from "@/components/shared/SearchBar";
-import { Trash2 } from "lucide-react";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import SearchBar from "@/components/shared/SearchBar";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useLecturerStore } from "@/store/useLecturerStore";
+import axios from "axios";
+import { Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 
@@ -102,13 +102,6 @@ export default function ControlPanelLecturer({
     } else toast.error(data.error);
   };
 
-  const handleBackup = async () => {
-    const res = await fetch("/api/lecturers/backup", { method: "POST" });
-    const data = await res.json();
-    if (res.ok) toast.success(`Backup thành công: ${data.filename}`);
-    else toast.error(data.error);
-  };
-
   const handleResetFilters = () => {
     setGenderFilters([]);
     setDepartmentFilters([]);
@@ -146,13 +139,6 @@ export default function ControlPanelLecturer({
               }}
             />
           </label>
-          <Button
-            variant="ghost"
-            className="bg-gray-200 hover:bg-gray-300 transition"
-            onClick={handleBackup}
-          >
-            Sao lưu
-          </Button>
 
           <Button
           variant="ghost"

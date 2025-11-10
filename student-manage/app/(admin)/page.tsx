@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import {
@@ -15,6 +16,7 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+import { toast } from "sonner";
 
 interface StatItem {
   label: string;
@@ -39,6 +41,29 @@ export default function DashboardPage() {
   const [classByMajor, setClassByMajor] = useState<any[]>([]);
   const [sectionByMajor, setSectionByMajor] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleBackup = async () => {
+    try {
+      const res = await fetch("/api/backup");
+
+      if (res.status === 200) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `backup_${new Date().toISOString().replace(/[:.]/g, "-")}.sql`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+
+        toast.success("Sao lưu thành công");
+      } else {
+        toast.error("Sao lưu thất bại");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Sao lưu thất bại");
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -149,6 +174,8 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+
+      <Button variant="ghost" className="bg-gray-200 hover:bg-gray-300 transition" onClick={handleBackup}>Sao lưu toàn bộ dữ liệu hệ thống</Button>
       
       {/* 🧩 Sinh viên theo ngành */}
       <Card className="shadow-sm">

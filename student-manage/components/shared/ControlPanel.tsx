@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import axios from "axios";
-import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import SearchBar from "./SearchBar";
+import { Label } from "@/components/ui/label";
 import { useStudentStore } from "@/store/useStudentStore";
+import axios from "axios";
 import { Trash2 } from "lucide-react";
-import ConfirmDialog from "./ConfirmDialog";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
+import ConfirmDialog from "./ConfirmDialog";
+import SearchBar from "./SearchBar";
 
 interface ControlPanelProps {
   total: number;
@@ -140,13 +140,6 @@ export default function ControlPanel({
     else toast.error(data.error);
   };
 
-  const handleBackup = async () => {
-    const res = await fetch("/api/students/backup", { method: "POST" });
-    const data = await res.json();
-    if (res.ok) toast.success(`Backup thành công: ${data.filename}`);
-    else toast.error(data.error);
-  };
-
   const handleResetFilters = () => {
     setGenderFilters([]);
     setClassFilters([]);
@@ -176,7 +169,6 @@ export default function ControlPanel({
               }}
             />
           </label>
-          <Button variant="ghost" className="bg-gray-200 hover:bg-gray-300 transition" onClick={handleBackup}>Sao lưu</Button>
 
           {/* Nút mở dialog in danh sách */}
           <Button
