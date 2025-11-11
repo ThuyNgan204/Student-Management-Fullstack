@@ -112,11 +112,34 @@ export default function StudentDetailPage() {
   const handleSave = async () => {
     const newErrors: any = {};
 
+    // Validate Họ Tên trống
     if (!formData.last_name) newErrors.last_name = "Họ không được để trống";
     if (!formData.first_name) newErrors.first_name = "Tên không được để trống";
+
+    // Validate Giới tính
     if (!formData.gender) newErrors.gender = "Giới tính không được để trống";
-    if (!formData.email) newErrors.email = "Email không được để trống";
-    if (!formData.phone) newErrors.phone = "Số điện thoại không được để trống";
+
+    // Validate Email
+    if (!formData.email) {
+      newErrors.email = "Email không được để trống";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Email không hợp lệ";
+      }
+    }
+
+    // Validate Số điện thoại
+    if (!formData.phone) {
+      newErrors.phone = "Số điện thoại không được để trống";
+    } else {
+      const phoneRegex = /^(03|05|07|08|09)\d{8}$/;
+      if (!phoneRegex.test(formData.phone)) {
+        newErrors.phone = "Số điện thoại không hợp lệ";
+      }
+    }
+
+    // Validate Address
     if (!formData.address) newErrors.address = "Địa chỉ không được để trống";
 
     setErrors(newErrors);
@@ -130,7 +153,7 @@ export default function StudentDetailPage() {
     try {
       setLoading(true);
       const res = await axios.put(`/api/students/${studentId}`, formData);
-      toast.success("Cập nhật thông tin thành công!");
+      toast.success("Cập nhật thành công!");
       setStudentData(res.data);
       setIsEditOpen(false);
       refetch();
@@ -283,7 +306,16 @@ export default function StudentDetailPage() {
       </div>
 
       {/* === Edit Modal === */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open && studentData) {
+            setFormData(studentData); 
+            setErrors({});
+          }
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa thông tin sinh viên</DialogTitle>
@@ -387,7 +419,14 @@ export default function StudentDetailPage() {
           </div>
 
           <DialogFooter className="mt-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setFormData(studentData);
+                setErrors({});
+                setIsEditOpen(false);
+              }}
+            >
               Hủy
             </Button>
             <Button onClick={handleSave} disabled={loading}>
