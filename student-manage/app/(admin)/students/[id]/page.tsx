@@ -70,6 +70,7 @@ export default function StudentDetailPage() {
   const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const {
     data: student,
@@ -109,6 +110,23 @@ export default function StudentDetailPage() {
   };
 
   const handleSave = async () => {
+    const newErrors: any = {};
+
+    if (!formData.last_name) newErrors.last_name = "Họ không được để trống";
+    if (!formData.first_name) newErrors.first_name = "Tên không được để trống";
+    if (!formData.gender) newErrors.gender = "Giới tính không được để trống";
+    if (!formData.email) newErrors.email = "Email không được để trống";
+    if (!formData.phone) newErrors.phone = "Số điện thoại không được để trống";
+    if (!formData.address) newErrors.address = "Địa chỉ không được để trống";
+
+    setErrors(newErrors);
+
+    // Nếu có lỗi thì không gọi API
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Vui lòng kiểm tra lại thông tin!");
+      return;
+    }
+
     try {
       setLoading(true);
       const res = await axios.put(`/api/students/${studentId}`, formData);
@@ -303,6 +321,7 @@ export default function StudentDetailPage() {
                   value={formData.last_name || ""}
                   onChange={handleChange}
                 />
+                {errors.last_name && <p className="text-xs text-red-500 mt-1">{errors.last_name}</p>}
               </div>
               <div>
                 <Label className="mb-2">Tên</Label>
@@ -311,6 +330,7 @@ export default function StudentDetailPage() {
                   value={formData.first_name || ""}
                   onChange={handleChange}
                 />
+                {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name}</p>}
               </div>
             </div>
 
@@ -321,6 +341,7 @@ export default function StudentDetailPage() {
                 value={formData.gender || ""}
                 onChange={handleChange}
               />
+              {errors.gender && <p className="text-xs text-red-500 mt-1">{errors.gender}</p>}
             </div>
 
             <div>
@@ -331,6 +352,7 @@ export default function StudentDetailPage() {
                 value={formData.dob ? formData.dob.split("T")[0] : ""}
                 onChange={handleChange}
               />
+              {errors.dob && <p className="text-xs text-red-500 mt-1">{errors.dob}</p>}
             </div>
 
             <div>
@@ -340,6 +362,7 @@ export default function StudentDetailPage() {
                 value={formData.email || ""}
                 onChange={handleChange}
               />
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
             </div>
 
             <div>
@@ -349,6 +372,7 @@ export default function StudentDetailPage() {
                 value={formData.phone || ""}
                 onChange={handleChange}
               />
+              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
             </div>
 
             <div>
@@ -358,6 +382,7 @@ export default function StudentDetailPage() {
                 value={formData.address || ""}
                 onChange={handleChange}
               />
+              {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
             </div>
           </div>
 
