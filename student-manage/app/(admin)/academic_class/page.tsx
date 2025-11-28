@@ -79,8 +79,8 @@ export default function ClassesPage() {
     const fetch = async () => {
       try {
         const [majorsRes, lecturersRes] = await Promise.all([
-          axios.get("/api/majors"),
-          axios.get("/api/lecturers"),
+          axios.get("/api/majors", { params: { page: 1, page_size: 100 } }),
+          axios.get("/api/lecturers", { params: { page: 1, page_size: 100 } }),
         ]);
         setMajors(majorsRes.data.items || majorsRes.data);
         setLecturers(lecturersRes.data.items || lecturersRes.data);

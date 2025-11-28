@@ -76,7 +76,7 @@ export default function MajorsPage() {
 
   useEffect(() => {
     axios
-      .get("/api/departments")
+      .get("/api/departments", { params: { page: 1, page_size: 100 } })
       .then((res) => setDepartments(res.data.items || []))
       .catch(() => toast.error("Không thể tải danh sách khoa"));
   }, []);
@@ -329,7 +329,7 @@ export default function MajorsPage() {
                   <SelectValue placeholder="Chọn khoa" />
                 </SelectTrigger>
 
-                <SelectContent>
+                <SelectContent className="max-h-60 overflow-y-auto">
                   {departments.map((dep) => (
                     <SelectItem
                       key={dep.department_id}

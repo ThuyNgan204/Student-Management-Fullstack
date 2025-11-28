@@ -1,11 +1,11 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/shared/SearchBar";
-import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useMajorStore } from "@/store/useMajorStore";
 import axios from "axios";
+import { useEffect, useRef, useState } from "react";
 
 interface ControlPanelMajorProps {
   total: number;
@@ -42,7 +42,7 @@ export default function ControlPanelMajor({
   // 🔹 Fetch danh sách khoa
   useEffect(() => {
     axios
-      .get("/api/departments")
+      .get("/api/departments", { params: { page: 1, page_size: 100 } })
       .then((res) => setDepartments(res.data.items))
       .catch(() => setDepartments([]));
   }, []);

@@ -1,11 +1,11 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useClassStore } from "@/store/useClassStore";
 import SearchBar from "@/components/shared/SearchBar";
-import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useClassStore } from "@/store/useClassStore";
 import axios from "axios";
+import { useEffect, useRef, useState } from "react";
 
 interface ControlPanelClassProps {
   total: number;
@@ -47,8 +47,8 @@ export default function ControlPanelClass({
   // 🔹 Fetch departments & majors
   useEffect(() => {
     Promise.all([
-      axios.get("/api/departments"),
-      axios.get("/api/majors"),
+      axios.get("/api/departments", { params: { page: 1, page_size: 100 } }),
+      axios.get("/api/majors", { params: { page: 1, page_size: 100 } }),
     ])
       .then(([deptRes, majorRes]) => {
         setDepartments(deptRes.data.items);
@@ -162,91 +162,99 @@ export default function ControlPanelClass({
           </button>
 
           {openFilter && (
-            <div className="absolute left-0 mt-2 w-96 rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
-              {/* Cohort Filter */}
-              <div>
-                <p className="font-medium text-base mb-3">Khóa</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {["K44", "K45", "K46", "K47", "K48"].map((c) => (
-                    <label key={c} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        value={c}
-                        checked={cohortFilters.includes(c)}
-                        onChange={(e) =>
-                          setCohortFilters((prev) =>
-                            e.target.checked ? [...prev, c] : prev.filter((x) => x !== c)
-                          )
-                        }
-                      />
-                      {c}
-                    </label>
-                  ))}
-                </div>
-              </div>
+  <div className="absolute left-0 mt-2 w-96 rounded-lg shadow-lg bg-white border z-20 p-6 text-sm">
 
-              {/* Department Filter */}
-              <div>
-                <p className="font-medium text-base mb-3">Khoa</p>
-                <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                  {departments.map((dept) => (
-                    <label key={dept.department_id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        value={dept.department_id}
-                        checked={departmentFilters.includes(dept.department_id)}
-                        onChange={(e) =>
-                          setDepartmentFilters((prev) =>
-                            e.target.checked
-                              ? [...prev, dept.department_id]
-                              : prev.filter((x) => x !== dept.department_id)
-                          )
-                        }
-                      />
-                      {dept.department_code}
-                    </label>
-                  ))}
-                </div>
-              </div>
+    {/* Vùng scroll cho filter */}
+    <div className="space-y-6 max-h-[420px] overflow-y-auto pr-2">
 
-              {/* Major Filter */}
-              <div>
-                <p className="font-medium text-base mb-3">Chuyên ngành</p>
-                <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                  {majors.map((m) => (
-                    <label key={m.major_id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        value={m.major_id}
-                        checked={majorFilters.includes(m.major_id)}
-                        onChange={(e) =>
-                          setMajorFilters((prev) =>
-                            e.target.checked
-                              ? [...prev, m.major_id]
-                              : prev.filter((x) => x !== m.major_id)
-                          )
-                        }
-                      />
-                      {m.major_code}
-                    </label>
-                  ))}
-                </div>
-              </div>
+      {/* Cohort Filter */}
+      <div>
+        <p className="font-medium text-base mb-3">Khóa</p>
+        <div className="grid grid-cols-3 gap-2">
+          {["K44", "K45", "K46", "K47", "K48"].map((c) => (
+            <label key={c} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                value={c}
+                checked={cohortFilters.includes(c)}
+                onChange={(e) =>
+                  setCohortFilters((prev) =>
+                    e.target.checked ? [...prev, c] : prev.filter((x) => x !== c)
+                  )
+                }
+              />
+              {c}
+            </label>
+          ))}
+        </div>
+      </div>
 
-              {/* Reset Button */}
-              <button
-                onClick={() => {
-                  setCohortFilters([]);
-                  setDepartmentFilters([]);
-                  setMajorFilters([]);
-                  setOpenFilter(false);
-                }}
-                className="w-full px-3 py-2 text-base rounded-md bg-gray-100 hover:bg-gray-200 mt-2"
-              >
-                Thiết lập lại
-              </button>
-            </div>
-          )}
+      {/* Department Filter */}
+      <div>
+        <p className="font-medium text-base mb-3">Khoa</p>
+        <div className="grid grid-cols-3 gap-2">
+          {departments.map((dept) => (
+            <label key={dept.department_id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                value={dept.department_id}
+                checked={departmentFilters.includes(dept.department_id)}
+                onChange={(e) =>
+                  setDepartmentFilters((prev) =>
+                    e.target.checked
+                      ? [...prev, dept.department_id]
+                      : prev.filter((x) => x !== dept.department_id)
+                  )
+                }
+              />
+              {dept.department_code}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Major Filter */}
+      <div>
+        <p className="font-medium text-base mb-3">Chuyên ngành</p>
+        <div className="grid grid-cols-3 gap-2">
+          {majors.map((m) => (
+            <label key={m.major_id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                value={m.major_id}
+                checked={majorFilters.includes(m.major_id)}
+                onChange={(e) =>
+                  setMajorFilters((prev) =>
+                    e.target.checked
+                      ? [...prev, m.major_id]
+                      : prev.filter((x) => x !== m.major_id)
+                  )
+                }
+              />
+              {m.major_code}
+            </label>
+          ))}
+        </div>
+      </div>
+
+    </div>
+
+    {/* Nút reset — CỐ ĐỊNH KHÔNG CUỘN */}
+    <button
+      onClick={() => {
+        setCohortFilters([]);
+        setDepartmentFilters([]);
+        setMajorFilters([]);
+        setOpenFilter(false);
+      }}
+      className="w-full px-3 py-2 text-base rounded-md bg-gray-100 hover:bg-gray-200 mt-4"
+    >
+      Thiết lập lại
+    </button>
+
+  </div>
+)}
+
         </div>
 
         {/* 🔎 Search */}

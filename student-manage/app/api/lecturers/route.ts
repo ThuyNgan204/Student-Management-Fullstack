@@ -1,6 +1,6 @@
 // app/api/lecturers/route.ts
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const departmentFilters = searchParams.getAll("department_code");
   const positionFilters = searchParams.getAll("position");
   const sortBy = searchParams.get("sort_by") || "lecturer_id";
-  const sortOrder = searchParams.get("sort_order") || "desc";
+  const sortOrder = searchParams.get("sort_order") || "asc";
 
   const skip = (page - 1) * pageSize;
 
