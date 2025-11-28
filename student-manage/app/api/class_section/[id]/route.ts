@@ -1,12 +1,13 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
-// GET ONE
+// ✅ GET ONE
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const sectionId = Number(params.id);
+  const { id } = await context.params;
+  const sectionId = Number(id);
   if (isNaN(sectionId))
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
 
@@ -28,15 +29,9 @@ export async function GET(
     if (!section)
       return NextResponse.json({ error: "Class section not found" }, { status: 404 });
 
-    // ✅ Tính số lượng đã đăng ký (enrollment_id hợp lệ)
     const enrolledCount = section.enrollment.filter(e => e.enrollment_id).length;
 
-    // ✅ Gộp vào object trả về
-    const result = {
-      ...section,
-      enrolledCount,
-    };
-
+    const result = { ...section, enrolledCount };
     return NextResponse.json(result);
   } catch (error) {
     console.error("GET one class_section error:", error);
@@ -47,12 +42,13 @@ export async function GET(
   }
 }
 
-// UPDATE
+// ✅ UPDATE
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const sectionId = Number(params.id);
+  const { id } = await context.params;
+  const sectionId = Number(id);
   const body = await req.json();
 
   try {
@@ -60,6 +56,7 @@ export async function PUT(
       where: { class_section_id: sectionId },
       data: {
         section_code: body.section_code,
+        academic_year: body.academic_year,
         semester: body.semester,
         course_id: body.course_id,
         lecturer_id: body.lecturer_id || null,
@@ -83,12 +80,13 @@ export async function PUT(
   }
 }
 
-// DELETE
+// ✅ DELETE
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const sectionId = Number(params.id);
+  const { id } = await context.params;
+  const sectionId = Number(id);
 
   try {
     const enrollments = await prisma.enrollment.findMany({

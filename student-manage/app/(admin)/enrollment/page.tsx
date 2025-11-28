@@ -303,7 +303,7 @@ export default function EnrollmentsPage() {
               )}
             </div>
 
-            <div>
+            {/* <div>
               <Label className="mb-2">Trạng thái</Label>
               <Select onValueChange={(value) => formAdd.setValue("status", value)}>
                 <SelectTrigger className="w-full">
@@ -315,7 +315,7 @@ export default function EnrollmentsPage() {
                   <SelectItem value="Tốt nghiệp">Tốt nghiệp</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             <DialogFooter className="flex justify-end space-x-2">
               <Button variant="outline" type="button" onClick={() => { formAdd.reset(); setAddOpen(false); }}>Đóng</Button>

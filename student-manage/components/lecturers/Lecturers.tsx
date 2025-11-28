@@ -1,16 +1,15 @@
-import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Department } from "@/store/useLecturerStore";
-import { TeacherFormInputs } from "@/lib/zodSchemas";
-import { useForm } from "react-hook-form";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+import { TeacherFormInputs } from "@/lib/zodSchemas";
+import { Department } from "@/store/useLecturerStore";
+import { useForm } from "react-hook-form";
 
 export default function LecturerForm({
   register,
@@ -28,12 +27,6 @@ export default function LecturerForm({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <Label className="mb-2">Mã Giảng viên</Label>
-        <Input {...register("lecturer_code")} />
-        {errors?.lecturer_code && <p className="text-xs text-red-500">{errors.lecturer_code.message}</p>}
-      </div>
-
-      <div>
         <Label className="mb-2">Họ</Label>
         <Input {...register("last_name")} />
         {errors?.last_name && <p className="text-xs text-red-500">{errors.last_name.message}</p>}
@@ -43,6 +36,12 @@ export default function LecturerForm({
         <Label className="mb-2">Tên</Label>
         <Input {...register("first_name")} />
         {errors?.first_name && <p className="text-xs text-red-500">{errors.first_name.message}</p>}
+      </div>
+
+      <div>
+        <Label className="mb-2">Mã Giảng viên</Label>
+        <Input {...register("lecturer_code")} />
+        {errors?.lecturer_code && <p className="text-xs text-red-500">{errors.lecturer_code.message}</p>}
       </div>
 
       <div>

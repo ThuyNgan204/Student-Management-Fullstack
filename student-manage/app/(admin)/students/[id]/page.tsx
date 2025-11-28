@@ -264,7 +264,7 @@ export default function StudentDetailPage() {
               <InfoRow label="Email" value={studentData.email} />
               <InfoRow label="Số điện thoại" value={studentData.phone} />
               <InfoRow label="Địa chỉ" value={studentData.address} />
-              <InfoRow label="Năm nhập học" value={studentData.cohort} />
+              <InfoRow label="Khóa" value={studentData.cohort} />
               <InfoRow label="Trạng thái" value={studentData.status} />
             </CardContent>
           </Card>
