@@ -76,7 +76,7 @@ export default function CoursesPage() {
 
   useEffect(() => {
     axios
-      .get("/api/departments")
+      .get("/api/departments", { params: { page: 1, page_size: 100 } })
       .then((res) => setDepartments(res.data.items || []))
       .catch(() => toast.error("Không thể tải danh sách khoa"));
   }, []);

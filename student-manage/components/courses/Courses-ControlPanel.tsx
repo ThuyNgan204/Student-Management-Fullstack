@@ -1,11 +1,10 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/shared/SearchBar";
-import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useCourseStore } from "@/store/useCourseStore";
-import axios from "axios";
+import { useEffect, useRef, useState } from "react";
 
 interface ControlPanelCourseProps {
   total: number;
@@ -38,13 +37,6 @@ export default function ControlPanelCourse({
 
   const [departments, setDepartments] = useState<any[]>([]);
   const filterRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    axios
-      .get("/api/departments")
-      .then((res) => setDepartments(res.data.items))
-      .catch(() => setDepartments([]));
-  }, []);
 
   useEffect(() => setPage(1), [search, sortBy, sortOrder]);
 
