@@ -195,7 +195,7 @@ export default function DashboardPage() {
                 cy="50%"
                 outerRadius={120}
                 labelLine={false}
-                label={({ name, count }) => `${name}: ${count}`}
+                label={({ count }) => `${count}`}
               >
                 {studentByMajor.map((_, i) => (
                   <Cell

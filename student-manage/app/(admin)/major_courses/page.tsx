@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import axios from "axios";
-import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -21,7 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRouter } from "next/navigation";
+import axios from "axios";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface Major {
   major_id: number;
@@ -115,7 +114,7 @@ export default function MajorCourses() {
 
   const fetchMajors = async () => {
     try {
-      const res = await axios.get("/api/majors");
+      const res = await axios.get("/api/majors", { params: { page: 1, page_size: 100 } });
       const data = res.data.items || res.data;
       setMajors(data);
       return data;
@@ -127,7 +126,7 @@ export default function MajorCourses() {
 
   const fetchCourses = async () => {
     try {
-      const res = await axios.get("/api/courses");
+      const res = await axios.get("/api/courses", { params: { page: 1, page_size: 100 } });
       setCourses(res.data.items || res.data);
     } catch {
       toast.error("Không thể tải danh sách học phần.");
