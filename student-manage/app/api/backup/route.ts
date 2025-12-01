@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
     const fileName = `backup_${timestamp}.sql`;
     const filePath = path.join(backupDir, fileName);
 
-    // ⚠️ Thay DATABASE_URL của bạn vào đây
+    // DATABASE_URL
     const dbUrl = "postgresql://postgres:123456@localhost:5432/studentManage";
 
-    // Thay đổi dumpCommand
-  const pgDumpPath = `"C:\\Program Files\\PostgreSQL\\17\\bin\\pg_dump.exe"`; // <-- sửa theo PostgreSQL của bạn
+    // dumpCommand
+  const pgDumpPath = `"C:\\Program Files\\PostgreSQL\\17\\bin\\pg_dump.exe"`;
   const dumpCommand = `${pgDumpPath} ${dbUrl} -f "${filePath}"`;
 
     exec(dumpCommand, (error) => {

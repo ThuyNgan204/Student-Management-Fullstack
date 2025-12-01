@@ -328,7 +328,7 @@ export default function ControlPanel({
           </button>
 
           {openFilter && (
-            <div className="absolute left-0 mt-2 w-[420px] rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
+            <div className="absolute left-0 mt-2 w-[480px] rounded-lg shadow-lg bg-white border z-20 p-6 space-y-6 text-sm">
               {/* Giới tính */}
               <div>
                 <p className="font-medium text-base mb-3">Giới tính</p>
